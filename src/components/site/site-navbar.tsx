@@ -11,6 +11,7 @@ import { useCart } from "@/context/CartContext"
 
 const links = [
   { label: "Products", href: "/products" },
+  { label: "Colours", href: "/colours" },
   { label: "Calculator", href: "/calculator" },
   { label: "My Orders", href: "/account/orders" },
   { label: "Track Order", href: "/track" },
