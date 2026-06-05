@@ -20,6 +20,8 @@ import jsPDF from "jspdf"
 import { supabase } from "@/services/supabase"
 import { inr } from "@/lib/format"
 import { Button } from "@/components/ui/button"
+import { sendOrderStatusWhatsApp } from "@/app/actions/whatsapp"
+import { toast } from "sonner"
 
 const STATUS_OPTIONS = ["Order Received", "Accepted", "Out for Delivery", "Delivered", "Cancelled"]
 
@@ -70,6 +72,16 @@ export default function AdminDashboard() {
     const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", id)
     if (!error) {
       setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o))
+      
+      const order = orders.find(o => o.id === id)
+      if (order && ["Accepted", "Out for Delivery", "Delivered"].includes(newStatus)) {
+        const res = await sendOrderStatusWhatsApp(order.order_id, newStatus, order.customer_phone, order.customer_name)
+        if (res.success) {
+          toast.success("WhatsApp Notification Sent", { description: `Customer notified about ${newStatus} status.` })
+        }
+      }
+    } else {
+      toast.error("Failed to update status")
     }
   }
 

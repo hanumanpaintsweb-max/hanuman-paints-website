@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
@@ -7,12 +6,10 @@ import { BadgeCheck, Check, ChevronRight, Heart, Minus, Plus, ShoppingCart, Star
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/site/product-card"
 import { inr } from "@/lib/format"
-import { useStore } from "@/lib/store"
 import { useCart } from "@/context/CartContext"
 import { PRODUCTS } from "@/data/products"
 
 export function ProductDetail({ product }: { product: any }) {
-  const { toggleWishlist, wishlist } = useStore()
   const { addItem } = useCart()
   const [size, setSize] = useState(product.sizes?.[0]?.size || "1 Ltr")
   const [qty, setQty] = useState(1)
@@ -23,8 +20,6 @@ export function ProductDetail({ product }: { product: any }) {
   const price = selectedSizeObj?.discounted || product.price || 0
   const mrp = selectedSizeObj?.mrp || product.mrp || 0
   const off = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0
-
-  const wished = wishlist.includes(product.id.toString())
   const related = PRODUCTS.filter((p: any) => p.categoryId === product.categoryId && p.id !== product.id)
   const relatedList = related.length ? related : PRODUCTS.filter((p: any) => p.id !== product.id)
 
@@ -173,15 +168,6 @@ export function ProductDetail({ product }: { product: any }) {
                 )}
               </AnimatePresence>
             </div>
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-xl"
-              onClick={() => toggleWishlist(product.id.toString())}
-              aria-label="Add to wishlist"
-            >
-              <Heart className={`size-5 ${wished ? "fill-primary text-primary" : ""}`} />
-            </Button>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 text-sm">

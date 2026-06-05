@@ -2,16 +2,13 @@
 
 import Link from "next/link"
 import { motion } from "motion/react"
-import { Heart, Plus, Star } from "lucide-react"
+import { Plus, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { inr } from "@/lib/format"
-import { useStore } from "@/lib/store"
 import { useCart } from "@/context/CartContext"
 
 export function ProductCard({ product, index = 0 }: { product: any; index?: number }) {
-  const { toggleWishlist, wishlist } = useStore()
   const { addItem } = useCart()
-  const wished = wishlist.includes(product.id.toString())
   
   const selectedSizeObj = product.sizes?.[0] || { size: '1 Ltr', mrp: 0, discounted: 0 }
   const mrp = selectedSizeObj.mrp || 0
@@ -41,15 +38,7 @@ export function ProductCard({ product, index = 0 }: { product: any; index?: numb
             </span>
           )}
         </div>
-        <button
-          onClick={() => toggleWishlist(product.id.toString())}
-          aria-label="Toggle wishlist"
-          className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur-md transition-colors hover:bg-background"
-        >
-          <motion.span animate={wished ? { scale: [1, 1.3, 1] } : {}} transition={{ duration: 0.3 }}>
-            <Heart className={`size-4 ${wished ? "fill-primary text-primary" : ""}`} />
-          </motion.span>
-        </button>
+
         <Link href={`/products/${product.id}`}>
           <img
             src={product.image || "/placeholder.svg"}

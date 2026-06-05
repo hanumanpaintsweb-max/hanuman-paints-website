@@ -3,21 +3,18 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "motion/react"
-import { Calculator, Heart, Home, ShoppingCart, Store } from "lucide-react"
-import { useStore } from "@/lib/store"
+import { Home, ShoppingCart, Store, User } from "lucide-react"
 import { useCart } from "@/context/CartContext"
 
 const items = [
   { label: "Home", href: "/", icon: Home },
   { label: "Shop", href: "/products", icon: Store },
   { label: "Cart", href: "/cart", icon: ShoppingCart },
-  { label: "Wishlist", href: "/wishlist", icon: Heart },
-  { label: "Calc", href: "/calculator", icon: Calculator },
+  { label: "Orders", href: "/my-orders", icon: User },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
-  const { wishlistCount } = useStore()
   const { itemCount: cartCount } = useCart()
 
   return (
@@ -25,7 +22,7 @@ export function BottomNav() {
       <ul className="mx-auto flex max-w-md items-center justify-around px-2 py-1.5">
         {items.map((it) => {
           const active = pathname === it.href
-          const badge = it.href === "/cart" ? cartCount : it.href === "/wishlist" ? wishlistCount : 0
+          const badge = it.href === "/cart" ? cartCount : 0
           return (
             <li key={it.label}>
               <Link

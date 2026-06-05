@@ -4,24 +4,20 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Calculator, Heart, Menu, Phone, ShoppingCart, User, X } from "lucide-react"
+import { Menu, Phone, ShoppingCart, User, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useStore } from "@/lib/store"
 import { useCart } from "@/context/CartContext"
 
 const links = [
   { label: "Products", href: "/products" },
   { label: "Colours", href: "/colours" },
-  { label: "Calculator", href: "/calculator" },
-  { label: "My Orders", href: "/account/orders" },
-  { label: "Track Order", href: "/track" },
+  { label: "My Orders", href: "/my-orders" },
 ]
 
 export function SiteNavbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
-  const { wishlistCount } = useStore()
   const { itemCount: cartCount } = useCart()
 
   useEffect(() => {
@@ -84,24 +80,9 @@ export function SiteNavbar() {
 
         <div className="flex items-center gap-1.5">
           <Link
-            href="/wishlist"
-            className="relative hidden size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted sm:flex"
-            aria-label="Wishlist"
-          >
-            <Heart className="size-5" />
-            {wishlistCount > 0 && <Badge>{wishlistCount}</Badge>}
-          </Link>
-          <Link
-            href="/calculator"
-            className="hidden size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted sm:flex lg:hidden"
-            aria-label="Paint calculator"
-          >
-            <Calculator className="size-5" />
-          </Link>
-          <Link
-            href="/login"
+            href="/admin/login"
             className="hidden size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted sm:flex"
-            aria-label="Account"
+            aria-label="Admin"
           >
             <User className="size-5" />
           </Link>
@@ -156,10 +137,3 @@ export function SiteNavbar() {
   )
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-      {children}
-    </span>
-  )
-}

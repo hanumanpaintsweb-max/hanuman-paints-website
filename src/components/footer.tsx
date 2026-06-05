@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 const cols = [
   { title: "Products", items: ["Interior", "Exterior", "Enamels", "Primers", "Waterproofing"] },
   { title: "Company", items: ["About us", "Our store", "Careers", "Blog", "Contact"] },
-  { title: "Support", items: ["Track order", "Delivery info", "Returns", "Color help", "FAQs"] },
+  { title: "Support", items: ["Delivery info", "Returns", "Color help", "FAQs"] },
 ]
 
 export function Footer() {

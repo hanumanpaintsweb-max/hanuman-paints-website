@@ -77,9 +77,6 @@ export function Hero() {
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-xl text-base">
-              <Link href="/calculator">Paint calculator</Link>
-            </Button>
           </motion.div>
 
           <motion.div
