@@ -21,6 +21,11 @@ const TINTABLE_PRODUCTS = [
   "Dulux Promise Sheen Exterior",
   "Dulux Promise Interior",
   "Dulux Promise Exterior",
+  "Dulux Promise SmartChoice Interior",
+  "Dulux Promise SmartChoice Exterior",
+  "Dulux Weathershield Powerflexx 15yr",
+  "Dulux Weathershield Protect Dustproof Hi-Sheen",
+  "Dulux Floor Plus"
 ]
 
 export function ColourPanel({ isOpen, colour, onClose }: ColourPanelProps) {
@@ -91,7 +96,7 @@ export function ColourPanel({ isOpen, colour, onClose }: ColourPanelProps) {
 
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mb-8 overflow-hidden rounded-2xl border border-border shadow-sm">
-                <div className="h-48 w-full" style={{ backgroundColor: colour.hex }} />
+                <div className="h-48 w-full" style={{ backgroundColor: `#${colour.hex}` }} />
                 <div className="bg-card p-4">
                   <h3 className="text-2xl font-bold text-foreground">{colour.name}</h3>
                   <p className="mt-1 font-mono text-sm font-medium text-muted-foreground">

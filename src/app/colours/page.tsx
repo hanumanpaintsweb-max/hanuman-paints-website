@@ -34,24 +34,24 @@ export default function ColoursPage() {
         </section>
 
         {/* Colours Grid */}
-        <section className="mx-auto max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex w-full snap-x snap-mandatory gap-4 overflow-x-auto pb-8 xl:grid xl:grid-cols-8 xl:gap-6 xl:overflow-x-visible">
+        <section className="mx-auto max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-4">
             {coloursData.map((family, fIdx) => (
-              <div key={family.family} className="flex min-w-[200px] shrink-0 snap-center flex-col">
-                <div className="mb-4 sticky top-20 z-10 bg-background/80 py-2 backdrop-blur-md rounded-lg text-center shadow-sm">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground">
+              <div key={family.family} className="flex flex-col">
+                <div className="mb-2 sticky top-20 z-10 bg-background/80 py-1 backdrop-blur-md text-center">
+                  <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-tighter text-foreground line-clamp-1">
                     {family.family}
                   </h3>
                 </div>
                 
-                <div className="flex flex-col gap-0 rounded-2xl overflow-hidden shadow-sm border border-border">
+                <div className="flex flex-col gap-0 rounded-xl overflow-hidden shadow-sm border border-border">
                   {family.colors.map((color, cIdx) => (
                     <motion.button
                       key={color.code}
                       onClick={() => setSelectedColour(color)}
-                      whileHover={{ scale: 1.05, zIndex: 20, y: -2 }}
+                      whileHover={{ scale: 1.1, zIndex: 20 }}
                       whileTap={{ scale: 0.95 }}
-                      className="group relative h-16 w-full cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:z-30"
+                      className="group relative h-8 w-full cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus:ring-1 focus:ring-primary focus:z-30"
                       style={{ backgroundColor: `#${color.hex}` }}
                     >
                       {/* Tooltip on hover */}
