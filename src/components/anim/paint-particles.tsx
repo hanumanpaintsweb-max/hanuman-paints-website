@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "motion/react"
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 
 const COLORS = ["#F97316", "#1E3A8A", "#14B8A6", "#FACC15", "#E11D48", "#0EA5E9"]
 
@@ -19,6 +19,14 @@ export function PaintParticles({ count = 14 }: { count?: number }) {
       })),
     [count],
   )
+
+  const [isMounted, setIsMounted] = useState(false)
+  
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) return null
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">

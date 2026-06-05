@@ -1,8 +1,17 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+"use client"
 
-const AuthContext = createContext(null);
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-export const AuthProvider = ({ children }) => {
+interface AuthContextType {
+  admin: any;
+  adminLogin: (email: string, pass: string) => Promise<any>;
+  adminLogout: () => Promise<void>;
+  isAdmin: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [admin, setAdmin] = useState(() => {
     try {
       const saved = sessionStorage.getItem('hp-admin');
@@ -10,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     } catch { return null; }
   });
 
-  const adminLogin = useCallback(async (email, password) => {
+  const adminLogin = useCallback(async (email: string, password: string) => {
     // Dynamically import supabase only when needed
     const { default: supabase } = await import('../services/supabase');
     if (!supabase) throw new Error('Supabase not configured. Please add .env file.');

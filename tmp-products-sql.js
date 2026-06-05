@@ -402,4 +402,4 @@ const productsList = [
   }
 ];
 
-export const PRODUCTS = productsList;
+module.exports = productsList;

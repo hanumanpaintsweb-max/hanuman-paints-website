@@ -1,12 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { AnimatePresence, motion } from "motion/react"
-import { Filter, Search, SlidersHorizontal, X } from "lucide-react"
+import { Filter, Search, SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/site/product-card"
-import { PRODUCTS } from "@/data/products"
+import { getProducts } from "@/services/productService"
 import { inr } from "@/lib/format"
 
 const sorts = [
@@ -37,12 +37,28 @@ export function ProductsBrowser() {
   const [maxPrice, setMaxPrice] = useState(30000)
   const [sort, setSort] = useState("popular")
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getProducts()
+        setProducts(data || [])
+      } catch (err) {
+        console.error("Failed to load products", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   const toggleCat = (id: string) =>
     setActiveCats((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
 
   const filtered = useMemo(() => {
-    let list = PRODUCTS.filter((p: any) => {
+    let list = products.filter((p: any) => {
       if (activeCats.length && !activeCats.includes(p.categoryId)) return false
       const price = p.sizes[0]?.discounted || 0
       if (price > maxPrice) return false
@@ -57,7 +73,7 @@ export function ProductsBrowser() {
       return (b.popular ? 1 : 0) - (a.popular ? 1 : 0)
     })
     return list
-  }, [activeCats, maxPrice, query, sort])
+  }, [activeCats, maxPrice, query, sort, products])
 
   const Filters = (
     <div className="flex flex-col gap-6">
@@ -171,17 +187,26 @@ export function ProductsBrowser() {
         </motion.aside>
 
         <div className="flex-1">
-          <motion.div layout className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            <AnimatePresence mode="popLayout">
-              {filtered.map((p, i) => (
-                <ProductCard key={p.id} product={p} index={i} />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-          {filtered.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border py-20 text-center text-muted-foreground">
-              No products match your filters.
+          {loading ? (
+            <div className="flex h-64 flex-col items-center justify-center gap-4 text-muted-foreground">
+              <Loader2 className="size-8 animate-spin text-primary" />
+              <p>Loading products from Supabase...</p>
             </div>
+          ) : (
+            <>
+              <motion.div layout className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <AnimatePresence mode="popLayout">
+                  {filtered.map((p, i) => (
+                    <ProductCard key={p.id} product={p} index={i} />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+              {filtered.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-border py-20 text-center text-muted-foreground">
+                  No products match your filters.
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

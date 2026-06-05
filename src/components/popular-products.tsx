@@ -3,10 +3,25 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/site/product-card"
-import { products } from "@/lib/data"
+import { useEffect, useState } from "react"
+import { getProducts } from "@/services/productService"
 
 export function PopularProducts() {
-  const featured = products.slice(0, 4)
+  const [featured, setFeatured] = useState<any[]>([])
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getProducts()
+        if (data) {
+          const popularList = data.filter((p: any) => p.popular).slice(0, 4)
+          setFeatured(popularList.length ? popularList : data.slice(0, 4))
+        }
+      } catch (err) {}
+    }
+    load()
+  }, [])
+
   return (
     <section id="products" className="bg-muted/40 py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">

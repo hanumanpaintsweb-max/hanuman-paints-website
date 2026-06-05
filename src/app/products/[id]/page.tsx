@@ -1,25 +1,39 @@
 import { SiteShell } from "@/components/site/site-shell"
 import { ProductDetail } from "@/components/site/product-detail"
-import { PRODUCTS } from "@/data/products"
+import { getProducts, getProductById } from "@/services/productService"
 import { notFound } from "next/navigation"
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({
-    id: p.id.toString(),
-  }))
-}
-
-export function generateMetadata({ params }: { params: { id: string } }) {
-  const product = PRODUCTS.find((p) => p.id.toString() === params.id)
-  if (!product) return { title: "Not Found" }
-  return {
-    title: `${product.name} | Hanuman Paints`,
-    description: product.description,
+export async function generateStaticParams() {
+  try {
+    const products = await getProducts()
+    return products.map((p: any) => ({
+      id: p.id.toString(),
+    }))
+  } catch (e) {
+    return []
   }
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
-  const product = PRODUCTS.find((p) => p.id.toString() === params.id)
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  try {
+    const product = await getProductById(params.id)
+    if (!product) return { title: "Not Found" }
+    return {
+      title: `${product.name} | Hanuman Paints`,
+      description: product.description,
+    }
+  } catch (e) {
+    return { title: "Not Found" }
+  }
+}
+
+export default async function ProductPage({ params }: { params: { id: string } }) {
+  let product = null
+  try {
+    product = await getProductById(params.id)
+  } catch (e) {
+    // ignore
+  }
   
   if (!product) {
     notFound()
