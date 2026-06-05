@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { Toaster } from 'sonner'
 import { StoreProvider } from '@/lib/store'
 import { CartProvider } from '@/context/CartContext'
 import { AuthProvider } from '@/context/AuthContext'
@@ -50,6 +51,7 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <StoreProvider>{children}</StoreProvider>
+            <Toaster position="top-right" richColors />
           </CartProvider>
         </AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
