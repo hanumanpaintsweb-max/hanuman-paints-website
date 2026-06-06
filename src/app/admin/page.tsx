@@ -107,6 +107,34 @@ export default function AdminOrdersPage() {
       setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updateData } : o))
       
       const order = orders.find(o => o.id === id)
+
+      // Auto deduct stock on Delivered
+      if (order && newStatus === "Delivered") {
+        for (const item of order.items || []) {
+          const productId = item.id || item.productId;
+          if (!productId) continue;
+          
+          const { data: stockData } = await supabase
+            .from('stock')
+            .select('current_stock, id')
+            .eq('product_id', productId)
+            .single()
+          
+          if (stockData) {
+            const newStock = Math.max(0, stockData.current_stock - (item.quantity || item.qty || 1))
+            await supabase.from('stock').update({ 
+              current_stock: newStock, updated_at: new Date().toISOString()
+            }).eq('id', stockData.id)
+            
+            await supabase.from('stock_history').insert({
+              product_id: productId, product_name: item.name,
+              old_stock: stockData.current_stock, new_stock: newStock,
+              changed_by: 'orders-auto', created_at: new Date().toISOString()
+            })
+          }
+        }
+      }
+
       if (order && ["Accepted", "Out for Delivery", "Delivered", "Cancelled"].includes(newStatus)) {
         await sendOrderStatusWhatsApp(order.order_id, newStatus, order.customer_phone, order.customer_name)
         toast.success("Customer notified via WhatsApp")
@@ -137,7 +165,29 @@ export default function AdminOrdersPage() {
       if (["Accepted", "Out for Delivery", "Delivered"].includes(newStatus)) {
         ids.forEach(async (id) => {
           const order = orders.find(o => o.id === id)
-          if (order) await sendOrderStatusWhatsApp(order.order_id, newStatus, order.customer_phone, order.customer_name)
+          if (order) {
+            await sendOrderStatusWhatsApp(order.order_id, newStatus, order.customer_phone, order.customer_name)
+            
+            // Auto deduct stock on Delivered
+            if (newStatus === "Delivered") {
+              for (const item of order.items || []) {
+                const productId = item.id || item.productId;
+                if (!productId) continue;
+                
+                const { data: stockData } = await supabase.from('stock').select('current_stock, id').eq('product_id', productId).single()
+                
+                if (stockData) {
+                  const newStock = Math.max(0, stockData.current_stock - (item.quantity || item.qty || 1))
+                  await supabase.from('stock').update({ current_stock: newStock, updated_at: new Date().toISOString() }).eq('id', stockData.id)
+                  await supabase.from('stock_history').insert({
+                    product_id: productId, product_name: item.name,
+                    old_stock: stockData.current_stock, new_stock: newStock,
+                    changed_by: 'orders-auto-bulk', created_at: new Date().toISOString()
+                  })
+                }
+              }
+            }
+          }
         })
       }
       setSelectedIds(new Set())

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react"
 import { 
   Plus, Trash2, Printer, Download, MessageCircle, FileText, 
   CheckCircle2, User, Phone, Check, Receipt, History, 
-  Search, FileSpreadsheet, Eye, ShoppingBag, MapPin, Building
+  Search, FileSpreadsheet, Eye, ShoppingBag, MapPin, Building, X
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/services/supabase"
@@ -49,6 +49,7 @@ export default function BillingPage() {
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
   const [historyFilter, setHistoryFilter] = useState("All")
+  const [selectedHistoryBill, setSelectedHistoryBill] = useState<any | null>(null)
 
   useEffect(() => {
     fetchInitialData()
@@ -209,15 +210,52 @@ export default function BillingPage() {
       const newBill = data[0]
       setSavedBillData(newBill)
       setBills([newBill, ...bills])
+
+      // Har item ke liye stock minus karo
+      for (const item of items) {
+        if (!item.productId) continue
+        // Current stock fetch karo
+        const { data: stockData } = await supabase
+          .from('stock')
+          .select('current_stock, id')
+          .eq('product_id', item.productId)
+          .single()
+        
+        if (stockData) {
+          const newStock = Math.max(0, stockData.current_stock - item.qty)
+          
+          // Stock update karo
+          await supabase
+            .from('stock')
+            .update({ 
+              current_stock: newStock,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', stockData.id)
+          
+          // Stock history mein log karo
+          await supabase
+            .from('stock_history')
+            .insert({
+              product_id: item.productId,
+              product_name: item.name,
+              old_stock: stockData.current_stock,
+              new_stock: newStock,
+              changed_by: 'billing-auto',
+              created_at: new Date().toISOString()
+            })
+        }
+      }
     }
   }
 
-  const handlePDF = () => {
-    const printArea = document.getElementById('bill-print-area')
+  const handlePDF = (targetId: string = 'bill-print-area', providedBillData?: any) => {
+    const printArea = document.getElementById(targetId)
     if (!printArea) return
     
-    const billNumber = savedBillData?.bill_number || billNoStr
-    const cName = customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : ''
+    const bd = providedBillData || savedBillData
+    const billNumber = bd?.bill_number || billNoStr
+    const cName = bd?.customer_name ? `-${bd.customer_name.replace(/[^a-zA-Z0-9]/g, '')}` : (customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : '')
     const fileName = `${billNumber}${cName}`
 
     const printWindow = window.open('', '_blank')
@@ -312,20 +350,7 @@ export default function BillingPage() {
 
   // View Bill from History
   const viewHistoricalBill = (bill: any) => {
-    setBillNoStr(bill.bill_number)
-    setCustomerName(bill.customer_name)
-    setCustomerPhone(bill.customer_phone)
-    setCustomerAddress(bill.customer_address || "")
-    setCustomerGstin(bill.customer_gstin || "")
-    setItems(bill.items)
-    setPaymentStatus(bill.payment_status)
-    setPaymentMethod(bill.payment_method)
-    // If we want to restore historical discount, we would need to save it in bill object.
-    // For now, calculating backwards or setting to default 5 is fine.
-    setGlobalDiscount(5)
-    setLinkedOrderId(bill.order_id)
-    setSavedBillData(bill)
-    setActiveTab("New Bill")
+    setSelectedHistoryBill(bill)
   }
 
   // Filter Bills
@@ -533,7 +558,7 @@ export default function BillingPage() {
             <div className="xl:col-span-5 space-y-4">
               <div className="grid grid-cols-2 gap-2">
                 <Button onClick={handleSaveBill} disabled={isSaving || !!savedBillData} className="rounded-xl w-full">{isSaving ? 'Saving...' : 'Save Bill'}</Button>
-                <Button onClick={handlePDF} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
+                <Button onClick={() => handlePDF()} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
                 <Button onClick={() => window.print()} disabled={!savedBillData} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
                 <Button onClick={shareWhatsApp} disabled={!savedBillData} className="rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share</Button>
               </div>
@@ -714,6 +739,146 @@ export default function BillingPage() {
               </table>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bill History Modal */}
+      <AnimatePresence>
+        {selectedHistoryBill && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedHistoryBill(null)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-card rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-border/60"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-border/60 flex justify-between items-center bg-muted/20">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <FileText className="size-6 text-primary" /> Bill Preview
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    #{selectedHistoryBill.bill_number} • {new Date(selectedHistoryBill.created_at).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => handlePDF('history-bill-print-area', selectedHistoryBill)} variant="outline" className="rounded-xl bg-white text-black"><Download className="size-4 mr-2"/> PDF</Button>
+                  <Button onClick={() => {
+                    const pa = document.getElementById('history-bill-print-area')
+                    if (!pa) return
+                    const printWindow = window.open('', '_blank')
+                    if (!printWindow) return
+                    printWindow.document.write(`
+                      <html><head><title>Print ${selectedHistoryBill.bill_number}</title>
+                      <script src="https://cdn.tailwindcss.com"></script></head>
+                      <body class="bg-white"><div style="width: 210mm; margin: 0 auto; padding: 20px;">${pa.innerHTML}</div>
+                      <script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 800) }</script></body></html>
+                    `)
+                    printWindow.document.close()
+                  }} variant="outline" className="rounded-xl"><Printer className="size-4 mr-2"/> Print</Button>
+                  <button onClick={() => setSelectedHistoryBill(null)} className="p-2 bg-muted hover:bg-muted/80 rounded-full transition-colors ml-2"><X className="size-5" /></button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 bg-muted/10 flex justify-center">
+                <div id="history-bill-print-area" className="bg-white p-8 w-[210mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0">
+                  {/* PDF Header */}
+                  <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                    <div>
+                      <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
+                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Dealer</p>
+                      <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
+                      <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p>
+                      <p className="text-xs text-gray-500">Ph: {settings.shop_phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                      <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
+                      <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
+                    </div>
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                    <div className="flex justify-between">
+                      <div>
+                        <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
+                        <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
+                        {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
+                      </div>
+                      {selectedHistoryBill.customer_gstin && (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 font-bold uppercase">Customer GSTIN</div>
+                          <div className="text-sm font-mono">{selectedHistoryBill.customer_gstin}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Items Table */}
+                  <table className="w-full mb-6 border-collapse">
+                    <thead>
+                      <tr className="bg-gray-800 text-white text-xs uppercase">
+                        <th className="py-2 px-2 text-left">S.No</th>
+                        <th className="py-2 px-2 text-left">Item Description</th>
+                        <th className="py-2 px-2 text-center">Qty</th>
+                        <th className="py-2 px-2 text-right">MRP</th>
+                        <th className="py-2 px-2 text-right">Taxable</th>
+                        <th className="py-2 px-2 text-right">GST%</th>
+                        <th className="py-2 px-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm border-b-2 border-gray-800">
+                      {selectedHistoryBill.items?.map((item: any, i: number) => {
+                        const taxable = item.mrp * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
+                        const gst = taxable * (item.taxRate/100);
+                        return (
+                          <tr key={i} className="border-b border-gray-200">
+                            <td className="py-3 px-2 text-gray-500">{i+1}</td>
+                            <td className="py-3 px-2"><strong>{item.name}</strong><br/><span className="text-xs text-gray-500">{item.size}</span></td>
+                            <td className="py-3 px-2 text-center">{item.qty}</td>
+                            <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                            <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
+                            <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                            <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Totals */}
+                  <div className="flex justify-between items-end">
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p><strong>Terms & Conditions:</strong></p>
+                      <p>1. Goods once sold cannot be returned or exchanged.</p>
+                      <p>2. Subject to Muzaffarpur jurisdiction only.</p>
+                      <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
+                    </div>
+                    <div className="w-64">
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
+                      {selectedHistoryBill.discount_amount > 0 && (
+                        <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
+                      )}
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                    <div>Customer Signature</div>
+                    <div>Authorized Signatory</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
