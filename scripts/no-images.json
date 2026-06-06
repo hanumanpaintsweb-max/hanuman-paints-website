@@ -1,0 +1,423 @@
+[
+  {
+    "slug": "dulux-acrylic-putty",
+    "name": "Dulux Acrylic Putty",
+    "category": "Putty",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/15/38/5d/b8/packshot_large.jpg",
+    "description": "Dulux Acrylic Wall putty is formulated for filling cracks, joints, leveling uneven and rough masonry and plasterwork up to 3-4mm. It is also used for filling defective cement surfaces to give a smooth and excellent finish.",
+    "features": [
+      "Easy to spread",
+      "Superior Whiteness",
+      "Excellent filling property"
+    ],
+    "coverage": "1.85 sqm/Kg"
+  },
+  {
+    "slug": "dulux-aquatech-exterior-pre-treatment-coat",
+    "name": "Dulux Aquatech Exterior Pre Treatment Coat",
+    "category": "Exterior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/cb/f4/58/19/packshot_large.png",
+    "description": "",
+    "features": [
+      "Surface Prep Wash",
+      "FungiClean Technology",
+      "Anti algal & anti fungal"
+    ],
+    "coverage": "112 sqm/L"
+  },
+  {
+    "slug": "dulux-aquatech-exterior-pu-coat",
+    "name": "Dulux Aquatech Exterior PU Coat",
+    "category": "Exterior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/0e/97/6d/82/packshot_large.png",
+    "description": "Dulux Aquatech Exterior PU coat is a superior waterproofing technology with hybrid Acrylic-Polyurethane technology and is suitable for both horizontal and vertical wall application. Its thick, elastomeric super protective film covers cracks of upto 4mm and the strong network of reinforced polymers makes the coating extremely tough and dirt & water resistant.",
+    "features": [
+      "Superior Waterproofing Performance of upto 15 years",
+      "Upto 4mm crackbridging",
+      "Surface Temperature reduction of upto 12 deg C",
+      "Multi-surface Adhesion"
+    ],
+    "coverage": "– upto 10 sqft/L for Horizontal Surfaces in 3 coats\n– upto 40 sqft/L for Vertical Surfaces in 1 coat"
+  },
+  {
+    "slug": "dulux-aquatech-interior-exterior-crackfiller-5mm-10mm-20mm",
+    "name": "Dulux Aquatech Interior & Exterior Crackfiller (5mm/10mm/20mm)",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/ed/22/c8/ae/packshot_large.png",
+    "description": "",
+    "features": [
+      "Fills cracks of upto 20mm",
+      "Shrinkfree- fills in just one application",
+      "Quick dry & tough- Accepts nails and screws in 4-6 hrs"
+    ],
+    "coverage": "30-75 rft per Kg. (depending on Crack Filler Type)"
+  },
+  {
+    "slug": "dulux-aquatech-interior-waterproof-basecoat",
+    "name": "Dulux Aquatech Interior Waterproof Basecoat",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/f8/a8/af/19/packshot_large.png",
+    "description": "Dulux Aquatech Interior Waterproof basecoat is an easy to apply, primer-upgrade waterproofing undercoat that is made up of micronized pigments and fillers forming an extremely tough film that protects the top coat layer from mild dampness. It offers 10X better water resistance and 2X higher stretchability against ordinary primers, thus providing better finish and performance to topcoats.",
+    "features": [
+      "10X Better Waterproofing than Primer",
+      "2X Higher Stretchability than Primer",
+      "Improves Topcoat Finish & Performance"
+    ],
+    "coverage": "180-200sqft/L/coat"
+  },
+  {
+    "slug": "dulux-aquatech-waterblock-2k",
+    "name": "Dulux Aquatech Waterblock 2K",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/bd/c1/76/5e/packshot_large.png",
+    "description": "Aquatech Waterblock 2k is a specialist 2 component product that provides protection against water penetration for interior walls, bathrooms and kitchens. Its unique Hydro breathe technology prevents swelling, blistering and chalking of paint. The breathable coating prevents the top paint layer from peeling off. The coating is suitable to be applied on the interior surface of swimming pools before applying tiling or topcoat. The product can be applied in water tanks as well.",
+    "features": [
+      "2K Cementitious Waterproofing coating",
+      "Excellent anti-alkali property",
+      "Suitable for waterproofing of sunken areas",
+      "Superior anti-carbonation property"
+    ],
+    "coverage": "10-15 sqft/kg/2 coats"
+  },
+  {
+    "slug": "dulux-aquatech-waterproof-putty",
+    "name": "Dulux Aquatech Waterproof Putty",
+    "category": "Waterproofing",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/77/8e/83/96/packshot_large.jpg",
+    "description": "Dulux Aquatech Waterproof Putty is a premium quality powder putty that is specially designed with silicone and anti-efflorescence additives to give unique waterproofing properties and efflorescence resistance for a smooth finish and extended life to the top coats.",
+    "features": [
+      "Efflorescence resistance",
+      "High water resistance",
+      "High adhesive strength"
+    ],
+    "coverage": "0.4 sqm/Kg"
+  },
+  {
+    "slug": "dulux-aquatech-waterproof-repair-polymer",
+    "name": "Dulux Aquatech Waterproof Repair Polymer",
+    "category": "Waterproofing",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/61/84/38/97/packshot_large.png",
+    "description": "Dulux Aquatech Waterproof Repair Polymer (WRP) is a ready to use multipurpose latex-based bonding additive for use in mortars, bond coats, and waterproofing primers. It is used for repairing damaged concrete, columns, beams, and chajjas. It is also used for waterproofing of toilets, balconies, and sunken areas.",
+    "features": [
+      "High adhesive strength",
+      "High water resistance",
+      "Improves hardness & abrasion resistance",
+      "High compressive strength"
+    ],
+    "coverage": "Not Applicable"
+  },
+  {
+    "slug": "dulux-polyputty",
+    "name": "Dulux Polyputty",
+    "category": "Putty",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/36/41/3d/80/packshot_large.png",
+    "description": "",
+    "features": [
+      "Polymer Based"
+    ],
+    "coverage": "0.27 - 1.85 sqm/Kg"
+  },
+  {
+    "slug": "dulux-promise-exterior-primer",
+    "name": "Dulux Promise Exterior Primer",
+    "category": "Exterior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/fa/fd/66/f1/packshot_large.png",
+    "description": "Dulux Promise Exterior Primer is a good quality, water-based primer for external surfaces. Its unique Anti-Peel formulation ensures superior adhesion for the paint film, thereby resisting peeling or flaking of the topcoat.",
+    "features": [
+      "Better Coverage",
+      "Anti-Chalking",
+      "Fast Drying",
+      "Anti-Peel"
+    ],
+    "coverage": "9.2-12 sqm/L"
+  },
+  {
+    "slug": "dulux-promise-interior-primer",
+    "name": "Dulux Promise Interior Primer",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/8e/5f/70/64/packshot_large.png",
+    "description": "Dulux Promise Interior Primer is a good quality primer having good adhesion to interior masonry surfaces, both new and previously decorated such as brickwork, plaster, cement, fibre boards, etc. It is specially formulated to give good filling property. Correct application of primer assures better quality and durability of the finished coat.",
+    "features": [
+      "Superior Adhesion",
+      "Superior Whiteness",
+      "Anti-Chalking"
+    ],
+    "coverage": "18.5 - 23.2 sqm/L"
+  },
+  {
+    "slug": "dulux-quick-drying-primer",
+    "name": "Dulux Quick Drying Primer",
+    "category": "Primer",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/9d/48/7e/46/packshot_large.png",
+    "description": "Dulux Quick Drying Primer is a premium quality water-based primer for application on wood and metal surfaces. It is ec0-friendly water-based undercoat with low odour and low voc. Unlike conventional solvent based primers it dries quickly and therefore the topcoat ca n be applied on the same day.",
+    "features": [
+      "Water-based Primer for Wood & Metal",
+      "Superior Corrosion Resistance",
+      "Quick drying"
+    ],
+    "coverage": "10.21 - 11.14 sqm/L"
+  },
+  {
+    "slug": "dulux-red-oxide-metal-primer",
+    "name": "Dulux Red-oxide Metal Primer",
+    "category": "Primer",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/16/4a/45/e4/packshot_large.png",
+    "description": "This is a solvent based economical primer anti-corrosive protective primer for interior and exterior ferrous and non-ferrous metal work, including steel work, new, weathered and pre-treated zinc and galvanized iron. It may also be applied over pre-treated aluminium.",
+    "features": [
+      "Stronger Adhesion",
+      "Effective Corrosion Protection"
+    ],
+    "coverage": "8.8 - 9.2 sqm/L"
+  },
+  {
+    "slug": "dulux-solvent-based-cement-primer",
+    "name": "Dulux Solvent-based Cement Primer",
+    "category": "Primer",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/ad/94/29/10/packshot_large.png",
+    "description": "",
+    "features": [
+      "Superior Adhesion",
+      "Better Top Coat Coverage",
+      "Better Quality Finish",
+      "Better Top Coat Durability"
+    ],
+    "coverage": "9.2-11.1 sqm/L"
+  },
+  {
+    "slug": "dulux-water-based-cement-primer",
+    "name": "Dulux Water-based Cement Primer",
+    "category": "Primer",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/aa/55/97/de/packshot_large.png",
+    "description": "Dulux Water Based Cement Primer is a water based primer, suitable for use on plastered masonry, POP, puttied, limed or pre-painted wall surfaces.",
+    "features": [
+      "Superior Adhesion",
+      "Alkali Resistance",
+      "Superior Whiteness",
+      "Better Top Coat Coverage"
+    ],
+    "coverage": "18.5 - 23.2 sqm/L"
+  },
+  {
+    "slug": "dulux-zinc-yellow-metal-primer",
+    "name": "Dulux Zinc Yellow Metal Primer",
+    "category": "Primer",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/76/19/02/9c/packshot_large.png",
+    "description": "Dulux Zinc Yellow Metal Primer is a solvent based protective primer suitable for interior and exterior ferrous and surface treated non-ferrous metal work. It gives effective protection against Corrosion to the surface and has strong adhesion properties. Appropriate application of the primer ensures better protection to the metal surface as well as higher durability of finish coat.",
+    "features": [
+      "Zinc-Phosphate Based",
+      "Stronger Adhesion",
+      "Superior Corrosion Resistance"
+    ],
+    "coverage": "8.3 - 10.2 sqm/L"
+  },
+  {
+    "slug": "sadolin-exterior-clear-2k-pu-gloss",
+    "name": "Sadolin Exterior Clear 2K PU Gloss",
+    "category": "Exterior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/b5/21/fb/2d/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces with exterior Durability.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Wood crack protection",
+      "All Weather Durable & UV resistant"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-exterior-clear-2k-pu-matt",
+    "name": "Sadolin Exterior Clear 2K PU Matt",
+    "category": "Exterior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/40/da/bf/e2/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces with exterior Durability.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Wood crack protection",
+      "All Weather Durable & UV resistant"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-exterior-clear-2k-pu-sealer",
+    "name": "Sadolin Exterior Clear 2K PU Sealer",
+    "category": "Exterior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/ee/ab/af/4a/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces with exterior Durability.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Wood crack protection",
+      "All Weather Durable & UV resistant"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-1k-pu-gloss",
+    "name": "Sadolin Interior Clear 1K PU Gloss",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/d8/7c/50/22/packshot_large.png",
+    "description": "Sadolin Alkyd Shine is a single pack polyurethane modified, clear & brushable wood finish for interior furniture, door & windows. It enhances the natural look of the wood and good resistance to normal wear & tear.",
+    "features": [
+      "Good gloss retention"
+    ],
+    "coverage": "80-90sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-2k-pu-gloss",
+    "name": "Sadolin Interior Clear 2K PU Gloss",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/62/ca/f9/e5/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Excellent Wood crack protection",
+      "Excellent Water Resistance"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-2k-pu-matt",
+    "name": "Sadolin Interior Clear 2K PU Matt",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/00/c0/a9/32/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Excellent Wood crack protection",
+      "Excellent Water Resistance"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-2k-pu-sealer",
+    "name": "Sadolin Interior Clear 2K PU Sealer",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/19/14/82/a9/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Excellent Wood crack protection",
+      "Excellent Water Resistance"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-melamine-gloss",
+    "name": "Sadolin Interior Clear Melamine Gloss",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/6f/91/e1/10/packshot_large.png",
+    "description": "Sadolin Melamine is a hard wearing, transparent, 2 component premium wood finish for all kinds of wood which offers superior stain, scratches & water resistance.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Non-yellowing",
+      "Long lasting beauty"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-melamine-matt",
+    "name": "Sadolin Interior Clear Melamine Matt",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/e4/d0/32/8b/packshot_large.png",
+    "description": "Sadolin Melamine is a hard wearing, transparent, 2 component premium wood finish for all kinds of wood which offers superior stain, scratches & water resistance.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Non-yellowing",
+      "Long lasting beauty"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-interior-clear-melamine-sealer",
+    "name": "Sadolin Interior Clear Melamine Sealer",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/50/12/42/22/packshot_large.jpg",
+    "description": "Sadolin Melamine is a hard wearing, transparent, 2 component premium wood finish for all kinds of wood which offers superior stain, scratches & water resistance.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Non-yellowing",
+      "Long lasting beauty"
+    ],
+    "coverage": "70-80 sqm/L"
+  },
+  {
+    "slug": "sadolin-opaque-2k-pu-gloss",
+    "name": "Sadolin Opaque  2K PU Gloss",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/8e/8e/fa/05/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. This product is avaialable in both Black and White variant.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Wood crack protection",
+      "All Weather Durable & UV resistant"
+    ],
+    "coverage": "80-90sqm/L"
+  },
+  {
+    "slug": "sadolin-opaque-2k-pu-matt",
+    "name": "Sadolin Opaque  2K PU Matt",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/06/a8/8d/1d/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. This product is avaialable in both Black and White variant.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Wood crack protection",
+      "All Weather Durable & UV resistant"
+    ],
+    "coverage": "80-90sqm/L"
+  },
+  {
+    "slug": "sadolin-opaque-2k-pu-primer-surfacer",
+    "name": "Sadolin Opaque 2K PU Primer Surfacer",
+    "category": "Primer",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/9e/57/06/35/packshot_large.png",
+    "description": "Sadolin PU is a high perfromance 2 componenet polyurethane wood finish offering upto 5X more protection, due to its 'Dual-Shield Technology'. It offers Stain, Scratch & Water Resistance to the Wooden Surfaces.",
+    "features": [
+      "Excellent scratch & stain resistance",
+      "Wood crack protection",
+      "All Weather Durable & UV resistant"
+    ],
+    "coverage": "80-90sqm/L"
+  },
+  {
+    "slug": "velvet-touch-diamond-glo",
+    "name": "Velvet Touch Diamond Glo",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/af/ed/63/a9/packshot_large.png",
+    "description": "Dulux Velvet Touch Diamond Glo is a super premium quality, highly durable and washable emulsion paint with a best in class high sheen luxury finish. It is the only super premium interior emulsion that brings alive the smooth touch of Velvet and glo of Diamonds on the walls. Uniquely formulated with Surface slip technology, Diamond Glo has the Best in Class Stain and Water Repellence- better than any other ordinary emulsion. Now with Tru Color (Dura Color Technology), Velvet Touch is made with the finest ingredients and color pigments to deliver intense rich colors and ultra-smooth finish on your walls.",
+    "features": [
+      "High sheen finish",
+      "Enhanced Smoothness",
+      "Best in class stain and water repellence",
+      "Surface Slip Technology",
+      "High durability"
+    ],
+    "coverage": "10.21 - 13.93 sqm/L"
+  },
+  {
+    "slug": "velvet-touch-pearl-glo",
+    "name": "Velvet Touch Pearl Glo",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/d0/3a/1c/5d/packshot_large.png",
+    "description": "Dulux Velvet Touch Pearl Glo is a premium quality, highly durable and washable emulsion paint with a best mid sheen luxury finish. It is the only super premium interior emulsion that brings alive the smooth touch of velvet and soft glo of pearls on the walls. Now with Tru Color (Dura Color Technology), Velvet Touch is made with the finest ingredients and color pigments to deliver intense rich colors and ultra-smooth finish on your walls.",
+    "features": [
+      "Mid sheen finish",
+      "Best-in-Class Smoothness",
+      "Long lasting pearl like finish",
+      "Protection from Finger Marking"
+    ],
+    "coverage": "11.14 - 14.86 sqm/L"
+  },
+  {
+    "slug": "velvet-touch-platinum-glo",
+    "name": "Velvet Touch Platinum Glo",
+    "category": "Interior",
+    "imageUrl": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/f1/e6/1b/97/packshot_large.png",
+    "description": "Dulux Velvet Touch Platinum Glo is an uber premium paint with subtle platinum like glow. Moreover its superior dust & dirt resistance coupled with Class A washability makes your walls timelessly beautiful. Now with Tru Color (Dura Color Technology), Velvet Touch is made with the finest ingredients and color pigments to deliver intense rich colors and ultra-smooth finish on your walls.",
+    "features": [
+      "Rich Matt finish",
+      "High durability",
+      "Best in class washability",
+      "Dirt and Dust Resistance"
+    ],
+    "coverage": "12.07 - 13.93 sqm/L"
+  }
+]
