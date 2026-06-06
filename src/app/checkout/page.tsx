@@ -11,8 +11,27 @@ import { inr } from "@/lib/format"
 import { supabase } from "@/services/supabase"
 import { SiteShell } from "@/components/site/site-shell"
 import { Button } from "@/components/ui/button"
+import { placeCheckoutOrder, type CheckoutItem } from "@/app/actions/orders"
 
 const INITIAL = { name: "", phone: "", address: "", pincode: "" }
+const NAME_PATTERN = /^[A-Za-z .'-]{2,100}$/
+const PHONE_PATTERN = /^[6-9]\d{9}$/
+const PINCODE_PATTERN = /^\d{6}$/
+
+type CouponData = {
+  id: string
+  code: string
+  coupon_type: "percentage" | "first_order" | "free_delivery" | "fixed" | string
+  discount_value: number
+  max_discount_cap: number | null
+  min_order_amount: number | null
+  usage_limit: number | null
+  used_count: number | null
+  per_customer_limit: number | null
+  is_active: boolean
+  valid_from: string | null
+  valid_until: string | null
+}
 
 export default function CheckoutPage() {
   const { items, subtotal, discountAmount, total, clearCart, DISCOUNT_PERCENT } = useCart()
@@ -26,7 +45,7 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState("")
   const [couponLoading, setCouponLoading] = useState(false)
   const [couponApplied, setCouponApplied] = useState(false)
-  const [couponData, setCouponData] = useState<any>(null)
+  const [couponData, setCouponData] = useState<CouponData | null>(null)
   const [couponError, setCouponError] = useState("")
   const [animating, setAnimating] = useState(false)
 
@@ -76,7 +95,7 @@ export default function CheckoutPage() {
     setCouponLoading(true)
     setCouponError("")
 
-    const { data, error } = await supabase.from("coupons").select("*").eq("code", code).single()
+    const { data, error } = await supabase.from("coupons").select("*").eq("code", code).single<CouponData>()
     setCouponLoading(false)
 
     if (error || !data) {
@@ -126,16 +145,19 @@ export default function CheckoutPage() {
   const validate = () => {
     const e: Record<string, string> = {}
     
-    const sanitizedName = form.name.replace(/[^a-zA-Z\s]/g, '').trim();
-    if (!sanitizedName || sanitizedName.length < 2) e.name = "Valid name required (letters only)"
+    const sanitizedName = form.name.replace(/\s+/g, " ").trim()
+    if (!NAME_PATTERN.test(sanitizedName)) {
+      e.name = "Name must be 2-100 characters and use letters, spaces, apostrophe, dot, or dash only"
+    }
     
-    const sanitizedPhone = form.phone.replace(/\D/g, '');
-    if (!/^[6-9]\d{9}$/.test(sanitizedPhone)) e.phone = "Valid 10-digit number required"
+    const sanitizedPhone = form.phone.replace(/\D/g, "")
+    if (!PHONE_PATTERN.test(sanitizedPhone)) e.phone = "Valid 10-digit number starting with 6-9 required"
     
-    if (!form.address.trim()) e.address = "Address required"
+    const sanitizedAddress = form.address.replace(/\s+/g, " ").trim()
+    if (!sanitizedAddress || sanitizedAddress.length > 500) e.address = "Address is required and must be under 500 characters"
     
-    const sanitizedPincode = form.pincode.replace(/\D/g, '');
-    if (!/^\d{6}$/.test(sanitizedPincode)) e.pincode = "Valid 6-digit pincode required"
+    const sanitizedPincode = form.pincode.replace(/\D/g, "")
+    if (!PINCODE_PATTERN.test(sanitizedPincode)) e.pincode = "Valid 6-digit pincode required"
     
     return e
   }
@@ -146,7 +168,9 @@ export default function CheckoutPage() {
     if (e.target.name === 'phone' || e.target.name === 'pincode') {
       value = value.replace(/\D/g, '');
     } else if (e.target.name === 'name') {
-      value = value.replace(/[^a-zA-Z\s]/g, '');
+      value = value.replace(/[^A-Za-z .'-]/g, '').slice(0, 100);
+    } else if (e.target.name === 'address') {
+      value = value.slice(0, 500);
     }
 
     setForm((f) => ({ ...f, [e.target.name]: value }))
@@ -161,80 +185,33 @@ export default function CheckoutPage() {
     }
 
     setLoading(true)
-    const oid = "HP" + Date.now().toString().slice(-6)
 
-    const sanitizedName = form.name.replace(/[^a-zA-Z\s]/g, '').trim();
-    const sanitizedPhone = form.phone.replace(/\D/g, '');
-    const sanitizedPincode = form.pincode.replace(/\D/g, '');
-    const sanitizedAddress = form.address.trim();
+    const result = await placeCheckoutOrder({
+      name: form.name,
+      phone: form.phone,
+      address: form.address,
+      pincode: form.pincode,
+      items: items as CheckoutItem[],
+      subtotal,
+      discountAmount,
+      total,
+      couponCode: couponApplied && couponData ? couponData.code : undefined,
+    })
 
-    // Validate per_customer_limit before placing order
-    if (couponApplied && couponData && couponData.per_customer_limit) {
-      const { count, error: countErr } = await supabase
-        .from("coupon_usage")
-        .select("*", { count: "exact", head: true })
-        .eq("coupon_id", couponData.id)
-        .eq("customer_phone", sanitizedPhone)
-      
-      if (countErr) {
-        alert("Coupon validation failed. Please try again.")
-        setLoading(false)
-        return
+    if (!result.success) {
+      if (result.field) {
+        setErrors((current) => ({ ...current, [result.field as string]: result.message }))
       }
-      
-      if (count !== null && count >= couponData.per_customer_limit) {
-        alert(`You have already used this coupon the maximum allowed times (${couponData.per_customer_limit}).`)
-        setLoading(false)
-        return
-      }
-    }
-
-    const { error } = await supabase.from("orders").insert([
-      {
-        order_id: oid,
-        customer_name: sanitizedName,
-        customer_phone: sanitizedPhone,
-        customer_address: sanitizedAddress,
-        customer_pincode: sanitizedPincode,
-        items: items,
-        subtotal: subtotal,
-        discount_amount: discountAmount + couponDiscountAmount,
-        total_amount: finalTotal,
-        status: "Order Received",
-        coupon_code: couponApplied ? couponData.code : null,
-        coupon_discount: couponDiscountAmount,
-      },
-    ])
-
-    if (error) {
-      alert("Failed to place order. Please try again.")
+      alert(result.message)
       setLoading(false)
       return
     }
 
-    if (couponApplied && couponData) {
-      await supabase
-        .from("coupons")
-        .update({ used_count: (couponData.used_count || 0) + 1 })
-        .eq("id", couponData.id)
-        
-      await supabase
-        .from("coupon_usage")
-        .insert([{
-          coupon_id: couponData.id,
-          coupon_code: couponData.code,
-          customer_phone: sanitizedPhone,
-          customer_name: sanitizedName,
-          order_id: oid,
-          discount_amount: couponDiscountAmount
-        }])
-    }
-
-    setOrderId(oid)
+    setOrderId(result.orderId)
     try {
       const recentOrders = JSON.parse(localStorage.getItem("hanuman_recent_orders") || "[]")
-      if (!recentOrders.includes(oid)) {
-        recentOrders.unshift(oid)
+      if (!recentOrders.includes(result.orderId)) {
+        recentOrders.unshift(result.orderId)
         localStorage.setItem("hanuman_recent_orders", JSON.stringify(recentOrders.slice(0, 10)))
       }
     } catch {

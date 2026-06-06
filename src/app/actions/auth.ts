@@ -2,16 +2,19 @@
 
 import { cookies } from "next/headers"
 import { supabase } from "@/services/supabase"
+import bcrypt from "bcryptjs"
 
 export async function loginUser(phone: string, name: string) {
   // Check if user exists
-  let { data: user, error } = await supabase
+  const { data: user, error } = await supabase
     .from("users")
     .select("*")
     .eq("phone", phone)
     .single()
+  
+  let finalUser = user
 
-  if (error || !user) {
+  if (error || !finalUser) {
     if (!name) {
       return { error: "Name is required for first-time login" }
     }
@@ -25,12 +28,12 @@ export async function loginUser(phone: string, name: string) {
     if (insertError || !newUser) {
       return { error: "Failed to create user account. Please try again." }
     }
-    user = newUser
+    finalUser = newUser
   }
 
   // Set secure cookie
   const cookieStore = await cookies()
-  cookieStore.set("hanuman_session", JSON.stringify({ id: user.id, phone: user.phone, name: user.name }), {
+  cookieStore.set("hanuman_session", JSON.stringify({ id: finalUser.id, phone: finalUser.phone, name: finalUser.name }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -38,7 +41,7 @@ export async function loginUser(phone: string, name: string) {
     maxAge: 60 * 60 * 24 * 30, // 30 days
   })
 
-  return { success: true, user }
+  return { success: true, user: finalUser }
 }
 
 export async function logoutUser() {
@@ -59,10 +62,11 @@ export async function getSession() {
   }
 }
 
-// Ensure bcryptjs is imported at top or required dynamically since this is a server action
-const bcrypt = require("bcryptjs")
+type AdminAuthResult = 
+  | { success: true; user: { email: string; id: string } }
+  | { success: false; message: string; locked?: boolean; lockedUntil?: string }
 
-export async function authenticateAdmin(email: string, password: string) {
+export async function authenticateAdmin(email: string, password: string): Promise<AdminAuthResult> {
   try {
     const cleanEmail = email.trim();
     const { data: user, error } = await supabase
@@ -91,7 +95,7 @@ export async function authenticateAdmin(email: string, password: string) {
 
     if (!isMatch) {
       const newAttempts = (user.failed_attempts || 0) + 1
-      let updates: any = { failed_attempts: newAttempts }
+      const updates: { failed_attempts: number; locked_until?: string } = { failed_attempts: newAttempts }
 
       if (newAttempts >= 5) {
         // Lock for 15 minutes
@@ -117,7 +121,8 @@ export async function authenticateAdmin(email: string, password: string) {
     }).eq("id", user.id)
 
     return { success: true, user: { email: user.email, id: user.id } }
-  } catch (error: any) {
-    return { success: false, message: error.message || "An error occurred during login" }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An error occurred during login"
+    return { success: false, message: errorMessage }
   }
 }

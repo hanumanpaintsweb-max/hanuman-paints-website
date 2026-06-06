@@ -19,9 +19,9 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
 
   // Raw Data
-  const [orders, setOrders] = useState<any[]>([])
-  const [bills, setBills] = useState<any[]>([])
-  const [settings, setSettings] = useState<any>({})
+  const [orders, setOrders] = useState<ReportOrder[]>([])
+  const [bills, setBills] = useState<ReportBill[]>([])
+  const [settings, setSettings] = useState<Record<string, string>>({})
 
   // Filters
   const todayStr = new Date().toISOString().split('T')[0]
@@ -40,8 +40,8 @@ export default function ReportsPage() {
     const { data: bData } = await supabase.from('bills').select('*').eq('is_deleted', false)
     const { data: sData } = await supabase.from('settings').select('*')
 
-    if (oData) setOrders(oData)
-    if (bData) setBills(bData)
+    if (oData) setOrders(oData as ReportOrder[])
+    if (bData) setBills(bData as ReportBill[])
     if (sData) {
       const sObj: any = {}
       sData.forEach(s => sObj[s.key] = s.value)

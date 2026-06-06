@@ -25,10 +25,38 @@ const INITIAL_FORM = {
   is_active: true,
 }
 
+type Coupon = {
+  id: string
+  code: string
+  coupon_type: string
+  discount_value: number
+  max_discount_cap: number | null
+  min_order_amount: number | null
+  usage_limit: number | null
+  used_count: number
+  per_customer_limit: number | null
+  valid_from: string | null
+  valid_until: string | null
+  description: string | null
+  is_active: boolean
+  created_at: string
+}
+
+type CouponUsage = {
+  id: string
+  coupon_id: string
+  coupon_code: string
+  customer_phone: string
+  customer_name: string
+  order_id: string | null
+  discount_amount: number
+  used_at: string
+}
+
 export default function AdminCouponsPage() {
   const [activeTab, setActiveTab] = useState<"Coupons" | "Analytics" | "Usage History">("Coupons")
-  const [coupons, setCoupons] = useState<any[]>([])
-  const [usages, setUsages] = useState<any[]>([])
+  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [usages, setUsages] = useState<CouponUsage[]>([])
   const [loading, setLoading] = useState(true)
   
   // Modal State
@@ -154,7 +182,7 @@ export default function AdminCouponsPage() {
   }
 
   // Helpers
-  const formatDiscount = (c: any) => {
+  const formatDiscount = (c: Coupon) => {
     if (c.coupon_type === "percentage") return `${c.discount_value}% OFF`
     if (c.coupon_type === "flat") return `₹${c.discount_value} OFF`
     if (c.coupon_type === "free_delivery") return `FREE DELIVERY`
@@ -162,12 +190,12 @@ export default function AdminCouponsPage() {
     return `${c.discount_value} OFF`
   }
 
-  const isExpired = (c: any) => {
+  const isExpired = (c: Coupon) => {
     if (!c.valid_until) return false
     return new Date() > new Date(c.valid_until)
   }
 
-  const isExpiringSoon = (c: any) => {
+  const isExpiringSoon = (c: Coupon) => {
     if (!c.valid_until) return false
     const daysLeft = (new Date(c.valid_until).getTime() - new Date().getTime()) / (1000 * 3600 * 24)
     return daysLeft > 0 && daysLeft <= 3
@@ -201,7 +229,9 @@ export default function AdminCouponsPage() {
 
     // Most Used Coupon
     const couponCounts: Record<string, number> = {}
-    usages.forEach(u => couponCounts[u.coupon_code] = (couponCounts[u.coupon_code] || 0) + 1)
+    usages.forEach(u => {
+      couponCounts[u.coupon_code] = (couponCounts[u.coupon_code] || 0) + 1
+    })
     let topCoupon = "None"
     let maxUses = 0
     Object.entries(couponCounts).forEach(([code, count]) => {

@@ -36,6 +36,7 @@ export default function InventoryPage() {
     const { data: historyData } = await supabase.from('stock_history').select('*').order('created_at', { ascending: false }).limit(100)
 
     if (stockData) {
+      setStockData(stockData as StockItem[])
       // Merge with PRODUCTS to ensure all products are represented
       const merged = PRODUCTS.map(p => {
         const existing = stockData.find(s => s.product_id === p.id.toString() || s.product_name === p.name)
@@ -54,12 +55,12 @@ export default function InventoryPage() {
     }
     
     if (historyData) {
-      setStockHistory(historyData)
+      setStockHistory(historyData as StockHistoryItem[])
     }
     setLoading(false)
   }
 
-  const handleSaveStock = async (item: any, newStockRaw: string) => {
+  const handleSaveStock = async (item: StockItem & { isNew?: boolean; category?: string }, newStockRaw: string) => {
     const newStock = parseInt(newStockRaw)
     if (isNaN(newStock) || newStock === item.current_stock) {
       setEditingId(null)
@@ -106,8 +107,9 @@ export default function InventoryPage() {
       if (hData) setStockHistory(hData)
 
       toast.success(`${item.product_name} stock updated!`)
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update stock")
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update stock"
+      toast.error(errorMessage)
     } finally {
       setSaving(null)
       setEditingId(null)

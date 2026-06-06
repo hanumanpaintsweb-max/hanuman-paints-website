@@ -79,8 +79,8 @@ export default function DashboardPage() {
     const { data: orders } = await supabase.from("orders").select("*").order("created_at", { ascending: false })
     const { data: bills } = await supabase.from("bills").select("*").eq('is_deleted', false).order("created_at", { ascending: false })
 
-    const allOrders = orders || []
-    const allBills = bills || []
+    const allOrders: Order[] = orders || []
+    const allBills: Bill[] = bills || []
     const allSales = [...allOrders, ...allBills]
 
     setRecentOrders(allOrders.slice(0, 10))

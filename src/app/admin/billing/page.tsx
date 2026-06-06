@@ -4,8 +4,8 @@ import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { 
   Plus, Trash2, Printer, Download, MessageCircle, FileText, 
-  CheckCircle2, User, Phone, Check, Receipt, History, 
-  Search, FileSpreadsheet, Eye, ShoppingBag, MapPin, Building, X
+  CheckCircle2, User, Receipt, 
+  Search, FileSpreadsheet, Eye, ShoppingBag, X
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/services/supabase"
@@ -15,8 +15,45 @@ import { toast } from "sonner"
 import { getSettings } from "@/lib/settings"
 
 type BillItem = {
-  id: string; productId: string; name: string; size: string;
-  qty: number; mrp: number; taxRate: number;
+  id: string
+  productId: string
+  name: string
+  size: string
+  qty: number
+  mrp: number
+  taxRate: number
+}
+
+type Settings = Record<string, string>
+
+type Bill = {
+  id: string
+  bill_number: string
+  customer_name: string
+  customer_phone: string
+  customer_address?: string
+  customer_gstin?: string
+  items: BillItem[]
+  subtotal: number
+  discount_amount: number
+  taxable_value: number
+  cgst_amount: number
+  sgst_amount: number
+  total_amount: number
+  payment_status: string
+  payment_method: string
+  order_id?: string
+  created_at: string
+  is_deleted: boolean
+}
+
+type Order = {
+  order_id: string
+  customer_name: string
+  customer_phone: string
+  customer_address: string
+  items: Array<{ id: string; name: string; size: string; quantity: number; price: number; mrp: number }>
+  total_amount: number
 }
 
 const TABS = ["New Bill", "Online Orders", "Bill History"]
@@ -29,9 +66,9 @@ export default function BillingPage() {
   const printRef = useRef<HTMLDivElement>(null)
 
   // -- APP STATE --
-  const [settings, setSettings] = useState<any>({})
-  const [bills, setBills] = useState<any[]>([])
-  const [orders, setOrders] = useState<any[]>([])
+  const [settings, setSettings] = useState<Settings>({})
+  const [bills, setBills] = useState<Bill[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
 
   // -- TAB 1: NEW BILL STATE --
   const [billNoStr, setBillNoStr] = useState<string>("")
@@ -44,17 +81,13 @@ export default function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [savedBillData, setSavedBillData] = useState<any | null>(null)
+  const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
   const [globalDiscount, setGlobalDiscount] = useState<number>(5)
 
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
   const [historyFilter, setHistoryFilter] = useState("All")
-  const [selectedHistoryBill, setSelectedHistoryBill] = useState<any | null>(null)
-
-  useEffect(() => {
-    fetchInitialData()
-  }, [])
+  const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
   const fetchInitialData = async () => {
     // 1. Settings
@@ -71,6 +104,10 @@ export default function BillingPage() {
     const { data: oData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
     if (oData) setOrders(oData)
   }
+
+  useEffect(() => {
+    fetchInitialData()
+  }, [])
 
   const fetchAndSetNextBillNo = async () => {
     const year = new Date().getFullYear()
@@ -122,13 +159,13 @@ export default function BillingPage() {
     setItems(newItems)
   }
 
-  const loadOrderToBill = (order: any) => {
+  const loadOrderToBill = (order: Order) => {
     setCustomerName(order.customer_name)
     setCustomerPhone(order.customer_phone)
     setCustomerAddress(order.customer_address)
     setLinkedOrderId(order.order_id)
     
-    const mappedItems: BillItem[] = order.items?.map((item: any) => {
+    const mappedItems: BillItem[] = order.items?.map((item) => {
       const product = PRODUCTS.find(p => p.id === item.id)
       return {
         id: Math.random().toString(36).substr(2, 9),
@@ -219,7 +256,7 @@ export default function BillingPage() {
     }
   }
 
-  const handlePDF = (targetId: string = 'bill-print-area', providedBillData?: any) => {
+  const handlePDF = (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
     const printArea = document.getElementById(targetId)
     if (!printArea) return
     
@@ -319,21 +356,19 @@ export default function BillingPage() {
   }
 
   // View Bill from History
-  const viewHistoricalBill = (bill: any) => {
+  const viewHistoricalBill = (bill: Bill) => {
     setSelectedHistoryBill(bill)
   }
 
   // Filter Bills
-  const filteredBills = useMemo(() => {
-    return bills.filter(b => {
-      if (historyFilter !== "All" && b.payment_status !== historyFilter.toLowerCase()) return false
-      if (historySearch) {
-        const s = historySearch.toLowerCase()
-        return b.bill_number.toLowerCase().includes(s) || b.customer_name.toLowerCase().includes(s) || b.customer_phone.includes(s)
-      }
-      return true
-    })
-  }, [bills, historyFilter, historySearch])
+  const filteredBills = bills.filter(b => {
+    if (historyFilter !== "All" && b.payment_status !== historyFilter.toLowerCase()) return false
+    if (historySearch) {
+      const s = historySearch.toLowerCase()
+      return b.bill_number.toLowerCase().includes(s) || b.customer_name.toLowerCase().includes(s) || b.customer_phone.includes(s)
+    }
+    return true
+  })
 
   return (
     <div className="space-y-6 pb-20">

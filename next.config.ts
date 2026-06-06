@@ -19,13 +19,15 @@ const nextConfig: NextConfig = {
   },
 };
 
+const hasValidSentryToken = process.env.SENTRY_AUTH_TOKEN?.startsWith('sntrys_')
+
 export default withSentryConfig(nextConfig, {
   org: "hanuman-paints",
   project: "javascript-nextjs",
-  silent: false,
+  silent: !hasValidSentryToken,
   widenClientFileUpload: true,
   authToken: process.env.SENTRY_AUTH_TOKEN,
   sourcemaps: {
-    disable: false,
+    disable: !hasValidSentryToken,
   },
 });
