@@ -41,8 +41,36 @@ const getStatusIcon = (status: string) => {
   }
 }
 
+type OrderItem = {
+  id?: string;
+  productId?: string;
+  name: string;
+  size?: string;
+  quantity?: number;
+  qty?: number;
+  price?: number;
+  mrp?: number;
+}
+
+type AdminOrder = {
+  id: string;
+  order_id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  customer_pincode: string;
+  items: OrderItem[];
+  subtotal: number;
+  discount_amount: number;
+  total_amount: number;
+  status: string;
+  coupon_code?: string;
+  created_at: string;
+  cancel_reason?: string;
+}
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<AdminOrder[]>([])
   const [loading, setLoading] = useState(true)
   
   // Filters & Search
@@ -55,7 +83,7 @@ export default function AdminOrdersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   
   // Modals
-  const [viewOrder, setViewOrder] = useState<any | null>(null)
+  const [viewOrder, setViewOrder] = useState<AdminOrder | null>(null)
   const [cancelReason, setCancelReason] = useState("")
   const [showCancelDialog, setShowCancelDialog] = useState(false)
 
@@ -76,6 +104,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
     if (typeof window !== "undefined" && "Notification" in window) {
       Notification.requestPermission()
@@ -84,7 +113,7 @@ export default function AdminOrdersPage() {
     const channel = supabase
       .channel('orders')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
-        const newOrder = payload.new
+        const newOrder = payload.new as AdminOrder
         setOrders(prev => [newOrder, ...prev])
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
           new Notification('Hanuman Paints', { body: 'New order received!', icon: '/favicon.ico' })

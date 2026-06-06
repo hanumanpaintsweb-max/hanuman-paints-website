@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { motion } from "motion/react"
-import { ArrowRight, Star, Truck } from "lucide-react"
+import Image from "next/image"
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PaintParticles } from "@/components/anim/paint-particles"
 import { useEffect, useState } from "react"
@@ -104,12 +105,15 @@ export function Hero() {
           <motion.div
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-            className="relative overflow-hidden rounded-3xl border border-border/60 shadow-2xl shadow-secondary/10"
+            className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-border/60 shadow-2xl shadow-secondary/10 sm:aspect-square"
           >
-            <img
+            <Image
               src="/hero-room.png"
               alt="Modern living room with a freshly painted terracotta orange accent wall"
-              className="aspect-[4/5] w-full object-cover sm:aspect-square"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
             />
             <motion.div
               initial={{ opacity: 0, y: 20 }}

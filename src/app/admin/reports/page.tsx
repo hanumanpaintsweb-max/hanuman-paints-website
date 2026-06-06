@@ -14,6 +14,26 @@ const TABS = ["Daily Sales", "Monthly GST (CA)", "Product wise", "Customer wise"
 const TIN_WOOD_CATEGORIES = ["Tinters", "Woodcare"] // 12%
 // Others = 18% (Paints, Enamels)
 
+type ReportOrder = {
+  id: string;
+  order_id: string;
+  created_at: string;
+  total_amount: number;
+  total?: number;
+  cgst_amount?: number;
+  sgst_amount?: number;
+  taxable_value?: number;
+  bill_number?: string;
+  customer_name?: string;
+  customer_gstin?: string;
+  items?: Record<string, any>[];
+  discount_amount?: number;
+  subtotal?: number;
+  customer_phone?: string;
+};
+
+type ReportBill = ReportOrder;
+
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState("Daily Sales")
   const [loading, setLoading] = useState(true)
@@ -30,10 +50,6 @@ export default function ReportsPage() {
   const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2, '0')}`
   const [gstMonth, setGstMonth] = useState(currentMonthStr)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
   const fetchData = async () => {
     setLoading(true)
     const { data: oData } = await supabase.from('orders').select('*')
@@ -43,12 +59,17 @@ export default function ReportsPage() {
     if (oData) setOrders(oData as ReportOrder[])
     if (bData) setBills(bData as ReportBill[])
     if (sData) {
-      const sObj: any = {}
+      const sObj: Record<string, string> = {}
       sData.forEach(s => sObj[s.key] = s.value)
       setSettings(sObj)
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // --- Process Data ---
   const allSales = useMemo(() => {
@@ -62,7 +83,7 @@ export default function ReportsPage() {
 
   const dailyTotals = dailySalesList.reduce((acc, curr) => {
     acc.total += (curr.total_amount || curr.total || 0)
-    acc.gst += (curr.cgst_amount ? (curr.cgst_amount + curr.sgst_amount) : 0) // rough approx for online orders if no cgst_amount
+    acc.gst += (curr.cgst_amount ? (curr.cgst_amount + (curr.sgst_amount || 0)) : 0) // rough approx for online orders if no cgst_amount
     return acc
   }, { total: 0, gst: 0 })
 
@@ -283,7 +304,7 @@ export default function ReportsPage() {
                       <td className="px-6 py-4">{new Date(s.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
                       <td className="px-6 py-4 font-mono text-xs font-bold">{s.bill_number || s.order_id}</td>
                       <td className="px-6 py-4">{s.customer_name || 'Walk-in'}</td>
-                      <td className="px-6 py-4 text-right font-bold text-primary">{inr(s.total_amount || s.total)}</td>
+                      <td className="px-6 py-4 text-right font-bold text-primary">{inr(s.total_amount || s.total || 0)}</td>
                     </tr>
                   ))}
                   {dailySalesList.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">No sales on this date</td></tr>}

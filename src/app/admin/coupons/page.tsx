@@ -428,8 +428,8 @@ export default function AdminCouponsPage() {
                       </div>
                       
                       <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold text-muted-foreground">
-                        {c.min_order_amount > 0 && <span className="bg-background px-2 py-1 rounded-md border border-border/60">Min: ₹{c.min_order_amount}</span>}
-                        {c.max_discount_cap > 0 && <span className="bg-background px-2 py-1 rounded-md border border-border/60">Cap: ₹{c.max_discount_cap}</span>}
+                        {(c.min_order_amount ?? 0) > 0 && <span className="bg-background px-2 py-1 rounded-md border border-border/60">Min: ₹{c.min_order_amount}</span>}
+                        {(c.max_discount_cap ?? 0) > 0 && <span className="bg-background px-2 py-1 rounded-md border border-border/60">Cap: ₹{c.max_discount_cap}</span>}
                         {c.coupon_type === "first_order" && <span className="bg-blue-500/10 text-blue-500 px-2 py-1 rounded-md">First Order Only</span>}
                       </div>
                     </div>

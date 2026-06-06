@@ -10,9 +10,31 @@ import {
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
+type StockItem = {
+  id: string;
+  product_id: string;
+  product_name: string;
+  category: string;
+  current_stock: number;
+  unit: string;
+  updated_at: string;
+}
+
+type StockHistoryItem = {
+  id: string;
+  product_id: string;
+  product_name: string;
+  change_type: string;
+  quantity_changed: number;
+  old_stock: number;
+  new_stock: number;
+  changed_by?: string;
+  created_at: string;
+}
+
 export default function InventoryPage() {
-  const [stockItems, setStockItems] = useState<any[]>([])
-  const [stockHistory, setStockHistory] = useState<any[]>([])
+  const [stockItems, setStockItems] = useState<StockItem[]>([])
+  const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   
   // Filters
@@ -36,7 +58,7 @@ export default function InventoryPage() {
     const { data: historyData } = await supabase.from('stock_history').select('*').order('created_at', { ascending: false }).limit(100)
 
     if (stockData) {
-      setStockData(stockData as StockItem[])
+      setStockItems(stockData as StockItem[])
       // Merge with PRODUCTS to ensure all products are represented
       const merged = PRODUCTS.map(p => {
         const existing = stockData.find(s => s.product_id === p.id.toString() || s.product_name === p.name)

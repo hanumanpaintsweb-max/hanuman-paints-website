@@ -41,6 +41,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     if (isAdmin) {
       fetchSidebarData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin])
 
   useEffect(() => {
@@ -149,7 +150,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         <div className="border-t border-border/60 p-4 space-y-3">
           <div className="px-4 py-2">
-            <p className="text-xs font-medium text-foreground truncate">{admin?.email}</p>
+            <p className="text-xs font-medium text-foreground truncate">{(admin as Record<string, any>)?.email}</p>
             <p className="text-[10px] text-muted-foreground">Administrator</p>
           </div>
           <button 

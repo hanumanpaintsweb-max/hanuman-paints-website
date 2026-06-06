@@ -22,10 +22,6 @@ export default function SettingsPage() {
   // WhatsApp Test State
   const [testPhone, setTestPhone] = useState("")
 
-  useEffect(() => {
-    fetchSettings()
-  }, [])
-
   const fetchSettings = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('settings').select('*')
@@ -64,6 +60,10 @@ export default function SettingsPage() {
     setLoading(false)
     setUnsavedChanges(false)
   }
+
+  useEffect(() => {
+    setTimeout(() => fetchSettings(), 0)
+  }, [])
 
   const handleChange = (key: string, value: string) => {
     setSettings(prev => ({ ...prev, [key]: value }))

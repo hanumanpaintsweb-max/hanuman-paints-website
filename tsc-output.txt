@@ -1,0 +1,28 @@
+src/app/admin/page.tsx(113,19): error TS2345: Argument of type '(prev: AdminOrder[]) => (AdminOrder | { [key: string]: any; })[]' is not assignable to parameter of type 'SetStateAction<AdminOrder[]>'.
+  Type '(prev: AdminOrder[]) => (AdminOrder | { [key: string]: any; })[]' is not assignable to type '(prevState: AdminOrder[]) => AdminOrder[]'.
+    Type '(AdminOrder | { [key: string]: any; })[]' is not assignable to type 'AdminOrder[]'.
+      Type 'AdminOrder | { [key: string]: any; }' is not assignable to type 'AdminOrder'.
+        Type '{ [key: string]: any; }' is missing the following properties from type 'AdminOrder': order_id, customer_name, customer_phone, customer_address, and 7 more.
+src/app/admin/page.tsx(132,41): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(134,40): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(139,45): error TS2339: Property 'productId' does not exist on type 'OrderItem'.
+src/app/admin/page.tsx(149,91): error TS2339: Property 'qty' does not exist on type 'OrderItem'.
+src/app/admin/page.tsx(168,34): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(186,54): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(192,44): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(199,51): error TS2339: Property 'productId' does not exist on type 'OrderItem'.
+src/app/admin/page.tsx(205,97): error TS2339: Property 'qty' does not exist on type 'OrderItem'.
+src/app/admin/page.tsx(233,59): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(371,28): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(374,41): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(377,121): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(378,42): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(524,93): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/page.tsx(534,65): error TS2339: Property 'id' does not exist on type 'AdminOrder'.
+src/app/admin/products/page.tsx(113,30): error TS2339: Property 'image' does not exist on type '{ id: string; name: string; category: string; size: string; price: number; mrp: number; image_url?: string | undefined; }'.
+src/app/admin/products/page.tsx(113,57): error TS2339: Property 'image' does not exist on type '{ id: string; name: string; category: string; size: string; price: number; mrp: number; image_url?: string | undefined; }'.
+src/app/admin/reports/page.tsx(22,40): error TS2304: Cannot find name 'ReportOrder'.
+src/app/admin/reports/page.tsx(23,38): error TS2304: Cannot find name 'ReportBill'.
+src/app/admin/reports/page.tsx(39,35): error TS2304: Cannot find name 'ReportOrder'.
+src/app/admin/reports/page.tsx(40,34): error TS2304: Cannot find name 'ReportBill'.
+src/app/checkout/page.tsx(126,38): error TS18047: 'data.used_count' is possibly 'null'.

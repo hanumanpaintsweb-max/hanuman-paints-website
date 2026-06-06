@@ -18,7 +18,26 @@ function getStatusColor(status: string) {
   }
 }
 
-export function OrdersClient({ orders }: { orders: any[] }) {
+export interface OrderItem {
+  quantity: number;
+  product_name?: string;
+  name?: string;
+  size: string;
+  price: number;
+}
+
+export interface Order {
+  id: string;
+  status: string;
+  created_at: string;
+  total_amount: number;
+  order_items?: OrderItem[];
+  items?: OrderItem[];
+  customer_name: string;
+  delivery_address: string;
+}
+
+export function OrdersClient({ orders }: { orders: Order[] }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (orders.length === 0) {
@@ -28,7 +47,7 @@ export function OrdersClient({ orders }: { orders: any[] }) {
           <Package className="size-8 text-muted-foreground" />
         </div>
         <h3 className="text-xl font-bold text-foreground">Abhi tak koi order nahi</h3>
-        <p className="mt-2 text-muted-foreground">Looks like you haven't placed any orders yet.</p>
+        <p className="mt-2 text-muted-foreground">Looks like you haven&apos;t placed any orders yet.</p>
         <Button asChild className="mt-6 rounded-xl" size="lg">
           <Link href="/products">Shop Now</Link>
         </Button>
@@ -94,7 +113,7 @@ export function OrdersClient({ orders }: { orders: any[] }) {
                               <Package className="size-4" /> Items
                             </h4>
                             <div className="space-y-3">
-                              {(order.order_items || order.items || []).map((item: any, i: number) => (
+                              {(order.order_items || order.items || []).map((item: OrderItem, i: number) => (
                                 <div key={i} className="flex justify-between text-sm">
                                   <span className="text-foreground">
                                     <span className="font-semibold text-muted-foreground">{item.quantity}x</span>{" "}

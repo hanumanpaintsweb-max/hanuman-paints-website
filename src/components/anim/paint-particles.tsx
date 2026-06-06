@@ -1,32 +1,40 @@
 "use client"
 
 import { motion } from "motion/react"
-import { useMemo, useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 
 const COLORS = ["#F97316", "#1E3A8A", "#14B8A6", "#FACC15", "#E11D48", "#0EA5E9"]
 
 export function PaintParticles({ count = 14 }: { count?: number }) {
-  const dots = useMemo(
-    () =>
-      Array.from({ length: count }).map((_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        size: 8 + Math.random() * 26,
-        delay: Math.random() * 6,
-        duration: 9 + Math.random() * 10,
-        color: COLORS[i % COLORS.length],
-        drift: (Math.random() - 0.5) * 60,
-      })),
-    [count],
-  )
-
+  const [dots, setDots] = useState<Array<{
+    id: number;
+    left: number;
+    size: number;
+    delay: number;
+    duration: number;
+    color: string;
+    drift: number;
+  }>>([])
   const [isMounted, setIsMounted] = useState(false)
-  
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
-  if (!isMounted) return null
+  useEffect(() => {
+    setTimeout(() => {
+      setDots(
+        Array.from({ length: count }).map((_, i) => ({
+          id: i,
+          left: Math.random() * 100,
+          size: 8 + Math.random() * 26,
+          delay: Math.random() * 6,
+          duration: 9 + Math.random() * 10,
+          color: COLORS[i % COLORS.length],
+          drift: (Math.random() - 0.5) * 60,
+        }))
+      )
+      setIsMounted(true)
+    }, 0)
+  }, [count])
+
+  if (!isMounted || dots.length === 0) return null
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">

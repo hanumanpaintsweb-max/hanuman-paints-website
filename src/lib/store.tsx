@@ -32,9 +32,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const c = localStorage.getItem("hp-cart")
-      if (c) setCart(JSON.parse(c))
+      if (c) {
+        const parsed = JSON.parse(c)
+        setTimeout(() => setCart(parsed), 0)
+      }
     } catch {}
-    setHydrated(true)
+    setTimeout(() => setHydrated(true), 0)
   }, [])
 
   useEffect(() => {

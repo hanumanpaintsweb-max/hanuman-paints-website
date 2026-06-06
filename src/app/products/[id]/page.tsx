@@ -6,7 +6,7 @@ import { notFound } from "next/navigation"
 export async function generateStaticParams() {
   try {
     const products = await getProducts()
-    return products.map((p: any) => ({
+    return products.map((p: { id: string | number }) => ({
       id: p.id.toString(),
     }))
   } catch (e) {

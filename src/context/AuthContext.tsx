@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 interface AuthContextType {
-  admin: any;
-  adminLogin: (email: string, pass: string) => Promise<any>;
-  setAdminContext: (user: any, remember?: boolean) => void;
+  admin: Record<string, unknown> | null;
+  adminLogin: (email: string, pass: string) => Promise<unknown>;
+  setAdminContext: (user: Record<string, unknown> | null, remember?: boolean) => void;
   adminLogout: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return null;
   }, []);
 
-  const setAdminContext = useCallback((user: any, remember: boolean = false) => {
+  const setAdminContext = useCallback((user: Record<string, unknown> | null, remember: boolean = false) => {
     setAdmin(user);
     if (remember) {
       localStorage.setItem('hp-admin', JSON.stringify(user));

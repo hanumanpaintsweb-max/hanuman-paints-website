@@ -3,18 +3,61 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/services/supabase';
 
-const CartContext = createContext<any>(null);
+export interface CartItem {
+  id: string;
+  name: string;
+  mrp: number;
+  quantity: number;
+  category?: string;
+  image?: string;
+  selectedSize?: string;
+  [key: string]: unknown;
+}
 
-const cartReducer = (state: any, action: any) => {
+interface CartState {
+  items: CartItem[];
+}
+
+interface ToastMessage {
+  id: number;
+  message: string;
+  hiding?: boolean;
+}
+
+type CartAction =
+  | { type: 'INIT_CART'; payload: CartItem[] }
+  | { type: 'ADD_ITEM'; payload: CartItem }
+  | { type: 'REMOVE_ITEM'; payload: string }
+  | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
+  | { type: 'CLEAR_CART' };
+
+export interface CartContextType {
+  items: CartItem[];
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+  itemCount: number;
+  addItem: (product: Omit<CartItem, 'quantity'> & { quantity?: number }, quantity?: number) => void;
+  addToCart: (product: Omit<CartItem, 'quantity'> & { quantity?: number }, quantity?: number) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  discountPercent: number;
+  DISCOUNT_PERCENT: number;
+}
+
+const CartContext = createContext<CartContextType | null>(null);
+
+const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'INIT_CART':
       return { ...state, items: action.payload };
     case 'ADD_ITEM': {
-      const existing = state.items.find((i: any) => i.id === action.payload.id);
+      const existing = state.items.find((i) => i.id === action.payload.id);
       if (existing) {
         return {
           ...state,
-          items: state.items.map((i: any) =>
+          items: state.items.map((i) =>
             i.id === action.payload.id
               ? { ...i, quantity: i.quantity + (action.payload.quantity || 1) }
               : i
@@ -27,13 +70,13 @@ const cartReducer = (state: any, action: any) => {
       };
     }
     case 'REMOVE_ITEM':
-      return { ...state, items: state.items.filter((i: any) => i.id !== action.payload) };
+      return { ...state, items: state.items.filter((i) => i.id !== action.payload) };
     case 'UPDATE_QUANTITY':
       return {
         ...state,
-        items: state.items.map((i: any) =>
+        items: state.items.map((i) =>
           i.id === action.payload.id ? { ...i, quantity: action.payload.quantity } : i
-        ).filter((i: any) => i.quantity > 0),
+        ).filter((i) => i.quantity > 0),
       };
     case 'CLEAR_CART':
       return { ...state, items: [] };
@@ -44,7 +87,7 @@ const cartReducer = (state: any, action: any) => {
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
-  const [toasts, setToasts] = useState<any[]>([]);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(5);
 
@@ -59,7 +102,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     } catch (e) {}
-    setIsMounted(true);
+    setTimeout(() => setIsMounted(true), 0);
   }, []);
 
   // Save to local storage on changes (only after mount)
@@ -83,30 +126,30 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       });
   }, []);
 
-  const subtotal = state.items.reduce((sum: number, item: any) => sum + item.mrp * item.quantity, 0);
+  const subtotal = state.items.reduce((sum: number, item: CartItem) => sum + item.mrp * item.quantity, 0);
   const discountAmount = Math.round(subtotal * discountPercent / 100);
   const total = subtotal - discountAmount;
-  const itemCount = state.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+  const itemCount = state.items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
 
   const showToast = useCallback((message: string) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message }]);
     setTimeout(() => {
-      setToasts(prev => prev.map((t: any) => t.id === id ? { ...t, hiding: true } : t));
+      setToasts(prev => prev.map((t) => t.id === id ? { ...t, hiding: true } : t));
       setTimeout(() => {
-        setToasts(prev => prev.filter((t: any) => t.id !== id));
+        setToasts(prev => prev.filter((t) => t.id !== id));
       }, 300);
     }, 2000);
   }, []);
 
-  const addItem = (product: any, quantity = 1) => {
-    dispatch({ type: 'ADD_ITEM', payload: { ...product, quantity } });
+  const addItem = (product: Omit<CartItem, 'quantity'> & { quantity?: number }, quantity = 1) => {
+    dispatch({ type: 'ADD_ITEM', payload: { ...product, quantity } as CartItem });
     showToast(`Added ${product.name} to cart`);
   };
 
-  const removeItem = (id: any) => dispatch({ type: 'REMOVE_ITEM', payload: id });
+  const removeItem = (id: string) => dispatch({ type: 'REMOVE_ITEM', payload: id });
 
-  const updateQuantity = (id: any, quantity: number) =>
+  const updateQuantity = (id: string, quantity: number) =>
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
 
   const clearCart = () => dispatch({ type: 'CLEAR_CART' });
@@ -124,6 +167,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         total,
         itemCount,
         addItem,
+        addToCart: addItem,
         removeItem,
         updateQuantity,
         clearCart,
@@ -134,7 +178,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       {/* Toast Notification Container */}
       <div className="toast-container fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((toast: any) => (
+        {toasts.map((toast) => (
           <div key={toast.id} className={`bg-black text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 transition-opacity duration-300 ${toast.hiding ? 'opacity-0' : 'opacity-100'}`}>
             <span style={{ color: '#10B981' }}>✔</span>
             {toast.message}

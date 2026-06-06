@@ -1,0 +1,1 @@
+export interface Product { id: string; name: string; category?: string; price?: number; mrp?: number; image_url?: string; image?: string; description?: string; features?: any[]; sizes?: any[]; [key: string]: any; }

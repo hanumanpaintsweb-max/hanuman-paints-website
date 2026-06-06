@@ -28,8 +28,16 @@ const TINTABLE_PRODUCTS = [
   "Dulux Floor Plus"
 ]
 
+interface TintableProduct {
+  id: string;
+  name: string;
+  image: string;
+  sizes?: Array<{ size: string; discounted: number }>;
+  [key: string]: unknown;
+}
+
 export function ColourPanel({ isOpen, colour, onClose }: ColourPanelProps) {
-  const [products, setProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<TintableProduct[]>([])
   const [loading, setLoading] = useState(false)
   const { addToCart } = useCart()
 
@@ -40,7 +48,7 @@ export function ColourPanel({ isOpen, colour, onClose }: ColourPanelProps) {
         try {
           const data = await getProducts()
           if (data) {
-            const tintable = data.filter((p: any) => TINTABLE_PRODUCTS.includes(p.name))
+            const tintable = data.filter((p: { name: string }) => TINTABLE_PRODUCTS.includes(p.name))
             setProducts(tintable)
           }
         } catch {
@@ -53,7 +61,7 @@ export function ColourPanel({ isOpen, colour, onClose }: ColourPanelProps) {
     }
   }, [isOpen])
 
-  const handleAdd = (product: any, sizeIndex: number = 0) => {
+  const handleAdd = (product: TintableProduct, sizeIndex: number = 0) => {
     if (!product.sizes || product.sizes.length === 0) return
     const size = product.sizes[sizeIndex]
     addToCart({

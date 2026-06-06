@@ -8,7 +8,15 @@ import { Button } from "@/components/ui/button"
 import { motion } from "motion/react"
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<Array<{
+    id: string;
+    name: string;
+    category: string;
+    size: string;
+    price: number;
+    mrp: number;
+    image_url?: string;
+  }>>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("All")
   
@@ -29,6 +37,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     fetchProducts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const removeProduct = async (id: string, name: string) => {
@@ -101,7 +110,7 @@ export default function AdminProductsPage() {
               <div key={product.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/30 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="size-12 rounded-lg border border-border/60 bg-muted flex-shrink-0 overflow-hidden">
-                    {product.image && <img src={product.image} alt={product.name} className="size-full object-cover" />}
+                    {product.image_url && <img src={product.image_url} alt={product.name} className="size-full object-cover" />}
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">{product.name}</h3>

@@ -5,7 +5,7 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Menu, Phone, ShoppingCart, User, X, LogOut, Package } from "lucide-react"
+import { Menu, ShoppingCart, User, X, LogOut, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/CartContext"
 import { getSession, logoutUser } from "@/app/actions/auth"
@@ -19,7 +19,7 @@ const links = [
 export function SiteNavbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<any | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -33,7 +33,7 @@ export function SiteNavbar() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  useEffect(() => setOpen(false), [pathname])
+  useEffect(() => { setTimeout(() => setOpen(false), 0) }, [pathname])
 
   useEffect(() => {
     async function fetchSession() {

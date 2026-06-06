@@ -1,27 +1,29 @@
 "use client"
+import { Product } from "@/types";
 import { useState } from "react"
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
-import { BadgeCheck, Check, ChevronRight, Heart, Minus, Plus, ShoppingCart, Star, Truck } from "lucide-react"
+import { BadgeCheck, Check, ChevronRight, Minus, Plus, ShoppingCart, Truck } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/site/product-card"
 import { inr } from "@/lib/format"
 import { useCart } from "@/context/CartContext"
 import { PRODUCTS } from "@/data/products"
 
-export function ProductDetail({ product }: { product: any }) {
+export function ProductDetail({ product }: { product: Product }) {
   const { addItem } = useCart()
   const [size, setSize] = useState(product.sizes?.[0]?.size || "1 Ltr")
   const [qty, setQty] = useState(1)
   const [burst, setBurst] = useState(false)
   const [pan, setPan] = useState({ x: 50, y: 50 })
 
-  const selectedSizeObj = product.sizes?.find((s: any) => s.size === size) || product.sizes?.[0]
+  const selectedSizeObj = product.sizes?.find((s: { size: string }) => s.size === size) || product.sizes?.[0]
   const price = selectedSizeObj?.discounted || product.price || 0
   const mrp = selectedSizeObj?.mrp || product.mrp || 0
   const off = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0
-  const related = PRODUCTS.filter((p: any) => p.categoryId === product.categoryId && p.id !== product.id)
-  const relatedList = related.length ? related : PRODUCTS.filter((p: any) => p.id !== product.id)
+  const related = PRODUCTS.filter((p: { categoryId: string; id: string }) => p.categoryId === product.categoryId && p.id !== product.id)
+  const relatedList = related.length ? related : PRODUCTS.filter((p: { id: string }) => p.id !== product.id)
 
   const handleAdd = () => {
     addItem({ ...product, selectedSize: selectedSizeObj?.size || size, mrp: mrp, quantity: qty, id: product.id.toString() })
@@ -48,9 +50,11 @@ export function ProductDetail({ product }: { product: any }) {
             setPan({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 })
           }}
         >
-          <img
-            src={product.image || "/placeholder.svg"}
-            alt={product.name}
+          <Image
+            src={(product.image as string) || "/placeholder.svg"}
+            alt={(product.name as string) || "Product Image"}
+            width={800}
+            height={800}
             className="size-full object-cover transition-transform duration-300 group-hover:scale-150"
             style={{ transformOrigin: `${pan.x}% ${pan.y}%` }}
           />
@@ -114,7 +118,7 @@ export function ProductDetail({ product }: { product: any }) {
             <div className="mt-6">
               <p className="mb-2 text-sm font-semibold text-foreground">Pack size</p>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((s: any) => (
+                {product.sizes.map((s: { size: string }) => (
                   <button
                     key={s.size}
                     onClick={() => setSize(s.size)}
@@ -191,7 +195,7 @@ export function ProductDetail({ product }: { product: any }) {
       <div className="mt-16">
         <h2 className="mb-6 text-2xl font-bold tracking-tight text-foreground">You might also like</h2>
         <div className="-mx-4 flex gap-5 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
-          {relatedList.slice(0, 6).map((p: any, i: number) => (
+          {relatedList.slice(0, 6).map((p: Product, i: number) => (
             <div key={p.id} className="w-64 shrink-0">
               <ProductCard product={p} index={i} />
             </div>

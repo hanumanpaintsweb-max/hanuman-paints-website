@@ -18,6 +18,25 @@ import Link from "next/link"
 const PIE_COLORS = ["#F97316", "#10B981", "#3B82F6", "#EF4444", "#8B5CF6"]
 const CAT_COLORS = ["#2563EB", "#DB2777", "#D97706", "#059669", "#7C3AED", "#DC2626"]
 
+type Order = {
+  order_id: string;
+  customer_name: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  items: Array<{ id: string; name: string; quantity: number; price: number }>;
+}
+
+type Bill = {
+  id: string;
+  bill_number: string;
+  customer_name: string;
+  total_amount: number;
+  payment_status: string;
+  created_at: string;
+  items: Array<{ id: string; name: string; qty: number; mrp: number }>;
+}
+
 // Simple animated counter component
 const CountUp = ({ value, prefix = "", suffix = "", isCurrency = false }: { value: number, prefix?: string, suffix?: string, isCurrency?: boolean }) => {
   const [count, setCount] = useState(0)
@@ -105,7 +124,7 @@ export default function DashboardPage() {
     // Process Stats
     allSales.forEach(s => {
       const d = new Date(s.created_at)
-      const amt = s.total_amount || s.total || 0
+      const amt = s.total_amount || 0
       
       // Daily
       if (d >= today) ts += amt
@@ -183,7 +202,7 @@ export default function DashboardPage() {
     }
     allSales.forEach(s => {
       const dateStr = new Date(s.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric" })
-      if (dailyRev[dateStr] !== undefined) dailyRev[dateStr] += (s.total_amount || s.total || 0)
+      if (dailyRev[dateStr] !== undefined) dailyRev[dateStr] += (s.total_amount || 0)
     })
     setRevenueData(Object.keys(dailyRev).map(date => ({ date, revenue: dailyRev[date] })))
 

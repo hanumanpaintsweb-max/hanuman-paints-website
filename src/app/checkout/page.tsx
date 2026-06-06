@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "motion/react"
+import Image from "next/image"
 import { CheckCircle, Truck, ShoppingBag, Tag, X, Loader2 } from "lucide-react"
 import confetti from "canvas-confetti"
 
-import { useCart } from "@/context/CartContext"
+import { useCart, type CartItem } from "@/context/CartContext"
 import { inr } from "@/lib/format"
 import { supabase } from "@/services/supabase"
 import { SiteShell } from "@/components/site/site-shell"
@@ -123,7 +124,7 @@ export default function CheckoutPage() {
       return
     }
 
-    if (data.usage_limit !== null && data.used_count >= data.usage_limit) {
+    if (data.usage_limit !== null && (data.used_count || 0) >= data.usage_limit) {
       setCouponError("This coupon has reached its usage limit.")
       return
     }
@@ -293,7 +294,7 @@ export default function CheckoutPage() {
     )
   }
 
-  if ((items as any[]).length === 0) {
+  if (items.length === 0) {
     return (
       <SiteShell>
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
@@ -426,18 +427,20 @@ export default function CheckoutPage() {
             <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
               <div className="flex items-center justify-between border-b border-border/60 bg-muted/50 px-6 py-5">
                 <h3 className="font-semibold text-foreground">
-                  Order Summary <span className="text-muted-foreground">({(items as any[]).length})</span>
+                  Order Summary <span className="text-muted-foreground">({items.length})</span>
                 </h3>
                 <span className="text-xl font-bold text-primary">{inr(finalTotal)}</span>
               </div>
 
               <div className="max-h-[360px] overflow-y-auto px-6 py-4">
-                {(items as any[]).map((item: any) => (
+                {items.map((item: CartItem) => (
                   <div key={`${item.id}-${item.selectedSize}`} className="mb-4 flex items-center gap-4 last:mb-0">
                     <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-muted p-1">
-                      <img
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
+                      <Image
+                        src={(item.image as string) || "/placeholder.svg"}
+                        alt={item.name as string}
+                        width={56}
+                        height={56}
                         className="size-full object-contain mix-blend-multiply"
                       />
                     </div>

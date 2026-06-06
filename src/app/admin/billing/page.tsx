@@ -89,6 +89,17 @@ export default function BillingPage() {
   const [historyFilter, setHistoryFilter] = useState("All")
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
+  const fetchAndSetNextBillNo = async () => {
+    const year = new Date().getFullYear()
+    const { data } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+    let maxNum = 0
+    if (data && data.length > 0) {
+      const match = data[0].bill_number.match(/-(\d+)$/)
+      if (match) maxNum = parseInt(match[1])
+    }
+    setBillNoStr(`HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
+  }
+
   const fetchInitialData = async () => {
     // 1. Settings
     const setts = await getSettings()
@@ -107,18 +118,8 @@ export default function BillingPage() {
 
   useEffect(() => {
     fetchInitialData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const fetchAndSetNextBillNo = async () => {
-    const year = new Date().getFullYear()
-    const { data } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
-    let maxNum = 0
-    if (data && data.length > 0) {
-      const match = data[0].bill_number.match(/-(\d+)$/)
-      if (match) maxNum = parseInt(match[1])
-    }
-    setBillNoStr(`HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
-  }
 
   // --- Calculations ---
   const calculations = useMemo(() => {
@@ -674,7 +675,7 @@ export default function BillingPage() {
               {orders.map(order => {
                 const isBilled = bills.some(b => b.order_id === order.order_id)
                 return (
-                  <div key={order.id} className="bg-card border border-border/60 p-5 rounded-2xl flex items-center justify-between">
+                  <div key={order.order_id} className="bg-card border border-border/60 p-5 rounded-2xl flex items-center justify-between">
                     <div>
                       <div className="font-bold flex items-center gap-2">#{order.order_id} {isBilled && <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded uppercase">Billed</span>}</div>
                       <div className="text-sm text-muted-foreground mt-1">{order.customer_name} • {order.customer_phone}</div>
@@ -838,7 +839,7 @@ export default function BillingPage() {
                       </tr>
                     </thead>
                     <tbody className="text-sm border-b-2 border-gray-800">
-                      {selectedHistoryBill.items?.map((item: any, i: number) => {
+                      {selectedHistoryBill.items?.map((item: BillItem, i: number) => {
                         const taxable = item.mrp * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
                         const gst = taxable * (item.taxRate/100);
                         return (

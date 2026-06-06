@@ -1,4 +1,5 @@
 "use client"
+import { Product } from "@/types";
 
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
@@ -57,15 +58,15 @@ export function ProductsBrowser() {
     setActiveCats((prev) => (prev.includes(id) ? [] : [id]))
 
   const filtered = useMemo(() => {
-    let list = products.filter((p: any) => {
+    let list = products.filter((p: Product) => {
       if (activeCats.length && !activeCats.includes(p.categoryId)) return false
 
       if (query && !`${p.name} ${p.subcategory || ""} ${p.category}`.toLowerCase().includes(query.toLowerCase())) return false
       return true
     })
-    list = [...list].sort((a: any, b: any) => {
-      const priceA = a.sizes[0]?.discounted || 0
-      const priceB = b.sizes[0]?.discounted || 0
+    list = [...list].sort((a: Product, b: Product) => {
+      const priceA = a.sizes?.[0]?.discounted || 0
+      const priceB = b.sizes?.[0]?.discounted || 0
       if (sort === "price-asc") return priceA - priceB
       if (sort === "price-desc") return priceB - priceA
       return (b.popular ? 1 : 0) - (a.popular ? 1 : 0)

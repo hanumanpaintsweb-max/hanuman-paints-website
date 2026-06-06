@@ -1,4 +1,5 @@
 "use client"
+import { Product } from "@/types";
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -14,7 +15,7 @@ export function PopularProducts() {
       try {
         const data = await getProducts()
         if (data) {
-          const popularList = data.filter((p: any) => p.popular).slice(0, 4)
+          const popularList = data.filter((p: { popular?: boolean }) => p.popular).slice(0, 4)
           setFeatured(popularList.length ? popularList : data.slice(0, 4))
         }
       } catch (err) {}
@@ -39,7 +40,7 @@ export function PopularProducts() {
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {featured.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
+            <ProductCard key={p.id as string} product={p} index={i} />
           ))}
         </div>
       </div>

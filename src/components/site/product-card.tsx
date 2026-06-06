@@ -1,13 +1,15 @@
 "use client"
+import { Product } from "@/types";
 
 import Link from "next/link"
 import { motion } from "motion/react"
-import { Plus, Star } from "lucide-react"
+import { Plus } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { inr } from "@/lib/format"
 import { useCart } from "@/context/CartContext"
 
-export function ProductCard({ product, index = 0 }: { product: any; index?: number }) {
+export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const { addItem } = useCart()
   
   const selectedSizeObj = product.sizes?.[0] || { size: '1 Ltr', mrp: 0, discounted: 0 }
@@ -40,9 +42,11 @@ export function ProductCard({ product, index = 0 }: { product: any; index?: numb
         </div>
 
         <Link href={`/products/${product.id}`}>
-          <img
-            src={product.image || "/placeholder.svg"}
-            alt={product.name}
+          <Image
+            src={(product.image as string) || "/placeholder.svg"}
+            alt={(product.name as string) || "Product image"}
+            width={400}
+            height={400}
             className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         </Link>

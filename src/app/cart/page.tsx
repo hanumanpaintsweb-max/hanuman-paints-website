@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { motion, AnimatePresence } from "motion/react"
 import { Minus, Plus, ShoppingBasket, Trash2, ArrowRight } from "lucide-react"
-import { useCart } from "@/context/CartContext"
+import Image from "next/image"
+import { useCart, type CartItem } from "@/context/CartContext"
 import { inr } from "@/lib/format"
 import { SiteShell } from "@/components/site/site-shell"
 import { Button } from "@/components/ui/button"
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button"
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal, discountAmount, total, DISCOUNT_PERCENT } = useCart()
 
-  if ((items as any[]).length === 0) {
+  if (items.length === 0) {
     return (
       <SiteShell>
         <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
@@ -20,7 +21,7 @@ export default function CartPage() {
           </div>
           <h2 className="mb-2 text-2xl font-bold tracking-tight text-foreground">Your cart is empty</h2>
           <p className="mb-8 max-w-[300px] text-muted-foreground text-balance">
-            Looks like you haven't added any premium paints yet.
+            Looks like you haven&apos;t added any premium paints yet.
           </p>
           <Button asChild size="lg" className="rounded-xl px-8">
             <Link href="/products">Start Shopping</Link>
@@ -41,7 +42,7 @@ export default function CartPage() {
           {/* Items */}
           <div className="flex-1 space-y-6">
             <AnimatePresence mode="popLayout">
-              {(items as any[]).map((item: any) => (
+              {items.map((item: CartItem) => (
                 <motion.div
                   key={`${item.id}-${item.selectedSize}`}
                   layout
@@ -51,9 +52,11 @@ export default function CartPage() {
                   className="flex gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
                 >
                   <div className="flex size-24 shrink-0 items-center justify-center rounded-xl bg-muted p-2 sm:size-32">
-                    <img
-                      src={item.image || "/placeholder.svg"}
+                    <Image
+                      src={(item.image as string) || "/placeholder.svg"}
                       alt={item.name}
+                      width={128}
+                      height={128}
                       className="size-full object-contain mix-blend-multiply"
                     />
                   </div>
@@ -111,7 +114,7 @@ export default function CartPage() {
             
             <div className="space-y-4">
               <div className="flex justify-between text-sm text-foreground">
-                <span className="text-muted-foreground">Subtotal ({(items as any[]).length} items)</span>
+                <span className="text-muted-foreground">Subtotal ({items.length} items)</span>
                 <span className="font-medium">{inr(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
