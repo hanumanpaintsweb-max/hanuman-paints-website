@@ -176,21 +176,26 @@ export default function BillingPage() {
       bill_number: finalBillNoStr,
       customer_name: customerName,
       customer_phone: customerPhone.replace(/\D/g,''),
-      customer_address: customerAddress,
-      customer_gstin: customerGstin,
+      customer_address: customerAddress || null,
+      customer_gstin: customerGstin || null,
       items: items,
-      subtotal: calculations.subtotal,
-      discount_amount: calculations.discount,
-      taxable_value: calculations.taxable,
-      cgst_amount: cgst,
-      sgst_amount: sgst,
-      total_amount: finalTotal,
+      subtotal: parseFloat(calculations.subtotal.toFixed(2)),
+      discount_amount: parseFloat(calculations.discount.toFixed(2)),
+      taxable_value: parseFloat(calculations.taxable.toFixed(2)),
+      cgst_amount: parseFloat(cgst.toFixed(2)),
+      sgst_amount: parseFloat(sgst.toFixed(2)),
+      total_amount: parseFloat(finalTotal.toFixed(2)),
       payment_status: paymentStatus,
       payment_method: paymentMethod,
-      order_id: linkedOrderId
+      order_id: linkedOrderId || null
     }
 
+    console.log('Saving bill data:', billData)
+
     const { data, error } = await supabase.from("bills").insert([billData]).select()
+    
+    console.log('Supabase response:', data, error)
+
     setIsSaving(false)
 
     if (error) {
