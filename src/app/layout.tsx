@@ -58,12 +58,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        {/* Sentry Debug Logs */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `console.log('Sentry DSN:', '${process.env.NEXT_PUBLIC_SENTRY_DSN || "NOT_SET"}'); console.log('Sentry initialized client:', ${Sentry.getClient() ? "true" : "false"});`
-          }}
-        />
         <AuthProvider>
           <CartProvider>
             <StoreProvider>{children}</StoreProvider>
