@@ -5,6 +5,8 @@ import { motion } from "motion/react"
 import { ArrowRight, Star, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PaintParticles } from "@/components/anim/paint-particles"
+import { useEffect, useState } from "react"
+import { getSettings } from "@/lib/settings"
 
 const swatches = ["#F97316", "#1E3A8A", "#14B8A6", "#E11D48", "#FACC15", "#0EA5E9"]
 const headline = ["Premium", "paint,", "delivered", "to", "your", "doorstep."]
@@ -19,6 +21,18 @@ const fadeUp = {
 }
 
 export function Hero() {
+  const [shopCity, setShopCity] = useState("Madhubani")
+
+  useEffect(() => {
+    async function fetchSettings() {
+      const settings = await getSettings()
+      if (settings["shop_city"]) {
+        setShopCity(settings["shop_city"])
+      }
+    }
+    fetchSettings()
+  }, [])
+
   return (
     <section className="relative overflow-hidden pt-32 pb-16 sm:pt-40 sm:pb-24">
       <PaintParticles />
@@ -36,7 +50,7 @@ export function Hero() {
             className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1.5 text-xs font-medium text-foreground backdrop-blur-md"
           >
             <span className="flex size-2 rounded-full bg-primary" />
-            India&apos;s trusted paint store, now online
+            {shopCity}&apos;s trusted paint store, now online
           </motion.div>
 
           <h1 className="mt-5 flex flex-wrap gap-x-3 text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">

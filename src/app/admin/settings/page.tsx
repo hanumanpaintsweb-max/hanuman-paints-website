@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { revalidateSettings } from "@/app/actions/settings"
 
 type SettingMap = Record<string, string>
 
@@ -85,6 +86,7 @@ export default function SettingsPage() {
     if (error) {
       toast.error("Failed to save settings")
     } else {
+      await revalidateSettings()
       toast.success("Settings saved successfully!")
       setUnsavedChanges(false)
     }

@@ -12,6 +12,7 @@ import { supabase } from "@/services/supabase"
 import { PRODUCTS } from "@/data/products"
 import { inr } from "@/lib/format"
 import { toast } from "sonner"
+import { getSettings } from "@/lib/settings"
 
 type BillItem = {
   id: string; productId: string; name: string; size: string;
@@ -57,12 +58,8 @@ export default function BillingPage() {
 
   const fetchInitialData = async () => {
     // 1. Settings
-    const { data: setts } = await supabase.from('settings').select('*')
-    if (setts) {
-      const sObj: any = {}
-      setts.forEach(s => sObj[s.key] = s.value)
-      setSettings(sObj)
-    }
+    const setts = await getSettings()
+    setSettings(setts)
 
     // 2. Bills
     const { data: bData } = await supabase.from('bills').select('*').eq('is_deleted', false).order('created_at', { ascending: false })

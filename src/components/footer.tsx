@@ -11,20 +11,26 @@ const cols = [
 ]
 
 import { useEffect, useState } from "react"
-import { getSetting } from "@/services/settingsService"
+import { getSettings } from "@/lib/settings"
 import Link from "next/link"
 
 import { usePathname } from "next/navigation"
 
 export function Footer() {
   const [whatsappNumber, setWhatsappNumber] = useState("9204367192")
+  const [shopPhone, setShopPhone] = useState("+91 00000 00000")
+  const [shopEmail, setShopEmail] = useState("hello@hanumanpaints.in")
+  const [shopAddress, setShopAddress] = useState("Main Road, Your City, India")
   const pathname = usePathname()
   const isProductsPage = pathname?.startsWith("/products")
 
   useEffect(() => {
     async function loadSettings() {
-      const num = await getSetting("whatsapp_number", "9204367192")
-      setWhatsappNumber(num)
+      const settings = await getSettings()
+      setWhatsappNumber(settings["whatsapp_number"] || "9204367192")
+      setShopPhone(settings["shop_phone"] || "+91 00000 00000")
+      setShopEmail(settings["shop_email"] || "hello@hanumanpaints.in")
+      setShopAddress(settings["shop_address"] || "Main Road, Your City, India")
     }
     loadSettings()
   }, [])
@@ -91,13 +97,13 @@ export function Footer() {
             </p>
             <ul className="mt-5 space-y-2 text-sm text-secondary-foreground/80">
               <li className="flex items-center gap-2">
-                <Phone className="size-4 text-primary" /> +91 00000 00000
+                <Phone className="size-4 text-primary" /> {shopPhone}
               </li>
               <li className="flex items-center gap-2">
-                <Mail className="size-4 text-primary" /> hello@hanumanpaints.in
+                <Mail className="size-4 text-primary" /> {shopEmail}
               </li>
-              <li className="flex items-center gap-2">
-                <MapPin className="size-4 text-primary" /> Main Road, Your City, India
+              <li className="flex items-start gap-2">
+                <MapPin className="size-4 text-primary mt-1" /> <span>{shopAddress}</span>
               </li>
             </ul>
           </div>
