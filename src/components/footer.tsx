@@ -80,16 +80,8 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <div className="grid gap-10 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-primary font-mono text-lg font-bold text-primary-foreground">
-                H
-              </span>
-              <span className="flex flex-col leading-none">
-                <span className="text-base font-bold tracking-tight">Hanuman Paints</span>
-                <span className="text-[10px] font-medium uppercase tracking-widest text-primary">
-                  Authorized Dulux Dealer
-                </span>
-              </span>
+            <div className="flex items-center">
+              <img src="/logo.svg" alt="Hanuman Paints" className="h-10 sm:h-12 w-auto" />
             </div>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-secondary-foreground/70">
               Your trusted neighbourhood paint store, now online. Genuine products, fair prices and

@@ -75,9 +75,7 @@ export function SiteNavbar() {
         }`}
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary font-mono text-lg font-bold text-primary-foreground">
-            H
-          </span>
+          <img src="/logo-icon.svg" alt="Hanuman Paints Icon" className="size-10" />
           <span className="flex flex-col leading-none">
             <span className="text-base font-bold tracking-tight text-foreground">Hanuman Paints</span>
             <span className="text-[10px] font-medium uppercase tracking-widest text-primary">
