@@ -26,7 +26,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Damp Protect 2in1",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/d3/eb/2f/2e/160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/d3/eb/2f/2e/packshot_large.png",
     "description": "Dulux Aquatech Exterior Damp Protect 2 in 1 is a high quality premium waterproofing coating that provides good water resistance when applied on both Exterior vertical walls & Roof surfaces. It's revolutionary Damp Resist Technology bridges cracks and covers the porous wall or Roof surface with a thick film that creates a durable and protective layer. This helps in preventing water seepage thus providing better waterproofing on the applied surfaces.",
     "features": [
       "8 years Waterproofing Performance",
@@ -49,7 +49,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Exterior Damp Protect Basecoat",
     "category": "Exterior",
     "categoryId": "exterior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/b8/2a/61/53/damp_protect_160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/b8/2a/61/53/damp_protect_packshot_large.png",
     "description": "Dulux Aquatech DampProtect Basecoat is an Exterior Waterproof Basecoat that can be applied on vertical as well as horizontal surfaces. Its unique AquaProtect Technology prevents the penetration of water and can handle up to 5 bar of Hydrostatic Pressure, providing waterproofing performance for up to 5 years. The basecoat is efficient in bridging the cracks of up to 1mm and provides SunReflect property that helps to reduce the surface temperature by upto 5 Degree Celsius.",
     "features": [
       "Crack bridging up to 1mm",
@@ -117,7 +117,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Flexible Waterproof Basecoat Advance",
     "category": "Waterproofing",
     "categoryId": "waterproofing",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/26/b0/d4/49/ext_advance_160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/26/b0/d4/49/ext_advance_packshot_large.png",
     "description": "Dulux Aquatech Flexible Waterproof basecoat advance is a breakthrough in waterproofing technology. Its PU based polymer matrix forms a thick, elastic, super protective film, which covers the cracks and blocks water. And the strong network of polymer fibers makes the coating tough enough for waterproofing of side walls.",
     "features": [
       "Strong reinforcing polyfibre network",
@@ -138,7 +138,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Flexible Waterproof Basecoat Neo",
     "category": "Waterproofing",
     "categoryId": "waterproofing",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/c4/b5/45/1d/neo_160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/c4/b5/45/1d/neo_packshot_large.png",
     "description": "Dulux Aquatech Flexible Waterproof basecoat Neo is a breakthrough in waterproofing technology. Its special tough polymer matrix forms a thick, elastic, super protective film, which covers the cracks and blocks water. And the strong network of polymer fibers makes the coating tough enough for waterproofing of side walls.",
     "features": [
       "Strong reinforcing polyfibre network",
@@ -205,7 +205,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Interior Waterproof Basecoat Advance",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/23/dd/ac/7c/int_advance_160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/23/dd/ac/7c/int_advance_packshot_large.png",
     "description": "Dulux Aquatech Interior Waterproof Basecoat Advance is an easy to apply, 1K film-forming waterproofing basecoat for interior surfaces which provides a long term solution against interior waterproofing problems like dampness and alkali attack, thus keeping the integrity of your paint film intact for longer period and enhancing the life of your walls",
     "features": [
       "Crackproof technology",
@@ -226,7 +226,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Repair Pro Latex",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/9d/24/f2/64/rpl_160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/9d/24/f2/64/rpl_packshot_large.png",
     "description": "Dulux Aquatech Repair Pro Latex is a superior performing modified SBR (Styrene Butadiene Rubber) based repair polymer. It is used for the repair of old concrete, columns, beams, chajjas, waterproofing of toilets, balconies and sinking areas. It reduces shrinkage of concrete & thereby does not let crack form in the concrete even after multiple years. It contains plasticizers that improves the workability of the cement mix at low water ratios, providing better cohesion & bonding.",
     "features": [
       "High water resistance"
@@ -246,7 +246,7 @@ export const PRODUCTS = [
     "name": "Dulux Aquatech Roof Waterproof",
     "category": "Waterproofing",
     "categoryId": "waterproofing",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/48/96/b2/1b/roof_160_x_160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/48/96/b2/1b/roof_packshot_large.png",
     "description": "Aquatech Roof Waterproof is a best in class product which provides protection on roofs and terraces for up to 12 years. Its unique PU Hybrid Technology forms a tougher, more elastic protective film of up to 600-800 microns over porous roof surfaces. The film is highly flexible which bridges cracks of up to 2mm preventing water seepage, carbonation and fungal attacks. The coating has got best in class adhesion and thus can be used on multiple surfaces like brickbat coba, plaster, china chips and mosaic tiles. In order to keep the surface cool during summers the coating also provides Sun Reflect of up to 10 degree Celsius.",
     "features": [
       "Crack bridging up to 2mm",
@@ -402,7 +402,7 @@ export const PRODUCTS = [
     "name": "Dulux Promise Sheen Exterior",
     "category": "Exterior",
     "categoryId": "exterior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/d9/a1/47/b4/dulux_promise_sheen_ext_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/d9/a1/47/b4/dulux_promise_sheen_ext_packshot_large.png",
     "description": "Dulux Promise Sheen Exterior Emulsion is a high quality, water based smooth emulsion paint which provides high sheen to your walls. Its Chroma Brite Glow-UV Fight Technology keeps the exterior wall colour brighter for longer. It is equipped with good coverage and good opacity formulation which gives a good finish to the walls and its unique Anti Peeling properties ensures that the paint film remains intact under the exterior weather conditions.",
     "features": [
       "Best-in-Class Sheen",
@@ -424,7 +424,7 @@ export const PRODUCTS = [
     "name": "Dulux Promise Sheen Interior",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/f7/d3/28/53/dulux_promise_sheen_int_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/f7/d3/28/53/dulux_promise_sheen_int_packshot_large.png",
     "description": "Dulux Promise Sheen Interior Emulsion is a high quality, water based acrylic emulsion paint which provides high sheen to your walls. Its Chroma Brite Glow Technology keeps the interior wall colour brighter for longer. It is  equipped with good coverage and good opacity formula which gives a rich finish to walls  and its unique Anti Chalking properties prevents the paint film from chalking giving a fresh & bright look to your walls.",
     "features": [
       "Rich and Soothing Sheen Finish",
@@ -446,7 +446,7 @@ export const PRODUCTS = [
     "name": "Dulux Promise SmartChoice Exterior",
     "category": "Exterior",
     "categoryId": "exterior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/ff/d5/d3/19/dulux_promise_sc_ext_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/ff/d5/d3/19/dulux_promise_sc_ext_packshot_large.png",
     "description": "Dulux Promise SmartChoice Exterior Emulsion is a good quality, water based emulsion paint. Equipped with good coverage and good opacity formulation, it covers a larger area in same quantity of paint and its Anti-Peeling properties ensures that the paint film remains intact giving smooth finish to your walls.",
     "features": [
       "Good coverage & Opacity",
@@ -468,7 +468,7 @@ export const PRODUCTS = [
     "name": "Dulux Promise SmartChoice Exterior Primer",
     "category": "Exterior",
     "categoryId": "exterior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/e0/9e/74/03/promise_sc_ext_primer_2025_copy_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/e0/9e/74/03/promise_sc_ext_primer_2025_copy_packshot_large.png",
     "description": "Dulux Promise Smartchoice Exterior Primer is a value for money, water-based primer for external surfaces. Its  formulation ensures superior adhesion for the paint film, thereby resisting peeling or flaking of the topcoat.",
     "features": [
       "Superior Whiteness",
@@ -489,7 +489,7 @@ export const PRODUCTS = [
     "name": "Dulux Promise SmartChoice Interior",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/15/50/74/af/dulux_promise_int_sc_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/15/50/74/af/dulux_promise_int_sc_packshot_large.png",
     "description": "Dulux Promise SmartChoice Interior Emulsion is a good quality, water based emulsion paint. Equipped with good coverage and good opacity formulation, it covers a larger area in same quantity of paint and its Anti-Chalking properties prevents the paint film from chalking giving smooth finish to your walls.",
     "features": [
       "Good coverage & Opacity",
@@ -511,7 +511,7 @@ export const PRODUCTS = [
     "name": "Dulux Promise SmartChoice Interior Primer",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/86/1d/da/fe/promise_sc_int_primer_2025_copy_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/86/1d/da/fe/promise_sc_int_primer_2025_copy_packshot_large.png",
     "description": "Dulux Promise Smartchoice Interior Primer is a value for primer having good adhesion to interior masonry surfaces, both new and previously decorated such as brickwork, plaster, cement, fibre boards, etc. Correct application of primer assures better quality and durability of the finished coat.",
     "features": [
       "Anti-Chalking",
@@ -598,7 +598,7 @@ export const PRODUCTS = [
     "name": "Dulux SuperClean",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/2a/f3/ab/f8/super_160x160px01.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/2a/f3/ab/f8/super_packshot_largepx01.png",
     "description": "Dulux SuperClean is an interior water-based, high-quality, durable, smooth emulsion paint developed using the unique High Bind Technology for decoration and protection purposes. Due to this special high bind technology, the latex particles bind together to form a compact film, which makes it harder for the stains to penetrate into the wall & thus enables easy cleaning of walls. With its Anti-Bacterial Property, it inhibits the growth of certain bacteria on the wall. Now, with new Silver Ion Technology, it comes with an added benefit of Anti-Viral property that helps to effectively work against certain Viruses. Dulux SuperClean gives a soothing sheen and a smooth finish to the walls, also its high washability gives an easy to maintain and clean walls which have a fresh look for many years to come.",
     "features": [
       "High Washability",
@@ -647,7 +647,7 @@ export const PRODUCTS = [
     "name": "Dulux SuperCover Ultra",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/22/32/45/9c/supercover_ultra_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/22/32/45/9c/supercover_ultra_packshot_large.png",
     "description": "Dulux SuperCover Ultra is a smooth premium interior emulsion for walls and ceilling that enables you to bring home the long-lasting colors. Its Silicon technology and Color guard technology ensure that these colors are protected from daily wear and tear and last longer while providing high whiteness and hiding.",
     "features": [
       "Silicone technology",
@@ -673,7 +673,7 @@ export const PRODUCTS = [
     "name": "Dulux Velvet Touch Eterna",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/be/21/08/fa/vt_eterna_tc160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/be/21/08/fa/vt_eterna_tcpackshot_large.png",
     "description": "",
     "features": [
       "Tru Colour+ with anti oxidants for long lasting richness and vibrancy of colours",
@@ -721,7 +721,7 @@ export const PRODUCTS = [
     "name": "Dulux Weathershield Alkali Bloc PU+ Primer",
     "category": "Primer",
     "categoryId": "primer",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/af/49/64/76/pu_plus_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/af/49/64/76/pu_plus_packshot_large.png",
     "description": "Dulux Weathershield Alkali Bloc PU+ Exterior Primer is a superior quality, high-performance priming cum sealing system suitable for applications on external plaster surface to improve adhesion between wall and topcoat material. Enriched with Polyurethane technology, the primer penetrates the substrate effectively, sealing its pores. This results in a smooth, even topcoat with an impeccable finish.This primer is specially designed to give up to 10X water resistance against ordinary primers and excellent Alkali resistance to exterior masonry substrate, thus resists peeling or flaking of topcoat and enhances its life.",
     "features": [
       "PU Reinforced Technology",
@@ -767,7 +767,7 @@ export const PRODUCTS = [
     "name": "Dulux Weathershield Prime Coat",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/67/76/46/a6/prime_coat_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/67/76/46/a6/prime_coat_packshot_large.png",
     "description": "",
     "features": [
       "Superior Adhesion",
@@ -790,7 +790,7 @@ export const PRODUCTS = [
     "name": "Dulux Weathershield Protect Dustproof",
     "category": "Interior",
     "categoryId": "interior",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/4d/03/05/f0/dust_proof_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/4d/03/05/f0/dust_proof_packshot_large.png",
     "description": "Dulux Weathershield Protect Dustproof (upgrade of Dulux Weathershield Protect) is a premium exterior acrylic emulsion specially designed for protection against the extreme weather elements like dust and sunlight. It has been enriched with Dust Shield Technology which resists dust from settling onto the exterior walls. Super durable binders that provide extreme protection against efflorescence & Anti fade colours that remain on the walls for longer periods of time.",
     "features": [
       "6 Years Warranty",
@@ -858,7 +858,7 @@ export const PRODUCTS = [
     "name": "Duwel Pink Wood Primer",
     "category": "Primer",
     "categoryId": "primer",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/fd/a7/8b/08/pink_wood_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/fd/a7/8b/08/pink_wood_packshot_large.png",
     "description": "",
     "features": [
       "Superior Adhesion",
@@ -880,7 +880,7 @@ export const PRODUCTS = [
     "name": "Duwel White Primer (Farco)",
     "category": "Primer",
     "categoryId": "primer",
-    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/8f/89/17/5d/white_pimer_160x160.png",
+    "image": "https://msp.images.akzonobel.com/prd/dh/aindlx/packshots/8f/89/17/5d/white_pimer_packshot_large.png",
     "description": "",
     "features": [
       "Good adhesion",

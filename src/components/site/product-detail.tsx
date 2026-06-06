@@ -68,31 +68,31 @@ export function ProductDetail({ product }: { product: any }) {
             {product.name}
           </h1>
           <div className="mt-3 flex items-center gap-3 text-sm">
-            <span className="flex items-center gap-1 rounded-lg bg-secondary px-2 py-1 text-secondary-foreground">
-              <Star className="size-3.5 fill-primary text-primary" />
-              <span className="font-semibold">4.8</span>
-            </span>
-            <span className="text-muted-foreground">120 reviews</span>
-            <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground">{product.subcategory || product.category}</span>
           </div>
 
           <div className="mt-5 flex items-end gap-3">
-            <AnimatePresence mode="popLayout">
-              <motion.span
-                key={price}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                className="text-3xl font-bold text-foreground"
-              >
-                {inr(price)}
-              </motion.span>
-            </AnimatePresence>
-            <span className="mb-1 text-base text-muted-foreground line-through">{inr(mrp)}</span>
-            <span className="mb-1 text-sm font-semibold text-primary">
-              {off}% off
-            </span>
+            {price === 0 ? (
+              <span className="text-2xl font-bold text-orange-500">Price on Request</span>
+            ) : (
+              <>
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={price}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    className="text-3xl font-bold text-foreground"
+                  >
+                    {inr(price)}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="mb-1 text-base text-muted-foreground line-through">{inr(mrp)}</span>
+                <span className="mb-1 text-sm font-semibold text-primary">
+                  {off}% off
+                </span>
+              </>
+            )}
           </div>
 
           <p className="mt-4 text-pretty text-sm leading-relaxed text-muted-foreground">{product.description}</p>
@@ -157,7 +157,7 @@ export function ProductDetail({ product }: { product: any }) {
               </button>
             </div>
             <div className="relative flex-1">
-              <Button onClick={handleAdd} size="lg" className="w-full gap-2 rounded-xl">
+              <Button onClick={handleAdd} size="lg" className="w-full gap-2 rounded-xl" disabled={price === 0}>
                 <ShoppingCart className="size-4" />
                 Add to cart
               </Button>

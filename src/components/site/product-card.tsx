@@ -49,9 +49,6 @@ export function ProductCard({ product, index = 0 }: { product: any; index?: numb
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Star className="size-3.5 fill-primary text-primary" />
-          <span className="font-medium text-foreground">4.8</span>
-          <span>·</span>
           <span className="truncate">{product.subcategory || product.finish || product.category}</span>
         </div>
         <Link href={`/products/${product.id}`}>
@@ -61,12 +58,19 @@ export function ProductCard({ product, index = 0 }: { product: any; index?: numb
         </Link>
         <div className="mt-auto flex items-center justify-between pt-4">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold text-foreground">{inr(price)}</span>
-            <span className="text-xs text-muted-foreground line-through">{inr(mrp)}</span>
+            {price === 0 ? (
+              <span className="text-sm font-bold text-orange-500">Price on Request</span>
+            ) : (
+              <>
+                <span className="text-lg font-bold text-foreground">{inr(price)}</span>
+                <span className="text-xs text-muted-foreground line-through">{inr(mrp)}</span>
+              </>
+            )}
           </div>
           <Button
             size="icon"
             className="size-9 rounded-xl"
+            disabled={price === 0}
             aria-label={`Add ${product.name} to cart`}
             onClick={() => addItem({ ...product, selectedSize: selectedSizeObj.size, mrp: mrp, id: product.id.toString() })}
           >
