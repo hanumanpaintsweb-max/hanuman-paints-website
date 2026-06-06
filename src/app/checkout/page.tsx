@@ -117,15 +117,31 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.name.trim()) e.name = "Name required"
-    if (!/^[6-9]\d{9}$/.test(form.phone)) e.phone = "Valid 10-digit number required"
+    
+    const sanitizedName = form.name.replace(/[^a-zA-Z\s]/g, '').trim();
+    if (!sanitizedName || sanitizedName.length < 2) e.name = "Valid name required (letters only)"
+    
+    const sanitizedPhone = form.phone.replace(/\D/g, '');
+    if (!/^[6-9]\d{9}$/.test(sanitizedPhone)) e.phone = "Valid 10-digit number required"
+    
     if (!form.address.trim()) e.address = "Address required"
-    if (!/^\d{6}$/.test(form.pincode)) e.pincode = "Valid 6-digit pincode required"
+    
+    const sanitizedPincode = form.pincode.replace(/\D/g, '');
+    if (!/^\d{6}$/.test(sanitizedPincode)) e.pincode = "Valid 6-digit pincode required"
+    
     return e
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+    let value = e.target.value;
+    
+    if (e.target.name === 'phone' || e.target.name === 'pincode') {
+      value = value.replace(/\D/g, '');
+    } else if (e.target.name === 'name') {
+      value = value.replace(/[^a-zA-Z\s]/g, '');
+    }
+
+    setForm((f) => ({ ...f, [e.target.name]: value }))
     setErrors((err) => ({ ...err, [e.target.name]: "" }))
   }
 
@@ -139,13 +155,18 @@ export default function CheckoutPage() {
     setLoading(true)
     const oid = "HP" + Date.now().toString().slice(-6)
 
+    const sanitizedName = form.name.replace(/[^a-zA-Z\s]/g, '').trim();
+    const sanitizedPhone = form.phone.replace(/\D/g, '');
+    const sanitizedPincode = form.pincode.replace(/\D/g, '');
+    const sanitizedAddress = form.address.trim();
+
     const { error } = await supabase.from("orders").insert([
       {
         order_id: oid,
-        customer_name: form.name,
-        customer_phone: form.phone,
-        customer_address: form.address,
-        customer_pincode: form.pincode,
+        customer_name: sanitizedName,
+        customer_phone: sanitizedPhone,
+        customer_address: sanitizedAddress,
+        customer_pincode: sanitizedPincode,
         items: items,
         subtotal: subtotal,
         discount_amount: discountAmount + couponDiscountAmount,
