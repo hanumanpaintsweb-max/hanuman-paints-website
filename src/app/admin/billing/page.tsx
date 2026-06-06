@@ -172,7 +172,7 @@ export default function BillingPage() {
         productId: item.id || "",
         name: item.name,
         size: item.size,
-        qty: item.quantity || item.qty || 1,
+        qty: item.quantity || 1,
         mrp: item.price || item.mrp || 0,
         taxRate: product && TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
       }
