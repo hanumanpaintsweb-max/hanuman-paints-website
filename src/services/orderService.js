@@ -15,18 +15,18 @@ export const placeOrder = async (orderData) => {
 export const getAllOrders = async () => {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*, products(*))')
+    .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 };
 
-// Get orders by phone (customer)
 export const getOrdersByPhone = async (phone) => {
+  const rawPhone = phone.replace(/\D/g, '').slice(-10);
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*, products(*))')
-    .eq('customer_phone', phone)
+    .select('*')
+    .or(`customer_phone.eq.${rawPhone},customer_phone.eq.+91${rawPhone},customer_phone.eq.91${rawPhone}`)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;

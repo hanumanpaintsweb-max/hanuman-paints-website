@@ -30,9 +30,10 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("")
   const [animating, setAnimating] = useState(false)
 
-  // Trigger confetti when ordered becomes true
+  // Trigger confetti and scroll to top when ordered becomes true
   useEffect(() => {
     if (ordered) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
       const duration = 3 * 1000
       const animationEnd = Date.now() + duration
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }

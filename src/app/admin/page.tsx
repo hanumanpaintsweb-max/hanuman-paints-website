@@ -35,6 +35,56 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders()
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      Notification.requestPermission()
+    }
+
+    const playNotification = () => {
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+        const ctx = new AudioContext()
+        const oscillator = ctx.createOscillator()
+        const gain = ctx.createGain()
+        oscillator.connect(gain)
+        gain.connect(ctx.destination)
+        oscillator.frequency.value = 800
+        oscillator.type = 'sine'
+        gain.gain.setValueAtTime(0.3, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
+        oscillator.start(ctx.currentTime)
+        oscillator.stop(ctx.currentTime + 0.5)
+      } catch (e) {
+        console.error("Audio API error", e)
+      }
+    }
+
+    const channel = supabase
+      .channel('orders')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'orders'
+      }, (payload) => {
+        const newOrder = payload.new
+        setOrders(prev => [newOrder, ...prev])
+        
+        playNotification()
+        
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+          new Notification('Hanuman Paints', {
+            body: 'Naya order aaya! 🎨',
+            icon: '/favicon.ico'
+          })
+        }
+        
+        toast.success("New Order Received!", { description: `Order #${newOrder.order_id} from ${newOrder.customer_name}` })
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const updateStatus = async (id: string, newStatus: string) => {
