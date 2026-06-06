@@ -40,6 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const adminLogout = useCallback(async () => {
     try {
+      const { logoutAdmin } = await import('@/app/actions/auth');
+      await logoutAdmin();
       const { default: supabase } = await import('../services/supabase');
       if (supabase) await supabase.auth.signOut();
     } catch {}

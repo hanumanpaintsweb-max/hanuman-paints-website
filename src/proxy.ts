@@ -25,7 +25,6 @@ export function proxy(request: NextRequest) {
     adminPath !== '/admin/login'
   ) {
     const adminSession = request.cookies.get('hp-admin')
-
     if (!adminSession) {
       return NextResponse.redirect(
         new URL('/admin/login', request.url)
