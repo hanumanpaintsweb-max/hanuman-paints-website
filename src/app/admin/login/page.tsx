@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
       
       if (res.success) {
         setAdminContext(res.user, rememberMe)
-        router.push("/admin")
+        window.location.href = "/admin"
       } else {
         setError(res.message || "Failed to login.")
         triggerShake()

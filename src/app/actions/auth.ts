@@ -68,7 +68,7 @@ type AdminAuthResult =
 
 export async function authenticateAdmin(email: string, password: string): Promise<AdminAuthResult> {
   try {
-    const cleanEmail = email.trim();
+    const cleanEmail = email.trim().toLowerCase();
     const { data: user, error } = await supabase
       .from("admin_users")
       .select("*")

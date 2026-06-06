@@ -38,17 +38,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true)
-    if (isAdmin) {
-      fetchSidebarData()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin])
+  }, [])
 
   useEffect(() => {
-    if (mounted && !isAdmin && pathname !== "/admin/login") {
-      router.push("/admin/login")
+    if (mounted) {
+      if (!isAdmin && pathname !== "/admin/login") {
+        router.push("/admin/login")
+      } else if (isAdmin) {
+        fetchSidebarData()
+      }
     }
-  }, [isAdmin, mounted, router, pathname])
+  }, [isAdmin, mounted, pathname, router])
 
   const fetchSidebarData = async () => {
     try {
