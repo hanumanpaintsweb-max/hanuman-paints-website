@@ -5,17 +5,18 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { 
-  Package, LogOut, Ticket, LineChart, FileText, 
-  Settings, ShoppingBag, Menu, X 
+  LogOut, Menu, X, LayoutDashboard, ShoppingBag, Receipt, BarChart3, Package, Users, Tag, Settings
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 
 const NAV_ITEMS = [
   { label: "Orders", href: "/admin", icon: ShoppingBag },
-  { label: "Billing", href: "/admin/billing", icon: FileText },
-  { label: "Dashboard", href: "/admin/dashboard", icon: LineChart },
-  { label: "Products", href: "/admin/products", icon: Package },
-  { label: "Coupons", href: "/admin/coupons", icon: Ticket },
+  { label: "Billing", href: "/admin/billing", icon: Receipt },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { label: "Inventory", href: "/admin/inventory", icon: Package },
+  { label: "Customers", href: "/admin/customers", icon: Users },
+  { label: "Coupons", href: "/admin/coupons", icon: Tag },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
