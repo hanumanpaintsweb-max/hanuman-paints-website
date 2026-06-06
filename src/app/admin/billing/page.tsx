@@ -67,25 +67,23 @@ export default function BillingPage() {
 
     // 2. Bills
     const { data: bData } = await supabase.from('bills').select('*').eq('is_deleted', false).order('created_at', { ascending: false })
-    if (bData) {
-      setBills(bData)
-      generateNextBillNo(bData)
-    } else {
-      generateNextBillNo([])
-    }
+    if (bData) setBills(bData)
+    
+    await fetchAndSetNextBillNo()
 
     // 3. Orders (for Tab 2)
     const { data: oData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
     if (oData) setOrders(oData)
   }
 
-  const generateNextBillNo = (existingBills: any[]) => {
+  const fetchAndSetNextBillNo = async () => {
     const year = new Date().getFullYear()
+    const { data } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
     let maxNum = 0
-    existingBills.forEach(b => {
-      const match = b.bill_number.match(new RegExp(`HP-${year}-(\\d+)`))
-      if (match) maxNum = Math.max(maxNum, parseInt(match[1]))
-    })
+    if (data && data.length > 0) {
+      const match = data[0].bill_number.match(/-(\d+)$/)
+      if (match) maxNum = parseInt(match[1])
+    }
     setBillNoStr(`HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
   }
 
@@ -162,8 +160,20 @@ export default function BillingPage() {
     }
 
     setIsSaving(true)
+    
+    // Fetch latest number right before saving to prevent duplicates
+    const year = new Date().getFullYear()
+    const { data: latestData } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+    let maxNum = 0
+    if (latestData && latestData.length > 0) {
+      const match = latestData[0].bill_number.match(/-(\d+)$/)
+      if (match) maxNum = parseInt(match[1])
+    }
+    const finalBillNoStr = `HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`
+    setBillNoStr(finalBillNoStr)
+
     const billData = {
-      bill_number: billNoStr,
+      bill_number: finalBillNoStr,
       customer_name: customerName,
       customer_phone: customerPhone.replace(/\D/g,''),
       customer_address: customerAddress,
@@ -184,6 +194,11 @@ export default function BillingPage() {
     setIsSaving(false)
 
     if (error) {
+      console.error('Supabase error:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
+
       if (error.code === '23505') toast.error("Bill number already exists!") // Unique constraint
       else toast.error("Failed to save bill")
     } else {
@@ -215,7 +230,7 @@ export default function BillingPage() {
     window.open(url, "_blank")
   }
 
-  const resetForm = () => {
+  const resetForm = async () => {
     setCustomerName("")
     setCustomerPhone("")
     setCustomerAddress("")
@@ -226,7 +241,7 @@ export default function BillingPage() {
     setGlobalDiscount(5)
     setLinkedOrderId(null)
     setSavedBillData(null)
-    generateNextBillNo(bills)
+    await fetchAndSetNextBillNo()
   }
 
   const exportToExcel = () => {
