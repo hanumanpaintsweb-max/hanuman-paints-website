@@ -6,7 +6,9 @@ export const metadata: Metadata = {
   description: 'Hanuman Paints Admin',
   robots: 'noindex, nofollow',
   icons: {
-    icon: '/logo-icon.svg',
+    icon: [
+      { url: '/logo-icon.svg', type: 'image/svg+xml' }
+    ],
   }
 }
 

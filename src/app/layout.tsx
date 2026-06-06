@@ -35,9 +35,9 @@ export const metadata: Metadata = {
   },
   generator: 'v0.app',
   icons: {
-    icon: '/logo-icon.svg',
-    shortcut: '/logo-icon.svg',
-    apple: '/logo-icon.svg',
+    icon: [
+      { url: '/logo-icon.svg', type: 'image/svg+xml' }
+    ],
   },
 }
 
