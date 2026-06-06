@@ -103,6 +103,12 @@ export function ProductDetail({ product }: { product: any }) {
             </ul>
           )}
 
+          {product.coverage && (
+            <div className="mt-4 text-sm text-muted-foreground flex gap-2 items-center">
+              <span className="font-semibold text-foreground">Coverage:</span> {product.coverage}
+            </div>
+          )}
+
           {/* size */}
           {product.sizes && product.sizes.length > 0 && (
             <div className="mt-6">
