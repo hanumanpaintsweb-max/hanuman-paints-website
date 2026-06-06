@@ -105,10 +105,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between border-b border-border/60 px-6">
           <div className="flex items-center gap-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-              <Package className="size-4 text-primary" />
-            </div>
-            <span className="font-bold tracking-tight text-foreground truncate max-w-[140px]">{shopName}</span>
+            <img src="/logo.svg" alt="Hanuman Paints Logo" className="h-8 w-auto" />
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
             <X className="size-5" />
