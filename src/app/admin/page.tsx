@@ -524,7 +524,28 @@ export default function AdminOrdersPage() {
                 </section>
               </div>
 
-              <div className="p-6 border-t border-border bg-card flex gap-4">
+              <div className="p-6 border-t border-border bg-card flex flex-col sm:flex-row gap-4">
+                {["Accepted", "Out for Delivery", "Delivered"].includes(viewOrder.status) && (
+                  <Button 
+                    onClick={() => {
+                      const name = viewOrder.customer_name || "Customer";
+                      const id = viewOrder.order_id;
+                      let msg = "";
+                      if (viewOrder.status === "Accepted") {
+                        msg = `Namaste ${name}! 🎨\nAapka Hanuman Paints order #${id} accept ho gaya hai.\nJald hi deliver karenge.\n- Hanuman Paints, Madhubani`;
+                      } else if (viewOrder.status === "Out for Delivery") {
+                        msg = `Namaste ${name}! 🚚\nAapka order #${id} ab delivery pe hai.\nAaj deliver ho jaayega.\n- Hanuman Paints, Madhubani`;
+                      } else if (viewOrder.status === "Delivered") {
+                        msg = `Namaste ${name}! ✅\nAapka order #${id} deliver ho gaya.\nShukriya! Dobara zaroor aayein.\n- Hanuman Paints, Madhubani`;
+                      }
+                      const phone = viewOrder.customer_phone?.replace(/\D/g, '') || "";
+                      window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                    }}
+                    className="rounded-xl flex-1 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold"
+                  >
+                    <MessageCircle className="size-4" /> Send WhatsApp Update
+                  </Button>
+                )}
                 <Button variant="outline" onClick={() => window.print()} className="rounded-xl flex-1 gap-2 text-foreground font-semibold">
                   <Printer className="size-4" /> Print Order
                 </Button>
