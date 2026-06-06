@@ -11,7 +11,7 @@ export default function ColoursPage() {
 
   return (
     <SiteShell>
-      <div className="relative min-h-screen bg-muted/20">
+      <div className="relative min-h-screen bg-muted/20 pt-20">
         {/* Header */}
         <section className="bg-primary px-4 py-16 text-primary-foreground sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl text-center">

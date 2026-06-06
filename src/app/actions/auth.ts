@@ -23,7 +23,8 @@ export async function loginUser(phone: string, name: string) {
       .single()
 
     if (insertError || !newUser) {
-      return { error: "Failed to create user account" }
+      console.error("Supabase user insert error:", insertError)
+      return { error: `Failed to create user account: ${insertError?.message || "Unknown error"}` }
     }
     user = newUser
   }
