@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { 
@@ -105,7 +106,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between border-b border-border/60 px-6">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Hanuman Paints Logo" className="h-8 w-auto" />
+            <Image src="/logo.svg" alt="Hanuman Paints Logo" width={160} height={32} className="h-8 w-auto" />
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
             <X className="size-5" />

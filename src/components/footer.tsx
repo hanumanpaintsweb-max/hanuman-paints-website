@@ -13,6 +13,7 @@ const cols = [
 import { useEffect, useState } from "react"
 import { getSettings } from "@/lib/settings"
 import Link from "next/link"
+import Image from "next/image"
 
 import { usePathname } from "next/navigation"
 
@@ -81,7 +82,7 @@ export function Footer() {
         <div className="grid gap-10 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <div className="flex items-center">
-              <img src="/logo.svg" alt="Hanuman Paints" className="h-10 sm:h-12 w-auto" />
+              <Image src="/logo.svg" alt="Hanuman Paints" width={200} height={48} className="h-10 sm:h-12 w-auto" />
             </div>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-secondary-foreground/70">
               Your trusted neighbourhood paint store, now online. Genuine products, fair prices and

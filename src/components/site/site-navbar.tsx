@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
@@ -75,7 +76,7 @@ export function SiteNavbar() {
         }`}
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <img src="/logo-icon.svg" alt="Hanuman Paints Icon" className="size-10" />
+          <Image src="/logo-icon.svg" alt="Hanuman Paints Icon" width={40} height={40} className="size-10" />
           <span className="flex flex-col leading-none">
             <span className="text-base font-bold tracking-tight text-foreground">Hanuman Paints</span>
             <span className="text-[10px] font-medium uppercase tracking-widest text-primary">
