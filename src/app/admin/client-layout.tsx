@@ -105,14 +105,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         }`}
       >
         <div className="flex h-16 items-center justify-between border-b border-border/60 px-6">
-          <div className="flex items-center gap-2.5">
-            <Image src="/logo-icon.svg" alt="Hanuman Paints Icon" width={40} height={40} className="size-10" />
-            <span className="flex flex-col leading-none">
-              <span className="text-base font-bold tracking-tight text-foreground">Hanuman Paints</span>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-primary">
-                Authorized Dulux Dealer
-              </span>
-            </span>
+          <div className="flex items-center gap-3">
+            <Image src="/logo-icon.svg" alt="Hanuman Paints" width={32} height={32} className="size-8" />
+            <span className="font-bold tracking-tight text-foreground truncate max-w-[140px]">{shopName}</span>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
             <X className="size-5" />
