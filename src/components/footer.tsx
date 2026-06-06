@@ -10,7 +10,27 @@ const cols = [
   { title: "Support", items: ["Delivery info", "Returns", "Color help", "FAQs"] },
 ]
 
+import { useEffect, useState } from "react"
+import { getSetting } from "@/services/settingsService"
+import Link from "next/link"
+
+import { usePathname } from "next/navigation"
+
 export function Footer() {
+  const [whatsappNumber, setWhatsappNumber] = useState("9204367192")
+  const pathname = usePathname()
+  const isProductsPage = pathname?.startsWith("/products")
+
+  useEffect(() => {
+    async function loadSettings() {
+      const num = await getSetting("whatsapp_number", "9204367192")
+      setWhatsappNumber(num)
+    }
+    loadSettings()
+  }, [])
+
+  const waLink = `https://wa.me/91${whatsappNumber}?text=Namaste%20Hanuman%20Paints!%20Mujhe%20paint%20selection%20mein%20madad%20chahiye.`
+
   return (
     <footer className="bg-secondary text-secondary-foreground">
       {/* CTA */}
@@ -29,16 +49,23 @@ export function Footer() {
             Get genuine Dulux paint delivered today with expert advice every step of the way.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" variant="secondary" className="group w-full gap-2 rounded-xl sm:w-auto">
-              Start shopping
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+            {!isProductsPage && (
+              <Button asChild size="lg" variant="secondary" className="group w-full gap-2 rounded-xl sm:w-auto">
+                <Link href="/products">
+                  Start Shopping
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            )}
             <Button
+              asChild
               size="lg"
               variant="outline"
               className="w-full rounded-xl border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground sm:w-auto"
             >
-              Book a consultation
+              <a href={waLink} target="_blank" rel="noopener noreferrer">
+                Consult on WhatsApp
+              </a>
             </Button>
           </div>
         </motion.div>

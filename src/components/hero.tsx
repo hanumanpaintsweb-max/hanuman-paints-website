@@ -73,31 +73,10 @@ export function Hero() {
           >
             <Button asChild size="lg" className="group gap-2 rounded-xl text-base">
               <Link href="/products">
-                Shop now
+                Start Shopping
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
-          </motion.div>
-
-          <motion.div
-            custom={11}
-            initial="hidden"
-            animate="show"
-            variants={fadeUp}
-            className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm"
-          >
-            <div className="flex items-center gap-2 text-foreground">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="size-4 fill-primary text-primary" />
-                ))}
-              </div>
-              <span className="font-medium">4.9 / 5 from 2,300+ customers</span>
-            </div>
-            <div className="flex items-center gap-2 text-foreground">
-              <Truck className="size-4 text-primary" />
-              <span className="font-medium">Free delivery over ₹2,000</span>
-            </div>
           </motion.div>
         </div>
 
@@ -137,16 +116,6 @@ export function Hero() {
                 ))}
               </div>
             </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-            className="absolute -left-3 top-8 hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 shadow-xl backdrop-blur-xl sm:block"
-          >
-            <p className="text-2xl font-bold text-foreground">15+ yrs</p>
-            <p className="text-xs text-muted-foreground">Serving the city</p>
           </motion.div>
         </motion.div>
       </div>

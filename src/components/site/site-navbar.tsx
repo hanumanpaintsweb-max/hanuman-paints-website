@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Menu, Phone, ShoppingCart, User, X } from "lucide-react"
+import { Menu, Phone, ShoppingCart, User, X, LogOut, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/CartContext"
+import { getSession, logoutUser } from "@/app/actions/auth"
 
 const links = [
   { label: "Products", href: "/products" },
@@ -17,8 +18,12 @@ const links = [
 export function SiteNavbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const [session, setSession] = useState<any>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { itemCount: cartCount } = useCart()
+  const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -28,6 +33,32 @@ export function SiteNavbar() {
   }, [])
 
   useEffect(() => setOpen(false), [pathname])
+
+  useEffect(() => {
+    async function fetchSession() {
+      const s = await getSession()
+      setSession(s)
+    }
+    fetchSession()
+  }, [pathname])
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleLogout = async () => {
+    await logoutUser()
+    setSession(null)
+    setProfileOpen(false)
+    router.push("/")
+    router.refresh()
+  }
 
   return (
     <motion.header
@@ -79,13 +110,56 @@ export function SiteNavbar() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Link
-            href="/admin/login"
-            className="hidden size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted sm:flex"
-            aria-label="Admin"
-          >
-            <User className="size-5" />
-          </Link>
+          <div className="relative hidden sm:block" ref={profileRef}>
+            {session ? (
+              <button
+                onClick={() => setProfileOpen((v) => !v)}
+                className="flex size-9 items-center justify-center rounded-lg text-primary bg-primary/10 transition-colors hover:bg-primary/20"
+                aria-label="Profile"
+              >
+                <User className="size-5" />
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="flex size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted"
+                aria-label="Login"
+              >
+                <User className="size-5" />
+              </Link>
+            )}
+
+            <AnimatePresence>
+              {profileOpen && session && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card p-2 shadow-xl"
+                >
+                  <div className="px-3 py-2 text-sm">
+                    <p className="font-bold text-foreground">{session.name}</p>
+                    <p className="text-xs text-muted-foreground">+91 {session.phone}</p>
+                  </div>
+                  <div className="my-1 h-px bg-border" />
+                  <Link
+                    href="/my-orders"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Package className="size-4" /> My Orders
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10"
+                  >
+                    <LogOut className="size-4" /> Logout
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <Button asChild size="sm" className="relative gap-2 rounded-lg">
             <Link href="/cart">
               <ShoppingCart className="size-4" />
@@ -115,6 +189,20 @@ export function SiteNavbar() {
             exit={{ opacity: 0, y: -10 }}
             className="mx-auto mt-2 max-w-7xl rounded-2xl border border-border/60 bg-background/90 p-2 shadow-lg backdrop-blur-xl lg:hidden"
           >
+            {session ? (
+              <div className="px-4 py-3">
+                <p className="font-bold text-foreground">{session.name}</p>
+                <p className="text-sm text-muted-foreground">+91 {session.phone}</p>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-muted"
+              >
+                <User className="size-4" /> Login / Signup
+              </Link>
+            )}
+            <div className="my-1 h-px bg-border lg:hidden" />
             {links.map((l) => (
               <Link
                 key={l.label}
@@ -124,12 +212,14 @@ export function SiteNavbar() {
                 {l.label}
               </Link>
             ))}
-            <a
-              href="tel:+910000000000"
-              className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-primary"
-            >
-              <Phone className="size-4" /> Call to order
-            </a>
+            {session && (
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10"
+              >
+                <LogOut className="size-4" /> Logout
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -34,7 +34,6 @@ export function ProductsBrowser() {
   const [activeCats, setActiveCats] = useState<string[]>(initialCat ? [initialCat] : [])
   const [query, setQuery] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)
-  const [maxPrice, setMaxPrice] = useState(30000)
   const [sort, setSort] = useState("popular")
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [products, setProducts] = useState<any[]>([])
@@ -55,13 +54,12 @@ export function ProductsBrowser() {
   }, [])
 
   const toggleCat = (id: string) =>
-    setActiveCats((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
+    setActiveCats((prev) => (prev.includes(id) ? [] : [id]))
 
   const filtered = useMemo(() => {
     let list = products.filter((p: any) => {
       if (activeCats.length && !activeCats.includes(p.categoryId)) return false
-      const price = p.sizes[0]?.discounted || 0
-      if (price > maxPrice) return false
+
       if (query && !`${p.name} ${p.subcategory || ""} ${p.category}`.toLowerCase().includes(query.toLowerCase())) return false
       return true
     })
@@ -73,7 +71,7 @@ export function ProductsBrowser() {
       return (b.popular ? 1 : 0) - (a.popular ? 1 : 0)
     })
     return list
-  }, [activeCats, maxPrice, query, sort, products])
+  }, [activeCats, query, sort, products])
 
   const Filters = (
     <div className="flex flex-col gap-6">
@@ -93,26 +91,12 @@ export function ProductsBrowser() {
           ))}
         </div>
       </div>
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-foreground">Max price</h3>
-        <input
-          type="range"
-          min={500}
-          max={30000}
-          step={500}
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-[var(--color-primary)]"
-        />
-        <p className="mt-2 text-sm font-medium text-foreground">Up to {inr(maxPrice)}</p>
-      </div>
-      {(activeCats.length > 0 || maxPrice < 30000) && (
+      {activeCats.length > 0 && (
         <Button
           variant="outline"
           className="rounded-xl"
           onClick={() => {
             setActiveCats([])
-            setMaxPrice(30000)
           }}
         >
           Clear filters
@@ -122,7 +106,7 @@ export function ProductsBrowser() {
   )
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-28 pb-16 sm:px-6 sm:pt-32">
+    <div className="mx-auto max-w-7xl px-4 pt-36 pb-16 sm:px-6 sm:pt-40">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">All Products</h1>
