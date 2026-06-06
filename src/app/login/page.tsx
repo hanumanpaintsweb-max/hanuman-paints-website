@@ -26,15 +26,19 @@ export default function LoginPage() {
     setError("")
 
     try {
-      await loginUser(phone, name)
+      const res = await loginUser(phone, name)
+      if (res?.error) {
+        if (res.error.includes("Name is required")) {
+          setError("Looks like you are new! Please enter your name to continue.")
+        } else {
+          setError(res.error)
+        }
+        return
+      }
       router.push("/")
       router.refresh()
     } catch (err: any) {
-      if (err.message.includes("Name is required")) {
-        setError("Looks like you are new! Please enter your name to continue.")
-      } else {
-        setError(err.message || "Failed to login. Please try again.")
-      }
+      setError("Failed to login. Please try again.")
     } finally {
       setLoading(false)
     }

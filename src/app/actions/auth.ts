@@ -13,7 +13,7 @@ export async function loginUser(phone: string, name: string) {
 
   if (error || !user) {
     if (!name) {
-      throw new Error("Name is required for first-time login")
+      return { error: "Name is required for first-time login" }
     }
     // Create new user
     const { data: newUser, error: insertError } = await supabase
@@ -23,7 +23,7 @@ export async function loginUser(phone: string, name: string) {
       .single()
 
     if (insertError || !newUser) {
-      throw new Error("Failed to create user account")
+      return { error: "Failed to create user account" }
     }
     user = newUser
   }
