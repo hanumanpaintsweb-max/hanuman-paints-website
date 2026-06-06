@@ -52,10 +52,18 @@ export default function CheckoutPage() {
 
   const couponDiscountAmount = (() => {
     if (!couponApplied || !couponData) return 0
-    if (couponData.discount_type === "percentage") {
-      return Math.round((total * couponData.discount_value) / 100)
+    let discount = 0
+    if (couponData.coupon_type === "percentage" || couponData.coupon_type === "first_order") {
+      discount = Math.round((total * couponData.discount_value) / 100)
+    } else if (couponData.coupon_type === "free_delivery") {
+      return 0 // Free delivery handled separately if there was a delivery charge
+    } else {
+      discount = couponData.discount_value
     }
-    return Math.min(couponData.discount_value, total)
+    if (couponData.max_discount_cap && discount > couponData.max_discount_cap) {
+      discount = couponData.max_discount_cap
+    }
+    return Math.min(discount, total)
   })()
 
   const finalTotal = Math.max(0, total - couponDiscountAmount)
@@ -160,6 +168,23 @@ export default function CheckoutPage() {
     const sanitizedPincode = form.pincode.replace(/\D/g, '');
     const sanitizedAddress = form.address.trim();
 
+    // Validate per_customer_limit before placing order
+    if (couponApplied && couponData && couponData.per_customer_limit) {
+      const { count, error: countErr } = await supabase
+        .from("coupon_usage")
+        .select("*", { count: "exact", head: true })
+        .eq("coupon_id", couponData.id)
+        .eq("customer_phone", sanitizedPhone)
+      
+      if (countErr) console.error("Error checking coupon usage:", countErr)
+      
+      if (count !== null && count >= couponData.per_customer_limit) {
+        alert(`You have already used this coupon the maximum allowed times (${couponData.per_customer_limit}).`)
+        setLoading(false)
+        return
+      }
+    }
+
     const { error } = await supabase.from("orders").insert([
       {
         order_id: oid,
@@ -189,6 +214,17 @@ export default function CheckoutPage() {
         .from("coupons")
         .update({ used_count: (couponData.used_count || 0) + 1 })
         .eq("id", couponData.id)
+        
+      await supabase
+        .from("coupon_usage")
+        .insert([{
+          coupon_id: couponData.id,
+          coupon_code: couponData.code,
+          customer_phone: sanitizedPhone,
+          customer_name: sanitizedName,
+          order_id: oid,
+          discount_amount: couponDiscountAmount
+        }])
     }
 
     setOrderId(oid)
@@ -487,7 +523,7 @@ export default function CheckoutPage() {
                           </div>
                           <div className="text-xs font-medium text-emerald-600 dark:text-emerald-500/80">
                             You save {inr(couponDiscountAmount)}
-                            {couponData?.discount_type === "percentage" ? ` (${couponData.discount_value}% off)` : ""}
+                            {couponData?.coupon_type === "percentage" || couponData?.coupon_type === "first_order" ? ` (${couponData.discount_value}% off)` : ""}
                           </div>
                         </div>
                       </div>
