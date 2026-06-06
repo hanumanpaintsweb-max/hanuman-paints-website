@@ -16,9 +16,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Hanuman Paints — Authorized Dulux Dealer Madhubani',
-  description:
-    'Buy genuine Dulux paints online in Madhubani. 5% discount on all orders. Cash on delivery available.',
-  keywords: 'Dulux paints Madhubani, paint shop Madhubani, Hanuman Paints Madhubani, buy paint online Bihar, Dulux dealer Madhubani Bihar',
+  description: 'Madhubani ki sabse trusted paint shop. Genuine Dulux paints online order karo. 5% discount + Cash on delivery.',
+  keywords: [
+    'Dulux paints Madhubani',
+    'paint shop Madhubani Bihar',
+    'Hanuman Paints Madhubani',
+    'buy paint online Madhubani',
+    'Dulux dealer Madhubani',
+    'wall paint Madhubani'
+  ],
   openGraph: {
     title: 'Hanuman Paints',
     description: 'Authorized Dulux Dealer — Madhubani',
