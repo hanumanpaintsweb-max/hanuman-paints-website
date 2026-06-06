@@ -37,7 +37,7 @@ export default function SettingsPage() {
       setSettings({
         shop_name: map.shop_name || "Hanuman Paints",
         shop_address: map.shop_address || "Loha Patty",
-        shop_city: map.shop_city || "Muzaffarpur",
+        shop_city: map.shop_city || "Madhubani",
         shop_state: map.shop_state || "Bihar",
         shop_pincode: map.shop_pincode || "842001",
         shop_phone: map.shop_phone || "",

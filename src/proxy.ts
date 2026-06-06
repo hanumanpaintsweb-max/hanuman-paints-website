@@ -1,50 +1,43 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Simple in-memory store for rate limiting (Edge compatible)
-// Note: In a distributed edge environment like Vercel, this map resets per instance.
-// For strict global rate limiting, a service like Upstash Redis is recommended.
-const rateLimitMap = new Map<string, { count: number, resetTime: number }>()
-
-export function proxy(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || '127.0.0.1'
-  const path = request.nextUrl.pathname
-  const now = Date.now()
-
-  // Clean up expired entries periodically (10% chance per request to save compute)
-  if (Math.random() < 0.1) {
-    for (const [key, value] of rateLimitMap.entries()) {
-      if (now > value.resetTime) rateLimitMap.delete(key)
-    }
+export default function proxy(request: NextRequest) {
+  const hostname = request.headers.get('host') || ''
+  const { pathname } = request.nextUrl
+  
+  // Check if we are on the admin subdomain
+  const isAdminSubdomain = hostname.startsWith('admin.')
+  
+  // Exclude static assets and API routes from middleware logic
+  if (
+    pathname.startsWith('/_next') || 
+    pathname.startsWith('/api') || 
+    pathname.includes('.')
+  ) {
+    return NextResponse.next()
   }
 
-  // Determine Rate Limit rules based on path
-  let limit = 0
-  let windowMs = 60000 // 1 minute window
-
-  if (path.startsWith('/api/')) {
-    limit = 100 // 100 requests per minute for APIs
-  } else if (path === '/checkout' && request.method === 'POST') {
-    // Treat POST requests to checkout (Server Actions) as order attempts
-    limit = 5 // Max 5 orders per minute
+  // 1. On Admin Subdomain: Serve the admin panel
+  if (isAdminSubdomain) {
+    // If they hit the root of the admin subdomain, rewrite to /admin/dashboard
+    if (pathname === '/') {
+      return NextResponse.rewrite(new URL('/admin/dashboard', request.url))
+    }
+    
+    // If they are hitting a non-admin path on the admin subdomain, rewrite it to /admin/[path]
+    // OR if they hit /admin/... just serve it.
+    if (!pathname.startsWith('/admin')) {
+      return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url))
+    }
+    
+    return NextResponse.next()
   }
 
-  // Apply Rate Limit if a limit rule matched
-  if (limit > 0) {
-    const key = `${ip}:${path}`
-    const record = rateLimitMap.get(key)
-
-    if (!record || now > record.resetTime) {
-      rateLimitMap.set(key, { count: 1, resetTime: now + windowMs })
-    } else {
-      record.count += 1
-      if (record.count > limit) {
-        return new NextResponse(
-          JSON.stringify({ error: 'Too many requests. Please try again later.' }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        )
-      }
-    }
+  // 2. On Main Domain: Block access to /admin routes for security
+  if (!isAdminSubdomain && pathname.startsWith('/admin')) {
+    // For enhanced security, return a 404 so bad actors don't even know it exists
+    request.nextUrl.pathname = '/_not-found'
+    return NextResponse.rewrite(request.nextUrl)
   }
 
   return NextResponse.next()
@@ -52,7 +45,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/api/:path*',
-    '/checkout'
-  ]
+    // Match all paths except static files
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+  ],
 }

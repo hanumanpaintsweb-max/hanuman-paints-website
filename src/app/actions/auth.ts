@@ -65,13 +65,15 @@ const bcrypt = require("bcryptjs")
 
 export async function authenticateAdmin(email: string, password: string) {
   try {
+    const cleanEmail = email.trim();
     const { data: user, error } = await supabase
       .from("admin_users")
       .select("*")
-      .eq("email", email)
+      .eq("email", cleanEmail)
       .single()
 
     if (error || !user) {
+      console.error("Supabase Auth Error for admin_users:", error)
       return { success: false, message: "Invalid email or password" }
     }
 
@@ -81,6 +83,10 @@ export async function authenticateAdmin(email: string, password: string) {
     if (user.locked_until && new Date(user.locked_until) > now) {
       const remainingMinutes = Math.ceil((new Date(user.locked_until).getTime() - now.getTime()) / 60000)
       return { success: false, message: `Account locked. Try again in ${remainingMinutes} minutes`, locked: true, lockedUntil: user.locked_until }
+    }
+
+    if (!user.password_hash) {
+      return { success: false, message: "Server misconfiguration: No password set for this admin user. Please run the SQL setup script." }
     }
 
     const isMatch = bcrypt.compareSync(password, user.password_hash)

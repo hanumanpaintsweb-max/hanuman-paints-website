@@ -9,7 +9,6 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { supabase } from "@/services/supabase"
-
 const NAV_ITEMS = [
   { label: "Orders", href: "/admin", icon: ShoppingBag, badgeKey: "orders" },
   { label: "Billing", href: "/admin/billing", icon: Receipt },

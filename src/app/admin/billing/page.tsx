@@ -639,7 +639,7 @@ export default function BillingPage() {
                     <div className="text-xs text-gray-500 space-y-1">
                       <p><strong>Terms & Conditions:</strong></p>
                       <p>1. Goods once sold cannot be returned or exchanged.</p>
-                      <p>2. Subject to Muzaffarpur jurisdiction only.</p>
+                      <p>2. Subject to Madhubani jurisdiction only.</p>
                       <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
                     </div>
                     <div className="w-64">
@@ -856,7 +856,7 @@ export default function BillingPage() {
                     <div className="text-xs text-gray-500 space-y-1">
                       <p><strong>Terms & Conditions:</strong></p>
                       <p>1. Goods once sold cannot be returned or exchanged.</p>
-                      <p>2. Subject to Muzaffarpur jurisdiction only.</p>
+                      <p>2. Subject to Madhubani jurisdiction only.</p>
                       <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
                     </div>
                     <div className="w-64">
