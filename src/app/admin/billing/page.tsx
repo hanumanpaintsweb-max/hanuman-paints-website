@@ -17,7 +17,7 @@ import jsPDF from "jspdf"
 
 type BillItem = {
   id: string; productId: string; name: string; size: string;
-  qty: number; mrp: number; discountPercent: number; taxRate: number;
+  qty: number; mrp: number; taxRate: number;
 }
 
 const TABS = ["New Bill", "Online Orders", "Bill History"]
@@ -46,6 +46,7 @@ export default function BillingPage() {
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [savedBillData, setSavedBillData] = useState<any | null>(null)
+  const [globalDiscount, setGlobalDiscount] = useState<number>(5)
 
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
@@ -92,7 +93,7 @@ export default function BillingPage() {
   const calculations = useMemo(() => {
     return items.reduce((acc, item) => {
       const gross = item.mrp * item.qty
-      const discountVal = gross * (item.discountPercent / 100)
+      const discountVal = gross * (globalDiscount / 100)
       const taxable = gross - discountVal
       const gstVal = taxable * (item.taxRate / 100)
       return {
@@ -103,7 +104,7 @@ export default function BillingPage() {
         total: acc.total + taxable + gstVal,
       }
     }, { subtotal: 0, discount: 0, taxable: 0, gst: 0, total: 0 })
-  }, [items])
+  }, [items, globalDiscount])
 
   const cgst = calculations.gst / 2
   const sgst = calculations.gst / 2
@@ -113,7 +114,7 @@ export default function BillingPage() {
   const handleAddRow = () => {
     setItems([...items, {
       id: Math.random().toString(36).substr(2, 9),
-      productId: "", name: "", size: "", qty: 1, mrp: 0, discountPercent: 5, taxRate: 18
+      productId: "", name: "", size: "", qty: 1, mrp: 0, taxRate: 18
     }])
   }
 
@@ -142,7 +143,6 @@ export default function BillingPage() {
         size: item.size,
         qty: item.quantity || item.qty || 1,
         mrp: item.price || item.mrp || 0,
-        discountPercent: 5,
         taxRate: product && TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
       }
     }) || []
@@ -223,6 +223,7 @@ export default function BillingPage() {
     setItems([])
     setPaymentStatus("paid")
     setPaymentMethod("cash")
+    setGlobalDiscount(5)
     setLinkedOrderId(null)
     setSavedBillData(null)
     generateNextBillNo(bills)
@@ -268,6 +269,9 @@ export default function BillingPage() {
     setItems(bill.items)
     setPaymentStatus(bill.payment_status)
     setPaymentMethod(bill.payment_method)
+    // If we want to restore historical discount, we would need to save it in bill object.
+    // For now, calculating backwards or setting to default 5 is fine.
+    setGlobalDiscount(5)
     setLinkedOrderId(bill.order_id)
     setSavedBillData(bill)
     setActiveTab("New Bill")
@@ -347,11 +351,19 @@ export default function BillingPage() {
                 </div>
               </div>
 
-              {/* Products */}
               <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Products</h2>
                   {!savedBillData && <Button onClick={handleAddRow} size="sm" variant="secondary" className="rounded-lg h-8 gap-1"><Plus className="size-4" /> Add Item</Button>}
+                </div>
+
+                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground mb-2 px-2">
+                  <div className="col-span-4">Product</div>
+                  <div className="col-span-2">Size</div>
+                  <div className="col-span-1 text-center">Qty</div>
+                  <div className="col-span-2 text-center">Price(₹)</div>
+                  <div className="col-span-1 text-center">GST</div>
+                  <div className="col-span-2 text-right">Total</div>
                 </div>
 
                 <div className="space-y-3">
@@ -362,7 +374,7 @@ export default function BillingPage() {
                         {!savedBillData && (
                           <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
                         )}
-                        <div className="col-span-5">
+                        <div className="col-span-4">
                           <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
                             <option value="">Select Product...</option>
                             {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -384,12 +396,23 @@ export default function BillingPage() {
                           }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-center outline-none" />
                         </div>
                         <div className="col-span-2">
-                          <input disabled={!!savedBillData} type="number" value={item.mrp} onChange={e => {
+                          <input disabled={!!savedBillData} type="number" placeholder="Price" value={item.mrp || ""} onChange={e => {
                             const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
                           }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none" />
                         </div>
+                        <div className="col-span-1">
+                          <select disabled={!!savedBillData} value={item.taxRate} onChange={e => {
+                            const newI = [...items]; newI[index].taxRate = parseFloat(e.target.value) || 0; setItems(newI)
+                          }} className="w-full rounded-lg border border-border bg-background px-1 py-1.5 text-xs outline-none">
+                            <option value="0">0%</option>
+                            <option value="5">5%</option>
+                            <option value="12">12%</option>
+                            <option value="18">18%</option>
+                            <option value="28">28%</option>
+                          </select>
+                        </div>
                         <div className="col-span-2 text-right font-bold text-sm text-primary">
-                          {inr((item.mrp * item.qty * (1 - item.discountPercent/100)) * (1 + item.taxRate/100))}
+                          {inr((item.mrp * item.qty * (1 - globalDiscount/100)) * (1 + item.taxRate/100))}
                         </div>
                       </div>
                     )
@@ -402,13 +425,45 @@ export default function BillingPage() {
               <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm grid grid-cols-2 gap-6">
                 <div>
                   <h2 className="text-sm font-bold uppercase text-muted-foreground mb-3">Payment Info</h2>
-                  <div className="space-y-3">
-                    <select disabled={!!savedBillData} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
-                      {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
-                    </select>
-                    <select disabled={!!savedBillData} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
-                      {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
-                    </select>
+                  <div className="space-y-4">
+                    
+                    {/* Global Discount */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="text-xs font-semibold text-muted-foreground">Global Discount</label>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {[0, 5, 10, 15, 20].map(d => (
+                          <button 
+                            key={d}
+                            disabled={!!savedBillData}
+                            onClick={() => setGlobalDiscount(d)}
+                            className={`px-2 py-1 text-xs font-bold rounded-md border transition-colors ${globalDiscount === d ? 'bg-orange-500 text-white border-orange-600' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                          >
+                            {d}%
+                          </button>
+                        ))}
+                      </div>
+                      <div className="relative">
+                        <input 
+                          disabled={!!savedBillData}
+                          type="number" 
+                          value={globalDiscount || ""} 
+                          onChange={e => setGlobalDiscount(parseFloat(e.target.value) || 0)} 
+                          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none" 
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-semibold">%</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <select disabled={!!savedBillData} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                        {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                      </select>
+                      <select disabled={!!savedBillData} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                        {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">
@@ -485,7 +540,7 @@ export default function BillingPage() {
                     </thead>
                     <tbody className="text-sm border-b-2 border-gray-800">
                       {items.map((item, i) => {
-                        const gross = item.mrp * item.qty; const disc = gross * (item.discountPercent/100);
+                        const gross = item.mrp * item.qty; const disc = gross * (globalDiscount/100);
                         const taxable = gross - disc; const gst = taxable * (item.taxRate/100);
                         return (
                           <tr key={i} className="border-b border-gray-200">
@@ -493,7 +548,7 @@ export default function BillingPage() {
                             <td className="py-3 px-2"><strong>{item.name}</strong><br/><span className="text-xs text-gray-500">{item.size}</span></td>
                             <td className="py-3 px-2 text-center">{item.qty}</td>
                             <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                            <td className="py-3 px-2 text-right">{item.discountPercent}%</td>
+                            <td className="py-3 px-2 text-right">{globalDiscount}%</td>
                             <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
                             <td className="py-3 px-2 text-right">{item.taxRate}%</td>
                             <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
