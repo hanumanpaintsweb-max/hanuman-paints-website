@@ -14,7 +14,6 @@ export async function sendOrderStatusWhatsApp(
 
   // Silently return if Twilio is not configured
   if (!sid || !token || !fromNumber) {
-    console.log("Twilio credentials missing. WhatsApp message skipped.")
     return { success: false, error: "Missing Twilio config" }
   }
 
@@ -50,8 +49,7 @@ export async function sendOrderStatusWhatsApp(
       to: toWhatsApp,
     })
     return { success: true }
-  } catch (error) {
-    console.error("Failed to send WhatsApp message:", error)
+  } catch {
     return { success: false, error: "Twilio API error" }
   }
 }

@@ -23,10 +23,15 @@ export const getAllOrders = async () => {
 
 export const getOrdersByPhone = async (phone) => {
   const rawPhone = phone.replace(/\D/g, '').slice(-10);
+  const phoneVariants = [
+    rawPhone,
+    `+91${rawPhone}`,
+    `91${rawPhone}`,
+  ];
   const { data, error } = await supabase
     .from('orders')
     .select('*')
-    .or(`customer_phone.eq.${rawPhone},customer_phone.eq.+91${rawPhone},customer_phone.eq.91${rawPhone}`)
+    .in('customer_phone', phoneVariants)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;

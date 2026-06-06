@@ -1,10 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useReducer, useEffect, useState, useCallback } from 'react';
+import { supabase } from '@/services/supabase';
 
 const CartContext = createContext<any>(null);
-
-const DISCOUNT_PERCENT = 5;
 
 const cartReducer = (state: any, action: any) => {
   switch (action.type) {
@@ -47,6 +46,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
   const [toasts, setToasts] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState(5);
 
   // Load from local storage on mount
   useEffect(() => {
@@ -69,8 +69,22 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [state, isMounted]);
 
+  useEffect(() => {
+    supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'default_discount')
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          const value = Number(data.value);
+          if (Number.isFinite(value)) setDiscountPercent(value);
+        }
+      });
+  }, []);
+
   const subtotal = state.items.reduce((sum: number, item: any) => sum + item.mrp * item.quantity, 0);
-  const discountAmount = Math.round(subtotal * DISCOUNT_PERCENT / 100);
+  const discountAmount = Math.round(subtotal * discountPercent / 100);
   const total = subtotal - discountAmount;
   const itemCount = state.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
@@ -103,7 +117,19 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <CartContext.Provider
-      value={{ items: state.items, subtotal, discountAmount, total, itemCount, addItem, removeItem, updateQuantity, clearCart, DISCOUNT_PERCENT }}
+      value={{
+        items: state.items,
+        subtotal,
+        discountAmount,
+        total,
+        itemCount,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        discountPercent,
+        DISCOUNT_PERCENT: discountPercent,
+      }}
     >
       {children}
       {/* Toast Notification Container */}

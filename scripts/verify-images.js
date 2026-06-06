@@ -28,22 +28,18 @@ async function run() {
     } else {
       invalid.push(item);
     }
-    // console.log(`[${i + 1}/${data.length}] ${item.slug}: ${isValid ? 'OK' : 'FAIL'}`);
   }
 
   fs.writeFileSync('scripts/valid-images.json', JSON.stringify(valid, null, 2));
   fs.writeFileSync('scripts/no-images.json', JSON.stringify(invalid, null, 2));
 
-  console.log(`\nResults: ${valid.length} valid, ${invalid.length} invalid.`);
 
   // Generate SQL
   if (invalid.length > 0) {
     const slugs = invalid.map(item => "'" + item.slug + "'").join(', ');
     const sql = `DELETE FROM products WHERE id IN (${slugs});`;
     fs.writeFileSync('delete_invalid_products.sql', sql);
-    console.log('delete_invalid_products.sql generated!');
   } else {
-    console.log('No invalid products to delete in SQL.');
   }
 
   // Update products.js
@@ -86,7 +82,6 @@ async function run() {
 
   const fileContent = 'export const PRODUCTS = ' + JSON.stringify(mapped, null, 2) + ';\n';
   fs.writeFileSync('src/data/products.js', fileContent);
-  console.log('src/data/products.js updated with ' + mapped.length + ' products.');
 }
 
 run();

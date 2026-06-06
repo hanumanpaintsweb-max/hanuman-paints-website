@@ -186,20 +186,11 @@ export default function BillingPage() {
       order_id: linkedOrderId || null
     }
 
-    console.log('Saving bill data:', billData)
-
     const { data, error } = await supabase.from("bills").insert([billData]).select()
-    
-    console.log('Supabase response:', data, error)
 
     setIsSaving(false)
 
     if (error) {
-      console.error('Supabase error:', error)
-      console.error('Error code:', error.code)
-      console.error('Error message:', error.message)
-      console.error('Error details:', error.details)
-
       if (error.code === '23505') toast.error("Bill number already exists!") // Unique constraint
       else toast.error("Failed to save bill")
     } else {
@@ -208,40 +199,22 @@ export default function BillingPage() {
       setSavedBillData(newBill)
       setBills([newBill, ...bills])
 
-      // Har item ke liye stock minus karo
+      let stockUpdateFailed = false
+
       for (const item of items) {
         if (!item.productId) continue
-        // Current stock fetch karo
-        const { data: stockData } = await supabase
-          .from('stock')
-          .select('current_stock, id')
-          .eq('product_id', item.productId)
-          .single()
-        
-        if (stockData) {
-          const newStock = Math.max(0, stockData.current_stock - item.qty)
-          
-          // Stock update karo
-          await supabase
-            .from('stock')
-            .update({ 
-              current_stock: newStock,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', stockData.id)
-          
-          // Stock history mein log karo
-          await supabase
-            .from('stock_history')
-            .insert({
-              product_id: item.productId,
-              product_name: item.name,
-              old_stock: stockData.current_stock,
-              new_stock: newStock,
-              changed_by: 'billing-auto',
-              created_at: new Date().toISOString()
-            })
-        }
+
+        const { error: stockError } = await supabase.rpc('deduct_stock', {
+          p_product_id: item.productId,
+          p_quantity: item.qty,
+          p_changed_by: 'billing-auto'
+        })
+
+        if (stockError) stockUpdateFailed = true
+      }
+
+      if (stockUpdateFailed) {
+        toast.error("Bill saved, but stock update failed")
       }
     }
   }

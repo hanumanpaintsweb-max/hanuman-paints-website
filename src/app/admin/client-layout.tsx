@@ -67,8 +67,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       const { count: billsCount } = await supabase.from('bills').select('*', { count: 'exact', head: true }).in('payment_status', ['unpaid', 'partial'])
       if (billsCount) setUnpaidBillsCount(billsCount)
 
-    } catch (e) {
-      console.error("Failed to fetch sidebar data", e)
+    } catch {
     }
   }
 

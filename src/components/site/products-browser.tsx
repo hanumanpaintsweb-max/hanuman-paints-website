@@ -44,8 +44,8 @@ export function ProductsBrowser() {
       try {
         const data = await getProducts()
         setProducts(data || [])
-      } catch (err) {
-        console.error("Failed to load products", err)
+      } catch {
+        setProducts([])
       } finally {
         setLoading(false)
       }

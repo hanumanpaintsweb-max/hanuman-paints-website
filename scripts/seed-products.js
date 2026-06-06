@@ -10,26 +10,21 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://cbkduvrkyzp
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY in .env");
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function run() {
-  console.log("Fetching existing products...");
   const { data: existing, error: fetchErr } = await supabase.from("products").select("id");
   if (fetchErr) {
-    console.error("Error fetching existing:", fetchErr);
     process.exit(1);
   }
 
   if (existing.length > 0) {
-    console.log(`Deleting ${existing.length} existing products...`);
     const ids = existing.map(e => e.id);
     const { error: deleteErr } = await supabase.from("products").delete().in("id", ids);
     if (deleteErr) {
-      console.error("Error deleting:", deleteErr);
       process.exit(1);
     }
   }
@@ -47,18 +42,15 @@ async function run() {
   
   const productsList = require("./tmp-products.js");
   
-  console.log(`Inserting ${productsList.length} products into Supabase...`);
   
   const { error: insertErr } = await supabase.from("products").insert(productsList);
   
   fs.unlinkSync(tmpPath);
   
   if (insertErr) {
-    console.error("Error inserting:", insertErr);
     process.exit(1);
   }
   
-  console.log("Successfully seeded Supabase with new products!");
 }
 
 run();

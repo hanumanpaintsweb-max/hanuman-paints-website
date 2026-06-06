@@ -22,4 +22,3 @@ const values = products.map(p => {
 sql += values;
 fs.writeFileSync('insert_products.sql', sql);
 fs.unlinkSync(__dirname + '/tmp-products-sql.js');
-console.log('SQL generated to insert_products.sql');

@@ -23,10 +23,8 @@ async function getProductUrls() {
   }
   
   const productSlugs = new Set(existingSlugs);
-  console.log(`Starting with ${productSlugs.size} existing unique slugs.`);
   
   for (const targetUrl of urlsToScrape) {
-    console.log(`Scraping ${targetUrl}...`);
     try {
       const res = await fetch('https://api.firecrawl.dev/v2/scrape', {
         method: 'POST',
@@ -43,7 +41,6 @@ async function getProductUrls() {
       const data = await res.json();
       
       if (!data.success) {
-        console.error("Failed to scrape:", targetUrl, data);
         continue;
       }
       
@@ -61,9 +58,7 @@ async function getProductUrls() {
         }
       }
       
-      console.log(`Current unique count: ${productSlugs.size}`);
     } catch (e) {
-      console.error(`Error scraping ${targetUrl}:`, e);
     }
     
     // Add a small delay between requests to avoid rate limits
@@ -73,7 +68,6 @@ async function getProductUrls() {
   const uniqueSlugs = Array.from(productSlugs).sort();
   fs.writeFileSync('scripts/dulux-product-urls.json', JSON.stringify(uniqueSlugs, null, 2));
   
-  console.log(`\nFinished! Found ${uniqueSlugs.length} unique product slugs in total.`);
 }
 
 getProductUrls();

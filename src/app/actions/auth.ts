@@ -23,8 +23,7 @@ export async function loginUser(phone: string, name: string) {
       .single()
 
     if (insertError || !newUser) {
-      console.error("Supabase user insert error:", insertError)
-      return { error: `Failed to create user account: ${insertError?.message || "Unknown error"}` }
+      return { error: "Failed to create user account. Please try again." }
     }
     user = newUser
   }
@@ -73,7 +72,6 @@ export async function authenticateAdmin(email: string, password: string) {
       .single()
 
     if (error || !user) {
-      console.error("Supabase Auth Error for admin_users:", error)
       return { success: false, message: "Invalid email or password" }
     }
 

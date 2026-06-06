@@ -17,8 +17,8 @@ export default async function MyOrdersPage() {
   let orders = []
   try {
     orders = await getOrdersByPhone(session.phone)
-  } catch (err) {
-    console.error("Failed to fetch orders:", err)
+  } catch {
+    orders = []
   }
 
   return (

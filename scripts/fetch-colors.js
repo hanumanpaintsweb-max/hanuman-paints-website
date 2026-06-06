@@ -1,7 +1,6 @@
 const fs = require('fs');
 
 async function scrapeDuluxColors() {
-  console.log("Starting Firecrawl extraction...");
   const url = 'https://api.firecrawl.dev/v1/scrape';
   
   const payload = {
@@ -51,7 +50,6 @@ async function scrapeDuluxColors() {
     });
 
     if (!res.ok) {
-      console.error("HTTP Error", res.status, await res.text());
       return;
     }
 
@@ -60,15 +58,11 @@ async function scrapeDuluxColors() {
       const extracted = data.data.extract;
       let total = 0;
       extracted.families?.forEach(f => total += (f.colors?.length || 0));
-      console.log(`Successfully extracted ${total} colors across ${extracted.families?.length || 0} families.`);
       
       fs.writeFileSync('./src/data/dulux-colors.json', JSON.stringify(extracted.families, null, 2));
-      console.log("Saved to src/data/dulux-colors.json");
     } else {
-      console.error("Extraction failed or returned unexpected format:", JSON.stringify(data, null, 2));
     }
   } catch (err) {
-    console.error("Request failed", err);
   }
 }
 

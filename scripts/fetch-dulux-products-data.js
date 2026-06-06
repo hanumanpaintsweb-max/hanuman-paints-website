@@ -22,7 +22,6 @@ function getCategoryFromSlug(slug) {
 async function fetchProductData() {
   const slugsFile = 'scripts/dulux-product-urls.json';
   if (!fs.existsSync(slugsFile)) {
-    console.error("No slugs file found!");
     return;
   }
   
@@ -33,7 +32,6 @@ async function fetchProductData() {
   
   for (let i = 0; i < slugs.length; i += BATCH_SIZE) {
     const batchSlugs = slugs.slice(i, i + BATCH_SIZE);
-    console.log(`Processing batch ${i / BATCH_SIZE + 1} of ${Math.ceil(slugs.length / BATCH_SIZE)}...`);
     
     const promises = batchSlugs.map(async (slug) => {
       const url = `https://www.dulux.in/en/products/${slug}`;
@@ -101,7 +99,6 @@ async function fetchProductData() {
           coverage
         };
       } catch (err) {
-        console.error(`Error for ${slug}:`, err.message);
         return { slug, name: slug, imageUrl: "", description: "", features: [], coverage: "", category: "Unknown" };
       }
     });
@@ -121,8 +118,6 @@ async function fetchProductData() {
     }
   }
   
-  console.log(`\nDONE! Total products fetched: ${results.length}`);
-  console.log(`Products with empty imageUrl: ${emptyImages}`);
 }
 
 fetchProductData();

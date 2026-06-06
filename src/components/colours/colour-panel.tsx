@@ -43,8 +43,8 @@ export function ColourPanel({ isOpen, colour, onClose }: ColourPanelProps) {
             const tintable = data.filter((p: any) => TINTABLE_PRODUCTS.includes(p.name))
             setProducts(tintable)
           }
-        } catch (err) {
-          console.error(err)
+        } catch {
+          setProducts([])
         } finally {
           setLoading(false)
         }

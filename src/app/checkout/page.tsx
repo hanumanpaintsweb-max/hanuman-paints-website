@@ -176,7 +176,11 @@ export default function CheckoutPage() {
         .eq("coupon_id", couponData.id)
         .eq("customer_phone", sanitizedPhone)
       
-      if (countErr) console.error("Error checking coupon usage:", countErr)
+      if (countErr) {
+        alert("Coupon validation failed. Please try again.")
+        setLoading(false)
+        return
+      }
       
       if (count !== null && count >= couponData.per_customer_limit) {
         alert(`You have already used this coupon the maximum allowed times (${couponData.per_customer_limit}).`)
@@ -203,7 +207,6 @@ export default function CheckoutPage() {
     ])
 
     if (error) {
-      console.error("Error placing order:", error)
       alert("Failed to place order. Please try again.")
       setLoading(false)
       return
@@ -234,8 +237,7 @@ export default function CheckoutPage() {
         recentOrders.unshift(oid)
         localStorage.setItem("hanuman_recent_orders", JSON.stringify(recentOrders.slice(0, 10)))
       }
-    } catch (e) {
-      console.error("Error saving recent order:", e)
+    } catch {
     }
 
     clearCart()

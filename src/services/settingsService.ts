@@ -12,8 +12,7 @@ export async function getSetting(key: string, defaultValue: string = ''): Promis
       return defaultValue
     }
     return data.value
-  } catch (err) {
-    console.error('Failed to fetch setting:', key, err)
+  } catch {
     return defaultValue
   }
 }
