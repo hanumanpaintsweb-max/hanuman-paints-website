@@ -12,8 +12,6 @@ import { supabase } from "@/services/supabase"
 import { PRODUCTS } from "@/data/products"
 import { inr } from "@/lib/format"
 import { toast } from "sonner"
-import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
 
 type BillItem = {
   id: string; productId: string; name: string; size: string;
@@ -214,19 +212,52 @@ export default function BillingPage() {
     }
   }
 
-  const generatePDF = async () => {
-    if (!printRef.current) return
-    try {
-      const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true })
-      const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF("p", "mm", "a4")
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
-      pdf.save(`${savedBillData?.bill_number || billNoStr}.pdf`)
-    } catch (err) {
-      toast.error("Failed to generate PDF")
+  const handlePDF = () => {
+    const printArea = document.getElementById('bill-print-area')
+    if (!printArea) return
+    
+    const billNumber = savedBillData?.bill_number || billNoStr
+    const cName = customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : ''
+    const fileName = `${billNumber}${cName}`
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      toast.error("Please allow popups to download PDF")
+      return
     }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${fileName}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            body { 
+              margin: 0;
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
+            }
+            @media print {
+              @page { size: A4 portrait; margin: 5mm; }
+            }
+          </style>
+        </head>
+        <body class="bg-white">
+          <div style="width: 210mm; margin: 0 auto; padding: 20px;">
+            ${printArea.innerHTML}
+          </div>
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print()
+                window.close()
+              }, 800) // Wait for tailwind to apply
+            }
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
   }
 
   const shareWhatsApp = () => {
@@ -502,14 +533,14 @@ export default function BillingPage() {
             <div className="xl:col-span-5 space-y-4">
               <div className="grid grid-cols-2 gap-2">
                 <Button onClick={handleSaveBill} disabled={isSaving || !!savedBillData} className="rounded-xl w-full">{isSaving ? 'Saving...' : 'Save Bill'}</Button>
-                <Button onClick={generatePDF} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
+                <Button onClick={handlePDF} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
                 <Button onClick={() => window.print()} disabled={!savedBillData} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
                 <Button onClick={shareWhatsApp} disabled={!savedBillData} className="rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share</Button>
               </div>
 
               {/* PDF Container Wrapper */}
-              <div className="border border-border/60 bg-white rounded-2xl overflow-hidden shadow-inner flex justify-center p-4">
-                <div ref={printRef} className="bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] sm:scale-[0.5] md:scale-[0.6] xl:scale-[0.55]">
+              <div className="border border-border/60 bg-white rounded-2xl overflow-hidden shadow-inner flex justify-center p-4 no-print">
+                <div id="bill-print-area" ref={printRef} className="bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] sm:scale-[0.5] md:scale-[0.6] xl:scale-[0.55] print:scale-100 print:shadow-none print:w-full print:p-0">
                   {/* PDF Header */}
                   <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
                     <div>

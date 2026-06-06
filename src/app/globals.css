@@ -126,3 +126,31 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  /* Sab kuch hide karo */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Sirf bill area show karo */
+  #bill-print-area,
+  #bill-print-area * {
+    visibility: visible;
+  }
+  
+  #bill-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Sidebar + navbar hide */
+  nav, aside, header, 
+  .no-print {
+    display: none !important;
+  }
+}
