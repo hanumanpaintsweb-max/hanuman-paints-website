@@ -1,8 +1,12 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Plus, Trash2, Printer, Download, MessageCircle, FileText, CheckCircle2, User, Phone, Check } from "lucide-react"
+import { 
+  Plus, Trash2, Printer, Download, MessageCircle, FileText, 
+  CheckCircle2, User, Phone, Check, Receipt, History, 
+  Search, FileSpreadsheet, Eye, ShoppingBag, MapPin, Building
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/services/supabase"
 import { PRODUCTS } from "@/data/products"
@@ -12,127 +16,144 @@ import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 
 type BillItem = {
-  id: string
-  productId: string
-  name: string
-  size: string
-  qty: number
-  mrp: number
-  discountPercent: number
-  taxRate: number
+  id: string; productId: string; name: string; size: string;
+  qty: number; mrp: number; discountPercent: number; taxRate: number;
 }
 
+const TABS = ["New Bill", "Online Orders", "Bill History"]
+const PAYMENT_STATUSES = ["paid", "unpaid", "partial"]
+const PAYMENT_METHODS = ["cash", "upi", "credit"]
 const TIN_WOOD_CATEGORIES = ["Tinters", "Woodcare"] // 12% GST items, rest 18%
 
 export default function BillingPage() {
-  const [customerName, setCustomerName] = useState("")
-  const [customerPhone, setCustomerPhone] = useState("")
-  const [items, setItems] = useState<BillItem[]>([])
-  const [billNo, setBillNo] = useState<number>(1001) // mock starting bill no
-  const [isSaving, setIsSaving] = useState(false)
-  const [savedBill, setSavedBill] = useState(false)
+  const [activeTab, setActiveTab] = useState("New Bill")
   const printRef = useRef<HTMLDivElement>(null)
 
-  // Fetch the latest bill number from supabase
+  // -- APP STATE --
+  const [settings, setSettings] = useState<any>({})
+  const [bills, setBills] = useState<any[]>([])
+  const [orders, setOrders] = useState<any[]>([])
+
+  // -- TAB 1: NEW BILL STATE --
+  const [billNoStr, setBillNoStr] = useState<string>("")
+  const [customerName, setCustomerName] = useState("")
+  const [customerPhone, setCustomerPhone] = useState("")
+  const [customerAddress, setCustomerAddress] = useState("")
+  const [customerGstin, setCustomerGstin] = useState("")
+  const [items, setItems] = useState<BillItem[]>([])
+  const [paymentStatus, setPaymentStatus] = useState("paid")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
+  const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [savedBillData, setSavedBillData] = useState<any | null>(null)
+
+  // -- TAB 3: HISTORY STATE --
+  const [historySearch, setHistorySearch] = useState("")
+  const [historyFilter, setHistoryFilter] = useState("All")
+
   useEffect(() => {
-    async function getLatestBillNo() {
-      const { data, error } = await supabase
-        .from("bills")
-        .select("bill_number")
-        .order("bill_number", { ascending: false })
-        .limit(1)
-      if (!error && data && data.length > 0) {
-        setBillNo(data[0].bill_number + 1)
-      }
-    }
-    getLatestBillNo()
+    fetchInitialData()
   }, [])
 
-  const addItemRow = () => {
-    setItems([
-      ...items,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        productId: "",
-        name: "",
-        size: "",
-        qty: 1,
-        mrp: 0,
-        discountPercent: 5,
-        taxRate: 18,
-      },
-    ])
-  }
-
-  const removeItemRow = (id: string) => {
-    setItems(items.filter((item) => item.id !== id))
-  }
-
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = PRODUCTS.find((p) => p.id.toString() === productId || p.id === productId)
-    if (!product) return
-
-    const newItems = [...items]
-    const taxRate = TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
-    const defaultSize = product.sizes?.[0]
-    
-    newItems[index] = {
-      ...newItems[index],
-      productId: product.id.toString(),
-      name: product.name,
-      size: defaultSize?.size || "",
-      mrp: defaultSize?.mrp || 0,
-      taxRate: taxRate,
+  const fetchInitialData = async () => {
+    // 1. Settings
+    const { data: setts } = await supabase.from('settings').select('*')
+    if (setts) {
+      const sObj: any = {}
+      setts.forEach(s => sObj[s.key] = s.value)
+      setSettings(sObj)
     }
-    setItems(newItems)
-  }
 
-  const handleSizeSelect = (index: number, size: string) => {
-    const newItems = [...items]
-    const item = newItems[index]
-    const product = PRODUCTS.find((p) => p.id.toString() === item.productId)
-    if (product) {
-      const sizeObj = product.sizes?.find((s) => s.size === size)
-      newItems[index] = {
-        ...item,
-        size,
-        mrp: sizeObj?.mrp || 0,
-      }
-      setItems(newItems)
+    // 2. Bills
+    const { data: bData } = await supabase.from('bills').select('*').eq('is_deleted', false).order('created_at', { ascending: false })
+    if (bData) {
+      setBills(bData)
+      generateNextBillNo(bData)
+    } else {
+      generateNextBillNo([])
     }
+
+    // 3. Orders (for Tab 2)
+    const { data: oData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
+    if (oData) setOrders(oData)
   }
 
-  const updateItemQty = (index: number, qty: number) => {
-    const newItems = [...items]
-    newItems[index].qty = Math.max(1, qty)
-    setItems(newItems)
+  const generateNextBillNo = (existingBills: any[]) => {
+    const year = new Date().getFullYear()
+    let maxNum = 0
+    existingBills.forEach(b => {
+      const match = b.bill_number.match(new RegExp(`HP-${year}-(\\d+)`))
+      if (match) maxNum = Math.max(maxNum, parseInt(match[1]))
+    })
+    setBillNoStr(`HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
   }
 
-  // Calculations
-  const calculations = items.reduce(
-    (acc, item) => {
+  // --- Calculations ---
+  const calculations = useMemo(() => {
+    return items.reduce((acc, item) => {
       const gross = item.mrp * item.qty
       const discountVal = gross * (item.discountPercent / 100)
       const taxable = gross - discountVal
       const gstVal = taxable * (item.taxRate / 100)
-      const total = taxable + gstVal
-
       return {
         subtotal: acc.subtotal + gross,
         discount: acc.discount + discountVal,
         taxable: acc.taxable + taxable,
         gst: acc.gst + gstVal,
-        total: acc.total + total,
+        total: acc.total + taxable + gstVal,
       }
-    },
-    { subtotal: 0, discount: 0, taxable: 0, gst: 0, total: 0 }
-  )
+    }, { subtotal: 0, discount: 0, taxable: 0, gst: 0, total: 0 })
+  }, [items])
 
+  const cgst = calculations.gst / 2
+  const sgst = calculations.gst / 2
   const finalTotal = Math.round(calculations.total)
 
+  // --- Actions ---
+  const handleAddRow = () => {
+    setItems([...items, {
+      id: Math.random().toString(36).substr(2, 9),
+      productId: "", name: "", size: "", qty: 1, mrp: 0, discountPercent: 5, taxRate: 18
+    }])
+  }
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = PRODUCTS.find((p) => p.id === productId)
+    if (!product) return
+    const newItems = [...items]
+    const taxRate = TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
+    const defaultSize = product.sizes?.[0]
+    newItems[index] = { ...newItems[index], productId: product.id, name: product.name, size: defaultSize?.size || "", mrp: defaultSize?.mrp || 0, taxRate }
+    setItems(newItems)
+  }
+
+  const loadOrderToBill = (order: any) => {
+    setCustomerName(order.customer_name)
+    setCustomerPhone(order.customer_phone)
+    setCustomerAddress(order.customer_address)
+    setLinkedOrderId(order.order_id)
+    
+    const mappedItems: BillItem[] = order.items?.map((item: any) => {
+      const product = PRODUCTS.find(p => p.id === item.id)
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        productId: item.id || "",
+        name: item.name,
+        size: item.size,
+        qty: item.quantity || item.qty || 1,
+        mrp: item.price || item.mrp || 0,
+        discountPercent: 5,
+        taxRate: product && TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
+      }
+    }) || []
+    setItems(mappedItems)
+    setSavedBillData(null)
+    setActiveTab("New Bill")
+  }
+
   const handleSaveBill = async () => {
-    if (!customerName || !customerPhone) {
-      toast.error("Please enter customer name and phone")
+    if (!customerName || customerPhone.replace(/\D/g,'').length !== 10) {
+      toast.error("Valid customer name and 10-digit phone required")
       return
     }
     if (items.length === 0 || items.some(i => !i.productId)) {
@@ -141,49 +162,55 @@ export default function BillingPage() {
     }
 
     setIsSaving(true)
-    const { data, error } = await supabase.from("bills").insert([{
+    const billData = {
+      bill_number: billNoStr,
       customer_name: customerName,
-      customer_phone: customerPhone,
+      customer_phone: customerPhone.replace(/\D/g,''),
+      customer_address: customerAddress,
+      customer_gstin: customerGstin,
       items: items,
       subtotal: calculations.subtotal,
-      discount: calculations.discount,
-      gst: calculations.gst,
-      total: finalTotal,
-      status: 'Paid'
-    }]).select()
+      discount_amount: calculations.discount,
+      taxable_value: calculations.taxable,
+      cgst_amount: cgst,
+      sgst_amount: sgst,
+      total_amount: finalTotal,
+      payment_status: paymentStatus,
+      payment_method: paymentMethod,
+      order_id: linkedOrderId
+    }
 
+    const { data, error } = await supabase.from("bills").insert([billData]).select()
     setIsSaving(false)
+
     if (error) {
-      toast.error("Failed to save bill", { description: error.message })
+      if (error.code === '23505') toast.error("Bill number already exists!") // Unique constraint
+      else toast.error("Failed to save bill")
     } else {
       toast.success("Bill saved successfully!")
-      if (data && data[0]) setBillNo(data[0].bill_number)
-      setSavedBill(true)
+      const newBill = data[0]
+      setSavedBillData(newBill)
+      setBills([newBill, ...bills])
     }
   }
 
   const generatePDF = async () => {
     if (!printRef.current) return
     try {
-      const canvas = await html2canvas(printRef.current, { scale: 2 })
+      const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true })
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
-      pdf.save(`Hanuman_Paints_Bill_${billNo}.pdf`)
+      pdf.save(`${savedBillData?.bill_number || billNoStr}.pdf`)
     } catch (err) {
-      console.error("PDF generation failed", err)
       toast.error("Failed to generate PDF")
     }
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   const shareWhatsApp = () => {
-    const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill #${billNo} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nItems: ${items.length}\n\nDhanyawad! 🎨`
+    const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill ${savedBillData?.bill_number} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nPayment Status: ${paymentStatus.toUpperCase()}\n\nDhanyawad! 🎨`
     const url = `https://wa.me/91${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`
     window.open(url, "_blank")
   }
@@ -191,296 +218,398 @@ export default function BillingPage() {
   const resetForm = () => {
     setCustomerName("")
     setCustomerPhone("")
+    setCustomerAddress("")
+    setCustomerGstin("")
     setItems([])
-    setSavedBill(false)
-    setBillNo(prev => prev + 1)
+    setPaymentStatus("paid")
+    setPaymentMethod("cash")
+    setLinkedOrderId(null)
+    setSavedBillData(null)
+    generateNextBillNo(bills)
   }
 
+  const exportToExcel = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Date,Bill Number,Customer,Phone,Total Amount,Status,Method\n" +
+      filteredBills.map(b => `${new Date(b.created_at).toLocaleDateString()},${b.bill_number},${b.customer_name},${b.customer_phone},${b.total_amount},${b.payment_status},${b.payment_method}`).join("\n")
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", `bills_export_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const updateBillStatus = async (id: string, newStatus: string) => {
+    const { error } = await supabase.from('bills').update({ payment_status: newStatus }).eq('id', id)
+    if (!error) {
+      setBills(bills.map(b => b.id === id ? { ...b, payment_status: newStatus } : b))
+      toast.success("Payment status updated")
+    }
+  }
+
+  const deleteBill = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this bill?")) return
+    const { error } = await supabase.from('bills').update({ is_deleted: true }).eq('id', id)
+    if (!error) {
+      setBills(bills.filter(b => b.id !== id))
+      toast.success("Bill deleted")
+    }
+  }
+
+  // View Bill from History
+  const viewHistoricalBill = (bill: any) => {
+    setBillNoStr(bill.bill_number)
+    setCustomerName(bill.customer_name)
+    setCustomerPhone(bill.customer_phone)
+    setCustomerAddress(bill.customer_address || "")
+    setCustomerGstin(bill.customer_gstin || "")
+    setItems(bill.items)
+    setPaymentStatus(bill.payment_status)
+    setPaymentMethod(bill.payment_method)
+    setLinkedOrderId(bill.order_id)
+    setSavedBillData(bill)
+    setActiveTab("New Bill")
+  }
+
+  // Filter Bills
+  const filteredBills = useMemo(() => {
+    return bills.filter(b => {
+      if (historyFilter !== "All" && b.payment_status !== historyFilter.toLowerCase()) return false
+      if (historySearch) {
+        const s = historySearch.toLowerCase()
+        return b.bill_number.toLowerCase().includes(s) || b.customer_name.toLowerCase().includes(s) || b.customer_phone.includes(s)
+      }
+      return true
+    })
+  }, [bills, historyFilter, historySearch])
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Billing System</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create manual bills for offline customers</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {savedBill && (
-            <Button onClick={resetForm} variant="outline" className="rounded-xl gap-2">
-              <Plus className="size-4" /> New Bill
-            </Button>
-          )}
-          <Button onClick={handleSaveBill} disabled={isSaving || savedBill || items.length === 0} className="rounded-xl gap-2">
-            {isSaving ? <span className="animate-pulse">Saving...</span> : savedBill ? <Check className="size-4" /> : <CheckCircle2 className="size-4" />}
-            {savedBill ? "Saved" : "Save & Generate"}
-          </Button>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+            <Receipt className="size-8 text-primary" /> Billing System
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">Generate GST invoices and manage accounts</p>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Form */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Customer Details</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Customer Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <input 
-                    type="text" 
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Enter full name"
-                    className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2.5 text-sm outline-none ring-primary focus:ring-2"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Phone Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <input 
-                    type="tel" 
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="10-digit mobile number"
-                    className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2.5 text-sm outline-none ring-primary focus:ring-2"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-border/60 pb-px">
+        {TABS.map(t => (
+          <button 
+            key={t} onClick={() => setActiveTab(t)}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${activeTab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
 
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Products</h2>
-              <Button onClick={addItemRow} size="sm" variant="secondary" className="rounded-lg gap-2 h-8">
-                <Plus className="size-4" /> Add Item
-              </Button>
-            </div>
+      <AnimatePresence mode="wait">
+        {activeTab === "New Bill" && (
+          <motion.div key="new-bill" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid gap-6 xl:grid-cols-12">
             
-            <div className="space-y-4">
-              <AnimatePresence>
-                {items.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-xl">
-                    No items added yet. Click 'Add Item' to start.
+            {/* Left: Form */}
+            <div className="xl:col-span-7 space-y-6">
+              {savedBillData && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 p-4 rounded-2xl flex justify-between items-center">
+                  <div className="flex items-center gap-2"><CheckCircle2 className="size-5" /> Bill #{savedBillData.bill_number} Saved</div>
+                  <Button variant="outline" size="sm" onClick={resetForm} className="bg-white hover:bg-emerald-50 text-emerald-700">Create New</Button>
+                </div>
+              )}
+
+              {/* Customer Info */}
+              <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-lg font-bold flex items-center gap-2"><User className="size-5 text-primary" /> Customer Info</h2>
+                  <div className="text-sm font-bold bg-muted px-3 py-1 rounded-lg">No: {billNoStr}</div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">Customer Name *</label>
+                    <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
-                ) : (
-                  items.map((item, index) => {
-                    const product = PRODUCTS.find(p => p.id.toString() === item.productId)
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">Phone Number *</label>
+                    <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-xs font-semibold text-muted-foreground">Address</label>
+                    <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-xs font-semibold text-muted-foreground">GSTIN (Optional B2B)</label>
+                    <input type="text" value={customerGstin} onChange={e => setCustomerGstin(e.target.value.toUpperCase())} disabled={!!savedBillData} maxLength={15} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Products */}
+              <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Products</h2>
+                  {!savedBillData && <Button onClick={handleAddRow} size="sm" variant="secondary" className="rounded-lg h-8 gap-1"><Plus className="size-4" /> Add Item</Button>}
+                </div>
+
+                <div className="space-y-3">
+                  {items.map((item, index) => {
+                    const product = PRODUCTS.find(p => p.id === item.productId)
                     return (
-                      <motion.div 
-                        key={item.id}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="flex flex-col gap-3 p-4 bg-muted/30 rounded-xl border border-border/60 relative group"
-                      >
-                        <button 
-                          onClick={() => removeItemRow(item.id)}
-                          className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                          <div className="sm:col-span-5">
-                            <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Select Product</label>
-                            <select 
-                              value={item.productId}
-                              onChange={(e) => handleProductSelect(index, e.target.value)}
-                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
-                            >
-                              <option value="" disabled>Choose product...</option>
-                              {PRODUCTS.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="sm:col-span-3">
-                            <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Size</label>
-                            <select 
-                              value={item.size}
-                              onChange={(e) => handleSizeSelect(index, e.target.value)}
-                              disabled={!product || !product.sizes}
-                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-primary focus:ring-2 disabled:opacity-50"
-                            >
-                              <option value="" disabled>Size</option>
-                              {product?.sizes?.map(s => (
-                                <option key={s.size} value={s.size}>{s.size}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="sm:col-span-2">
-                            <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Qty</label>
-                            <input 
-                              type="number" 
-                              min="1"
-                              value={item.qty}
-                              onChange={(e) => updateItemQty(index, parseInt(e.target.value) || 1)}
-                              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
-                            />
-                          </div>
-                          <div className="sm:col-span-2">
-                            <label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">MRP</label>
-                            <div className="py-2 text-sm font-semibold">{inr(item.mrp)}</div>
-                          </div>
+                      <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-muted/40 p-3 rounded-xl border border-border/60 relative group">
+                        {!savedBillData && (
+                          <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
+                        )}
+                        <div className="col-span-5">
+                          <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
+                            <option value="">Select Product...</option>
+                            {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          </select>
                         </div>
-                        <div className="flex gap-4 text-xs mt-2 border-t border-border pt-2">
-                          <span className="text-muted-foreground">Discount: <span className="font-bold text-foreground">5%</span></span>
-                          <span className="text-muted-foreground">GST: <span className="font-bold text-foreground">{item.taxRate}%</span></span>
-                          <span className="ml-auto font-bold text-primary">Item Total: {inr((item.mrp * item.qty * 0.95) * (1 + item.taxRate/100))}</span>
+                        <div className="col-span-2">
+                          <select disabled={!!savedBillData || !product} value={item.size} onChange={e => {
+                            const newI = [...items]; newI[index].size = e.target.value;
+                            newI[index].mrp = product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0;
+                            setItems(newI);
+                          }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
+                            <option value="">Size</option>
+                            {product?.sizes?.map(s => <option key={s.size} value={s.size}>{s.size}</option>)}
+                          </select>
                         </div>
-                      </motion.div>
+                        <div className="col-span-1">
+                          <input disabled={!!savedBillData} type="number" min="1" value={item.qty} onChange={e => {
+                            const newI = [...items]; newI[index].qty = Math.max(1, parseInt(e.target.value) || 1); setItems(newI)
+                          }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-center outline-none" />
+                        </div>
+                        <div className="col-span-2">
+                          <input disabled={!!savedBillData} type="number" value={item.mrp} onChange={e => {
+                            const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
+                          }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none" />
+                        </div>
+                        <div className="col-span-2 text-right font-bold text-sm text-primary">
+                          {inr((item.mrp * item.qty * (1 - item.discountPercent/100)) * (1 + item.taxRate/100))}
+                        </div>
+                      </div>
                     )
-                  })
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
+                  })}
+                  {items.length === 0 && <div className="text-center py-6 text-muted-foreground border border-dashed rounded-xl text-sm">No items. Click Add Item to start.</div>}
+                </div>
+              </div>
 
-        {/* Right Column: Preview & Actions */}
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm sticky top-24">
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <FileText className="size-5 text-primary" /> Bill Summary
-            </h2>
-            
-            <div className="space-y-3 text-sm mb-6">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">{inr(calculations.subtotal)}</span>
+              {/* Payment Section */}
+              <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm grid grid-cols-2 gap-6">
+                <div>
+                  <h2 className="text-sm font-bold uppercase text-muted-foreground mb-3">Payment Info</h2>
+                  <div className="space-y-3">
+                    <select disabled={!!savedBillData} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                      {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                    </select>
+                    <select disabled={!!savedBillData} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                      {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{inr(calculations.subtotal)}</span></div>
+                  <div className="flex justify-between text-emerald-600"><span>Discount</span><span>-{inr(calculations.discount)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Taxable Value</span><span>{inr(calculations.taxable)}</span></div>
+                  <div className="flex justify-between text-muted-foreground text-xs"><span>CGST 9%</span><span>+{inr(cgst)}</span></div>
+                  <div className="flex justify-between text-muted-foreground text-xs border-b border-border pb-2"><span>SGST 9%</span><span>+{inr(sgst)}</span></div>
+                  <div className="flex justify-between font-extrabold text-lg text-foreground pt-1"><span>Grand Total</span><span className="text-primary">{inr(finalTotal)}</span></div>
+                </div>
               </div>
-              <div className="flex justify-between text-emerald-600">
-                <span>Discount (5%)</span>
-                <span>-{inr(calculations.discount)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Taxable Value</span>
-                <span className="font-medium">{inr(calculations.taxable)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Total GST</span>
-                <span className="font-medium">+{inr(calculations.gst)}</span>
-              </div>
-              <div className="pt-4 border-t border-dashed border-border flex justify-between text-lg font-extrabold text-foreground">
-                <span>Grand Total</span>
-                <span className="text-primary">{inr(finalTotal)}</span>
-              </div>
+
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <Button onClick={generatePDF} disabled={!savedBill} variant="outline" className="rounded-xl w-full gap-2 text-xs h-12 print:hidden">
-                <Download className="size-4" /> Download
-              </Button>
-              <Button onClick={handlePrint} disabled={!savedBill} variant="outline" className="rounded-xl w-full gap-2 text-xs h-12 print:hidden">
-                <Printer className="size-4" /> Print
-              </Button>
-            </div>
-            <Button onClick={shareWhatsApp} disabled={!savedBill} className="rounded-xl w-full gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white h-12 print:hidden">
-              <MessageCircle className="size-4" /> Share on WhatsApp
-            </Button>
-            
-            {!savedBill && items.length > 0 && (
-              <p className="text-center text-xs text-muted-foreground mt-4">Save bill first to enable print & share</p>
-            )}
-          </div>
-        </div>
-      </div>
+            {/* Right: PDF Preview & Actions */}
+            <div className="xl:col-span-5 space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={handleSaveBill} disabled={isSaving || !!savedBillData} className="rounded-xl w-full">{isSaving ? 'Saving...' : 'Save Bill'}</Button>
+                <Button onClick={generatePDF} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
+                <Button onClick={() => window.print()} disabled={!savedBillData} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
+                <Button onClick={shareWhatsApp} disabled={!savedBillData} className="rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share</Button>
+              </div>
 
-      {/* Hidden Printable A4 Bill Format */}
-      <div className="overflow-hidden h-0 w-0 absolute opacity-0">
-        <div ref={printRef} className="bg-white p-10 font-sans text-black w-[800px] print:w-full print:p-0 print:block">
-          <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-            <h1 className="text-4xl font-extrabold text-orange-600 tracking-tight">HANUMAN PAINTS</h1>
-            <p className="text-gray-500 mt-1">Authorized Dulux Dealer</p>
-            <p className="text-sm text-gray-500 mt-1">Main Road, Your City, India | Ph: +91 00000 00000</p>
-          </div>
-          
-          <div className="flex justify-between mb-8">
-            <div>
-              <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1">Billed To:</h3>
-              <p className="font-bold text-lg">{customerName || "Cash Customer"}</p>
-              <p className="text-gray-600">{customerPhone}</p>
-            </div>
-            <div className="text-right">
-              <h3 className="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1">Invoice Details:</h3>
-              <p className="font-bold text-lg">INV-{billNo}</p>
-              <p className="text-gray-600">{new Date().toLocaleDateString("en-IN")}</p>
-            </div>
-          </div>
+              {/* PDF Container Wrapper */}
+              <div className="border border-border/60 bg-white rounded-2xl overflow-hidden shadow-inner flex justify-center p-4">
+                <div ref={printRef} className="bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] sm:scale-[0.5] md:scale-[0.6] xl:scale-[0.55]">
+                  {/* PDF Header */}
+                  <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                    <div>
+                      <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
+                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Dealer</p>
+                      <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
+                      <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p>
+                      <p className="text-xs text-gray-500">Ph: {settings.shop_phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                      <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
+                      <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
+                    </div>
+                  </div>
 
-          <table className="w-full mb-8 border-collapse">
-            <thead>
-              <tr className="bg-gray-100 border-y-2 border-gray-200">
-                <th className="py-3 px-2 text-left text-sm text-gray-600">Product</th>
-                <th className="py-3 px-2 text-center text-sm text-gray-600">Qty</th>
-                <th className="py-3 px-2 text-right text-sm text-gray-600">MRP</th>
-                <th className="py-3 px-2 text-right text-sm text-gray-600">Disc.</th>
-                <th className="py-3 px-2 text-right text-sm text-gray-600">GST</th>
-                <th className="py-3 px-2 text-right text-sm text-gray-600">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, i) => {
-                const gross = item.mrp * item.qty
-                const disc = gross * 0.05
-                const tax = (gross - disc) * (item.taxRate / 100)
-                const tot = (gross - disc) + tax
+                  {/* Customer Info */}
+                  <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                    <div className="flex justify-between">
+                      <div>
+                        <div className="font-bold text-lg">{customerName || "Cash Customer"}</div>
+                        <div className="text-sm text-gray-600">{customerPhone}</div>
+                        {customerAddress && <div className="text-sm text-gray-600">{customerAddress}</div>}
+                      </div>
+                      {customerGstin && (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 font-bold uppercase">Customer GSTIN</div>
+                          <div className="text-sm font-mono">{customerGstin}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Items Table */}
+                  <table className="w-full mb-6 border-collapse">
+                    <thead>
+                      <tr className="bg-gray-800 text-white text-xs uppercase">
+                        <th className="py-2 px-2 text-left">S.No</th>
+                        <th className="py-2 px-2 text-left">Item Description</th>
+                        <th className="py-2 px-2 text-center">Qty</th>
+                        <th className="py-2 px-2 text-right">MRP</th>
+                        <th className="py-2 px-2 text-right">Disc%</th>
+                        <th className="py-2 px-2 text-right">Taxable</th>
+                        <th className="py-2 px-2 text-right">GST%</th>
+                        <th className="py-2 px-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm border-b-2 border-gray-800">
+                      {items.map((item, i) => {
+                        const gross = item.mrp * item.qty; const disc = gross * (item.discountPercent/100);
+                        const taxable = gross - disc; const gst = taxable * (item.taxRate/100);
+                        return (
+                          <tr key={i} className="border-b border-gray-200">
+                            <td className="py-3 px-2 text-gray-500">{i+1}</td>
+                            <td className="py-3 px-2"><strong>{item.name}</strong><br/><span className="text-xs text-gray-500">{item.size}</span></td>
+                            <td className="py-3 px-2 text-center">{item.qty}</td>
+                            <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                            <td className="py-3 px-2 text-right">{item.discountPercent}%</td>
+                            <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
+                            <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                            <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Totals */}
+                  <div className="flex justify-between items-end">
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p><strong>Terms & Conditions:</strong></p>
+                      <p>1. Goods once sold cannot be returned or exchanged.</p>
+                      <p>2. Subject to Muzaffarpur jurisdiction only.</p>
+                      <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
+                    </div>
+                    <div className="w-64">
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{calculations.taxable.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST 9%</span><span>{cgst.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST 9%</span><span>{sgst.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                    <div>Customer Signature</div>
+                    <div>Authorized Signatory</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === "Online Orders" && (
+          <motion.div key="online" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <div className="grid gap-4">
+              {orders.map(order => {
+                const isBilled = bills.some(b => b.order_id === order.order_id)
                 return (
-                  <tr key={i} className="border-b border-gray-100">
-                    <td className="py-4 px-2">
-                      <div className="font-bold text-gray-900">{item.name}</div>
-                      <div className="text-xs text-gray-500">{item.size}</div>
-                    </td>
-                    <td className="py-4 px-2 text-center font-medium">{item.qty}</td>
-                    <td className="py-4 px-2 text-right text-gray-600">₹{item.mrp}</td>
-                    <td className="py-4 px-2 text-right text-emerald-600">-₹{disc.toFixed(2)}</td>
-                    <td className="py-4 px-2 text-right text-gray-600">
-                      {item.taxRate}%<br/><span className="text-xs text-gray-400">₹{tax.toFixed(2)}</span>
-                    </td>
-                    <td className="py-4 px-2 text-right font-bold text-gray-900">₹{tot.toFixed(2)}</td>
-                  </tr>
+                  <div key={order.id} className="bg-card border border-border/60 p-5 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <div className="font-bold flex items-center gap-2">#{order.order_id} {isBilled && <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded uppercase">Billed</span>}</div>
+                      <div className="text-sm text-muted-foreground mt-1">{order.customer_name} • {order.customer_phone}</div>
+                      <div className="text-xs font-semibold text-primary mt-1">{inr(order.total_amount)}</div>
+                    </div>
+                    <Button onClick={() => loadOrderToBill(order)} disabled={isBilled} variant={isBilled ? "secondary" : "default"} className="rounded-xl">
+                      {isBilled ? "Already Billed" : "Generate Bill"}
+                    </Button>
+                  </div>
                 )
               })}
-            </tbody>
-          </table>
-
-          <div className="flex justify-end">
-            <div className="w-72">
-              <div className="flex justify-between py-2 text-gray-600">
-                <span>Subtotal</span>
-                <span>₹{calculations.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-2 text-emerald-600 border-b border-gray-100">
-                <span>Discount (5%)</span>
-                <span>-₹{calculations.discount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-2 text-gray-600">
-                <span>Taxable Value</span>
-                <span>₹{calculations.taxable.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-2 text-gray-600 border-b border-gray-200">
-                <span>Total GST</span>
-                <span>+₹{calculations.gst.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-4 text-2xl font-extrabold text-gray-900">
-                <span>Grand Total</span>
-                <span>₹{finalTotal}</span>
-              </div>
-              <div className="mt-2 flex justify-between py-2 rounded bg-green-50 px-3 text-green-800 font-bold text-center w-full">
-                 <span>STATUS</span>
-                 <span>PAID</span>
-              </div>
             </div>
-          </div>
-          
-          <div className="mt-16 text-center text-sm text-gray-500 border-t border-gray-200 pt-6">
-            <p>Thank you for shopping with Hanuman Paints!</p>
-            <p className="text-xs mt-1">This is a computer generated invoice.</p>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+
+        {activeTab === "Bill History" && (
+          <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <div className="flex gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input type="text" placeholder="Search bill no, name, phone..." value={historySearch} onChange={e => setHistorySearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-sm" />
+              </div>
+              <select value={historyFilter} onChange={e => setHistoryFilter(e.target.value)} className="px-4 py-2 bg-background border border-border rounded-xl text-sm">
+                <option value="All">All Status</option>
+                {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+              </select>
+              <Button onClick={exportToExcel} variant="outline" className="rounded-xl gap-2"><FileSpreadsheet className="size-4" /> Export CSV</Button>
+            </div>
+
+            <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-bold">
+                  <tr>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Bill No</th>
+                    <th className="px-6 py-4">Customer</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filteredBills.map(bill => (
+                    <tr key={bill.id} className="hover:bg-muted/30">
+                      <td className="px-6 py-4">{new Date(bill.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 font-bold">{bill.bill_number}</td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold">{bill.customer_name}</div>
+                        <div className="text-xs text-muted-foreground">{bill.customer_phone}</div>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-primary">{inr(bill.total_amount)}</td>
+                      <td className="px-6 py-4">
+                        <select value={bill.payment_status} onChange={(e) => updateBillStatus(bill.id, e.target.value)} className={`text-xs font-bold uppercase rounded px-2 py-1 outline-none ${bill.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button size="icon" variant="outline" onClick={() => viewHistoricalBill(bill)} className="size-8 rounded-lg"><Eye className="size-4" /></Button>
+                          <Button size="icon" variant="destructive" onClick={() => deleteBill(bill.id)} className="size-8 rounded-lg"><Trash2 className="size-4" /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredBills.length === 0 && <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No bills found</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
