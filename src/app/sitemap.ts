@@ -1,14 +1,11 @@
 import { MetadataRoute } from 'next'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/services/supabase'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.hanumanpaints.in'
   
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-  )
-  
+  // Fetch active products
+  // Supabase instance handles placeholder logic internally to prevent build crashes
   // Fetch active products
   const { data: products } = await supabase
     .from('products')
