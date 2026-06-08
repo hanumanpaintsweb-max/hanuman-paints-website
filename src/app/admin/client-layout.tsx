@@ -6,17 +6,21 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { 
-  LogOut, Menu, X, LayoutDashboard, ShoppingBag, Receipt, BarChart3, Package, Users, Tag, Settings, Bell, Gift, Target
+  LogOut, Menu, X, LayoutDashboard, ShoppingBag, Receipt, BarChart3, Package, Users, Tag, Settings, Bell, Gift, Target, FileText, BookOpen, BellRing, CalendarRange
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { supabase } from "@/services/supabase"
 const NAV_ITEMS = [
   { label: "Orders", href: "/admin", icon: ShoppingBag, badgeKey: "orders" },
   { label: "Billing", href: "/admin/billing", icon: Receipt },
+  { label: "Quotations", href: "/admin/quotations", icon: FileText },
+  { label: "Customers", href: "/admin/customers", icon: Users },
+  { label: "Ledger", href: "/admin/ledger", icon: BookOpen },
+  { label: "Reminders", href: "/admin/reminders", icon: BellRing },
+  { label: "Day Book", href: "/admin/daybook", icon: CalendarRange },
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Inventory", href: "/admin/inventory", icon: Package },
-  { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Offers", href: "/admin/offers", icon: Gift },
   { label: "Schemes", href: "/admin/schemes", icon: Target },
   { label: "Coupons", href: "/admin/coupons", icon: Tag },

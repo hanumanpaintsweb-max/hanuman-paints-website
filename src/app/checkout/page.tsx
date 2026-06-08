@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "motion/react"
 import Image from "next/image"
-import { CheckCircle, Truck, ShoppingBag, Tag, X, Loader2 } from "lucide-react"
+import { CheckCircle, Truck, ShoppingBag, Tag, X, Loader2, MessageCircle } from "lucide-react"
 import confetti from "canvas-confetti"
 
 import { useCart, type CartItem } from "@/context/CartContext"
@@ -49,6 +49,28 @@ export default function CheckoutPage() {
   const [couponData, setCouponData] = useState<CouponData | null>(null)
   const [couponError, setCouponError] = useState("")
   const [animating, setAnimating] = useState(false)
+  const [showWaPopup, setShowWaPopup] = useState(false)
+
+  // Customer Wholesale Check
+  const [customerType, setCustomerType] = useState<"retail" | "wholesale">("retail")
+  const [checkingCustomer, setCheckingCustomer] = useState(false)
+
+  useEffect(() => {
+    const sanitizedPhone = form.phone.replace(/\D/g, "")
+    if (sanitizedPhone.length === 10) {
+      setCheckingCustomer(true)
+      supabase.from("customers").select("customer_type").eq("phone", sanitizedPhone).single().then(({ data }) => {
+        if (data?.customer_type === "wholesale") {
+          setCustomerType("wholesale")
+        } else {
+          setCustomerType("retail")
+        }
+        setCheckingCustomer(false)
+      })
+    } else {
+      setCustomerType("retail")
+    }
+  }, [form.phone])
 
   // Trigger confetti and scroll to top when ordered becomes true
   useEffect(() => {
@@ -66,7 +88,22 @@ export default function CheckoutPage() {
         confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() - 0.2, y: Math.random() - 0.2 } }))
         confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() + 0.2, y: Math.random() - 0.2 } }))
       }, 250)
-      return () => clearInterval(interval)
+
+      // Show popup after confetti ends
+      const popupTimeout = setTimeout(() => {
+        setShowWaPopup(true)
+      }, 3500)
+
+      // Auto close popup after 8 seconds of appearing
+      const closeTimeout = setTimeout(() => {
+        setShowWaPopup(false)
+      }, 11500)
+
+      return () => {
+        clearInterval(interval)
+        clearTimeout(popupTimeout)
+        clearTimeout(closeTimeout)
+      }
     }
   }, [ordered])
 
@@ -86,7 +123,20 @@ export default function CheckoutPage() {
     return Math.min(discount, total)
   })()
 
-  const finalTotal = Math.max(0, total - couponDiscountAmount)
+  const wholesaleCustomerDiscountAmount = (() => {
+    if (customerType !== "wholesale") return 0
+    let discount = 0
+    items.forEach((item: CartItem) => {
+      // Apply discount only if item hasn't already received quantity-based wholesale
+      if (!(item.min_wholesale_qty && item.quantity >= item.min_wholesale_qty)) {
+        const wDiscount = item.wholesale_discount || 10
+        discount += (item.mrp * item.quantity * wDiscount) / 100
+      }
+    })
+    return Math.round(discount)
+  })()
+
+  const finalTotal = Math.max(0, total - couponDiscountAmount - wholesaleCustomerDiscountAmount)
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -194,8 +244,8 @@ export default function CheckoutPage() {
       pincode: form.pincode,
       items: items as CheckoutItem[],
       subtotal,
-      discountAmount,
-      total,
+      discountAmount: discountAmount + wholesaleCustomerDiscountAmount,
+      total: total - wholesaleCustomerDiscountAmount,
       couponCode: couponApplied && couponData ? couponData.code : undefined,
     })
 
@@ -283,12 +333,50 @@ export default function CheckoutPage() {
             className="flex w-full max-w-xs flex-col gap-3"
           >
             <Button asChild size="lg" className="rounded-xl">
-              <Link href="/track-order">Track Order</Link>
+              <Link href="/my-orders">Track Order</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="rounded-xl">
               <Link href="/">Go Home</Link>
             </Button>
           </motion.div>
+          
+          <AnimatePresence>
+            {showWaPopup && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-primary/20 bg-card p-6 shadow-2xl text-center"
+                >
+                  <button onClick={() => setShowWaPopup(false)} className="absolute right-4 top-4 z-10 rounded-full bg-muted p-1.5 text-muted-foreground hover:bg-muted-foreground/20 hover:text-foreground">
+                    <X className="size-4" />
+                  </button>
+                  <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366]">
+                    <MessageCircle className="size-8" />
+                  </div>
+                  <h3 className="mb-2 text-xl font-bold text-foreground">Aapka order place ho chuka hai! 🎉</h3>
+                  <p className="mb-4 text-sm text-muted-foreground text-balance">
+                    Confirmation hote hi WhatsApp pe update aa jaayega.
+                  </p>
+                  <div className="mb-6 inline-block rounded-lg bg-muted/50 px-4 py-2 text-sm font-semibold tracking-wide text-foreground border border-border">
+                    Order: <span className="text-primary">#{orderId}</span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3">
+                    <Button asChild size="lg" className="w-full rounded-xl bg-[#25D366] hover:bg-[#128C7E] text-white">
+                      <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919204367192"}?text=${encodeURIComponent(`Hello Hanuman Paints, my order ID is #${orderId}. I have placed this order on the website. Please confirm!`)}`} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="mr-2 size-5" /> Share with Hanuman Paints
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full rounded-xl" onClick={() => setShowWaPopup(false)}>
+                      <Link href="/my-orders">Track My Order</Link>
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </SiteShell>
     )
@@ -535,6 +623,14 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-emerald-600 dark:text-emerald-500">Coupon ({couponData.code})</span>
                     <span className="font-semibold text-emerald-600 dark:text-emerald-500">−{inr(couponDiscountAmount)}</span>
+                  </div>
+                )}
+                {customerType === "wholesale" && wholesaleCustomerDiscountAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-emerald-600 dark:text-emerald-500 flex items-center gap-1">
+                      <Tag className="size-3" /> Wholesale Customer Benefit
+                    </span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-500">−{inr(wholesaleCustomerDiscountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">

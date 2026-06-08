@@ -11,7 +11,7 @@ import { SiteShell } from "@/components/site/site-shell"
 import { Button } from "@/components/ui/button"
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal, discountAmount, total, DISCOUNT_PERCENT } = useCart()
+  const { items, subtotal, discountAmount, total, removeItem, updateQuantity, DISCOUNT_PERCENT, wholesaleItemsCount } = useCart()
   const activeOffers = useActiveOffers()
 
   // Find applicable offers for cart items
@@ -186,6 +186,12 @@ export default function CartPage() {
             <p className="mt-4 text-center text-xs text-muted-foreground">
               Taxes and shipping calculated at checkout.
             </p>
+
+            {wholesaleItemsCount > 0 && (
+              <div className="mt-4 text-center font-bold text-emerald-600 dark:text-emerald-500 text-sm bg-emerald-50 dark:bg-emerald-500/10 py-2 rounded-xl border border-emerald-200 dark:border-emerald-500/30">
+                Wholesale Price Applied! 🎉
+              </div>
+            )}
 
             {totalSavings > 0 && (
               <div className="mt-4 text-center font-bold text-emerald-600 dark:text-emerald-500 text-sm bg-emerald-50 dark:bg-emerald-500/10 py-2 rounded-xl border border-emerald-200 dark:border-emerald-500/30">

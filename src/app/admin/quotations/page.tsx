@@ -28,7 +28,7 @@ type Settings = Record<string, string>
 
 type Bill = {
   id: string
-  bill_number: string
+  quotation_number: string
   customer_name: string
   customer_phone: string
   customer_address?: string
@@ -56,22 +56,22 @@ type Order = {
   total_amount: number
 }
 
-const TABS = ["New Bill", "Online Orders", "Bill History"]
+const TABS = ["New Quotation", "Online Orders", "Quotation History"]
 const PAYMENT_STATUSES = ["paid", "unpaid", "partial"]
 const PAYMENT_METHODS = ["cash", "upi", "credit"]
 const TIN_WOOD_CATEGORIES = ["Tinters", "Woodcare"] // 12% GST items, rest 18%
 
-export default function BillingPage() {
-  const [activeTab, setActiveTab] = useState("New Bill")
+export default function QuotationsPage() {
+  const [activeTab, setActiveTab] = useState("New Quotation")
   const printRef = useRef<HTMLDivElement>(null)
 
   // -- APP STATE --
   const [settings, setSettings] = useState<Settings>({})
-  const [bills, setBills] = useState<Bill[]>([])
+  const [quotations, setQuotations] = useState<Bill[]>([])
   const [orders, setOrders] = useState<Order[]>([])
 
   // -- TAB 1: NEW BILL STATE --
-  const [billNoStr, setBillNoStr] = useState<string>("")
+  const [quoteNoStr, setQuoteNoStr] = useState<string>("")
   const [customerName, setCustomerName] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
@@ -81,7 +81,7 @@ export default function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
+  const [savedQuotationData, setSavedQuotationData] = useState<Bill | null>(null)
   const [globalDiscount, setGlobalDiscount] = useState<number>(5)
   const [customerRecord, setCustomerRecord] = useState<any>(null)
 
@@ -90,15 +90,15 @@ export default function BillingPage() {
   const [historyFilter, setHistoryFilter] = useState("All")
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
-  const fetchAndSetNextBillNo = async () => {
+  const fetchAndSetNextQuoteNo = async () => {
     const year = new Date().getFullYear()
-    const { data } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+    const { data } = await supabase.from('quotations').select('quotation_number').order('created_at', { ascending: false }).limit(1)
     let maxNum = 0
     if (data && data.length > 0) {
-      const match = data[0].bill_number.match(/-(\d+)$/)
+      const match = data[0].quotation_number.match(/-(\d+)$/)
       if (match) maxNum = parseInt(match[1])
     }
-    setBillNoStr(`HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
+    setQuoteNoStr(`HQ-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
   }
 
   const fetchInitialData = async () => {
@@ -106,11 +106,11 @@ export default function BillingPage() {
     const setts = await getSettings()
     setSettings(setts)
 
-    // 2. Bills
-    const { data: bData } = await supabase.from('bills').select('*').eq('is_deleted', false).order('created_at', { ascending: false })
-    if (bData) setBills(bData)
+    // 2. Quotations
+    const { data: bData } = await supabase.from('quotations').select('*').eq('is_deleted', false).order('created_at', { ascending: false })
+    if (bData) setQuotations(bData)
     
-    await fetchAndSetNextBillNo()
+    await fetchAndSetNextQuoteNo()
 
     // 3. Orders (for Tab 2)
     const { data: oData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
@@ -123,37 +123,12 @@ export default function BillingPage() {
   }, [])
 
   useEffect(() => {
-    const qData = localStorage.getItem('convert_quotation')
-    if (qData) {
-      try {
-        const quotation = JSON.parse(qData)
-        setCustomerName(quotation.customer_name || "")
-        setCustomerPhone(quotation.customer_phone || "")
-        setCustomerAddress(quotation.customer_address || "")
-        setCustomerGstin(quotation.customer_gstin || "")
-        setItems(quotation.items || [])
-        setActiveTab("New Bill")
-        localStorage.removeItem('convert_quotation')
-        toast.success("Quotation loaded. You can now save it as a Bill.")
-      } catch (e) {
-        console.error("Failed to parse quotation data", e)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
     const phone = customerPhone.replace(/\D/g, '')
     if (phone.length === 10) {
       supabase.from('customers').select('*').eq('phone', phone).single().then(({ data }) => {
         setCustomerRecord(data || null)
         if (data && !customerName) {
           setCustomerName(data.name)
-        }
-        if (data?.customer_type === 'wholesale') {
-          setGlobalDiscount(10)
-          toast.success("Wholesale customer detected. Wholesale discount applied.")
-        } else {
-          setGlobalDiscount(5)
         }
       })
     } else {
@@ -219,11 +194,11 @@ export default function BillingPage() {
       }
     }) || []
     setItems(mappedItems)
-    setSavedBillData(null)
-    setActiveTab("New Bill")
+    setSavedQuotationData(null)
+    setActiveTab("New Quotation")
   }
 
-  const handleSaveBill = async () => {
+  const handleSaveQuotation = async () => {
     if (!customerName || customerPhone.replace(/\D/g,'').length !== 10) {
       toast.error("Valid customer name and 10-digit phone required")
       return
@@ -237,17 +212,17 @@ export default function BillingPage() {
     
     // Fetch latest number right before saving to prevent duplicates
     const year = new Date().getFullYear()
-    const { data: latestData } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+    const { data: latestData } = await supabase.from('quotations').select('quotation_number').order('created_at', { ascending: false }).limit(1)
     let maxNum = 0
     if (latestData && latestData.length > 0) {
-      const match = latestData[0].bill_number.match(/-(\d+)$/)
+      const match = latestData[0].quotation_number.match(/-(\d+)$/)
       if (match) maxNum = parseInt(match[1])
     }
-    const finalBillNoStr = `HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`
-    setBillNoStr(finalBillNoStr)
+    const finalBillNoStr = `HQ-${year}-${(maxNum + 1).toString().padStart(3, '0')}`
+    setQuoteNoStr(finalBillNoStr)
 
-    const billData = {
-      bill_number: finalBillNoStr,
+    const quotationData = {
+      quotation_number: finalBillNoStr,
       customer_name: customerName,
       customer_phone: customerPhone.replace(/\D/g,''),
       customer_address: customerAddress || null,
@@ -264,7 +239,7 @@ export default function BillingPage() {
       order_id: linkedOrderId || null
     }
 
-    const { data, error } = await supabase.from("bills").insert([billData]).select()
+    const { data, error } = await supabase.from("quotations").insert([quotationData]).select()
 
     setIsSaving(false)
 
@@ -274,51 +249,12 @@ export default function BillingPage() {
     } else {
       toast.success("Bill saved successfully!")
       const newBill = data[0]
-      setSavedBillData(newBill)
-      setBills([newBill, ...bills])
+      setSavedQuotationData(newBill)
+      setQuotations([newBill, ...quotations])
 
-      let stockUpdateFailed = false
+      
 
-      for (const item of items) {
-        if (!item.productId) continue
-
-        const { error: stockError } = await supabase.rpc('deduct_stock', {
-          p_product_id: item.productId,
-          p_quantity: item.qty,
-          p_changed_by: 'billing-auto'
-        })
-
-        if (stockError) stockUpdateFailed = true
-      }
-
-      if (stockUpdateFailed) {
-        toast.error("Bill saved, but stock update failed")
-      }
-
-      // Update customer outstanding if unpaid/partial
-      if (paymentStatus !== 'paid' && customerPhone.length === 10) {
-        const remaining = paymentStatus === 'unpaid' ? finalTotal : finalTotal / 2 // simplified for partial
-        
-        // Auto-add to ledger
-        await supabase.from('ledger').insert([{
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          type: 'receivable',
-          amount: remaining,
-          description: `Bill #${finalBillNoStr}`,
-          date: new Date().toISOString().split('T')[0],
-          status: paymentStatus
-        }])
-
-        // Update outstanding
-        if (customerRecord) {
-          await supabase.from('customers').update({
-            current_outstanding: (customerRecord.current_outstanding || 0) + remaining,
-            total_orders: (customerRecord.total_orders || 0) + 1,
-            total_value: (customerRecord.total_value || 0) + finalTotal
-          }).eq('id', customerRecord.id)
-        }
-      }
+      
     }
   }
 
@@ -326,8 +262,8 @@ export default function BillingPage() {
     const printArea = document.getElementById(targetId)
     if (!printArea) return
     
-    const bd = providedBillData || savedBillData
-    const billNumber = bd?.bill_number || billNoStr
+    const bd = providedBillData || savedQuotationData
+    const billNumber = bd?.quotation_number || quoteNoStr
     const cName = bd?.customer_name ? `-${bd.customer_name.replace(/[^a-zA-Z0-9]/g, '')}` : (customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : '')
     const fileName = `${billNumber}${cName}`
 
@@ -372,7 +308,7 @@ export default function BillingPage() {
   }
 
   const shareWhatsApp = () => {
-    const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill ${savedBillData?.bill_number} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nPayment Status: ${paymentStatus.toUpperCase()}\n\nDhanyawad! 🎨`
+    const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill ${savedQuotationData?.quotation_number} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nPayment Status: ${paymentStatus.toUpperCase()}\n\nDhanyawad! 🎨`
     const url = `https://wa.me/91${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`
     window.open(url, "_blank")
   }
@@ -387,36 +323,36 @@ export default function BillingPage() {
     setPaymentMethod("cash")
     setGlobalDiscount(5)
     setLinkedOrderId(null)
-    setSavedBillData(null)
-    await fetchAndSetNextBillNo()
+    setSavedQuotationData(null)
+    await fetchAndSetNextQuoteNo()
   }
 
   const exportToExcel = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Date,Bill Number,Customer,Phone,Total Amount,Status,Method\n" +
-      filteredBills.map(b => `${new Date(b.created_at).toLocaleDateString()},${b.bill_number},${b.customer_name},${b.customer_phone},${b.total_amount},${b.payment_status},${b.payment_method}`).join("\n")
+      filteredQuotations.map(b => `${new Date(b.created_at).toLocaleDateString()},${b.quotation_number},${b.customer_name},${b.customer_phone},${b.total_amount},${b.payment_status},${b.payment_method}`).join("\n")
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement("a")
     link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `bills_export_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute("download", `quotations_export_${new Date().toISOString().split('T')[0]}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
   const updateBillStatus = async (id: string, newStatus: string) => {
-    const { error } = await supabase.from('bills').update({ payment_status: newStatus }).eq('id', id)
+    const { error } = await supabase.from('quotations').update({ payment_status: newStatus }).eq('id', id)
     if (!error) {
-      setBills(bills.map(b => b.id === id ? { ...b, payment_status: newStatus } : b))
+      setQuotations(quotations.map(b => b.id === id ? { ...b, payment_status: newStatus } : b))
       toast.success("Payment status updated")
     }
   }
 
   const deleteBill = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this bill?")) return
-    const { error } = await supabase.from('bills').update({ is_deleted: true }).eq('id', id)
+    const { error } = await supabase.from('quotations').update({ is_deleted: true }).eq('id', id)
     if (!error) {
-      setBills(bills.filter(b => b.id !== id))
+      setQuotations(quotations.filter(b => b.id !== id))
       toast.success("Bill deleted")
     }
   }
@@ -426,12 +362,18 @@ export default function BillingPage() {
     setSelectedHistoryBill(bill)
   }
 
-  // Filter Bills
-  const filteredBills = bills.filter(b => {
+  // Convert to Bill
+  const convertToBill = (bill: Bill) => {
+    localStorage.setItem('convert_quotation', JSON.stringify(bill))
+    window.location.href = '/admin/billing'
+  }
+
+  // Filter Quotations
+  const filteredQuotations = quotations.filter(b => {
     if (historyFilter !== "All" && b.payment_status !== historyFilter.toLowerCase()) return false
     if (historySearch) {
       const s = historySearch.toLowerCase()
-      return b.bill_number.toLowerCase().includes(s) || b.customer_name.toLowerCase().includes(s) || b.customer_phone.includes(s)
+      return b.quotation_number.toLowerCase().includes(s) || b.customer_name.toLowerCase().includes(s) || b.customer_phone.includes(s)
     }
     return true
   })
@@ -441,9 +383,9 @@ export default function BillingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <Receipt className="size-8 text-primary" /> Billing System
+            <Receipt className="size-8 text-primary" /> Quotation Builder
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Generate GST invoices and manage accounts</p>
+          <p className="text-sm text-muted-foreground mt-1">Create estimates and convert them to quotations</p>
         </div>
       </div>
 
@@ -460,14 +402,14 @@ export default function BillingPage() {
       </div>
 
       <AnimatePresence mode="wait">
-        {activeTab === "New Bill" && (
+        {activeTab === "New Quotation" && (
           <motion.div key="new-bill" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid gap-6 xl:grid-cols-12">
             
             {/* Left: Form */}
             <div className="xl:col-span-7 space-y-6">
-              {savedBillData && (
+              {savedQuotationData && (
                 <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 p-4 rounded-2xl flex justify-between items-center">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="size-5" /> Bill #{savedBillData.bill_number} Saved</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="size-5" /> Bill #{savedQuotationData.quotation_number} Saved</div>
                   <Button variant="outline" size="sm" onClick={resetForm} className="bg-white hover:bg-emerald-50 text-emerald-700">Create New</Button>
                 </div>
               )}
@@ -483,25 +425,25 @@ export default function BillingPage() {
                         {customerRecord.current_outstanding + finalTotal > customerRecord.credit_limit && ' (LIMIT EXCEEDED)'}
                       </div>
                     )}
-                    <div className="text-sm font-bold bg-muted px-3 py-1 rounded-lg">No: {billNoStr}</div>
+                    <div className="text-sm font-bold bg-muted px-3 py-1 rounded-lg">No: {quoteNoStr}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">Customer Name *</label>
-                    <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedQuotationData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">Phone Number *</label>
-                    <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedQuotationData} maxLength={10} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                   <div className="space-y-1 col-span-2">
                     <label className="text-xs font-semibold text-muted-foreground">Address</label>
-                    <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedQuotationData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                   <div className="space-y-1 col-span-2">
                     <label className="text-xs font-semibold text-muted-foreground">GSTIN (Optional B2B)</label>
-                    <input type="text" value={customerGstin} onChange={e => setCustomerGstin(e.target.value.toUpperCase())} disabled={!!savedBillData} maxLength={15} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    <input type="text" value={customerGstin} onChange={e => setCustomerGstin(e.target.value.toUpperCase())} disabled={!!savedQuotationData} maxLength={15} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                 </div>
               </div>
@@ -509,7 +451,7 @@ export default function BillingPage() {
               <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Products</h2>
-                  {!savedBillData && <Button onClick={handleAddRow} size="sm" variant="secondary" className="rounded-lg h-8 gap-1"><Plus className="size-4" /> Add Item</Button>}
+                  {!savedQuotationData && <Button onClick={handleAddRow} size="sm" variant="secondary" className="rounded-lg h-8 gap-1"><Plus className="size-4" /> Add Item</Button>}
                 </div>
 
                 <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground mb-2 px-2">
@@ -526,17 +468,17 @@ export default function BillingPage() {
                     const product = PRODUCTS.find(p => p.id === item.productId)
                     return (
                       <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-muted/40 p-3 rounded-xl border border-border/60 relative group">
-                        {!savedBillData && (
+                        {!savedQuotationData && (
                           <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
                         )}
                         <div className="col-span-4">
-                          <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
+                          <select disabled={!!savedQuotationData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
                             <option value="">Select Product...</option>
                             {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                         </div>
                         <div className="col-span-2">
-                          <select disabled={!!savedBillData || !product} value={item.size} onChange={e => {
+                          <select disabled={!!savedQuotationData || !product} value={item.size} onChange={e => {
                             const newI = [...items]; newI[index].size = e.target.value;
                             newI[index].mrp = product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0;
                             setItems(newI);
@@ -546,17 +488,17 @@ export default function BillingPage() {
                           </select>
                         </div>
                         <div className="col-span-1">
-                          <input disabled={!!savedBillData} type="number" min="1" value={item.qty} onChange={e => {
+                          <input disabled={!!savedQuotationData} type="number" min="1" value={item.qty} onChange={e => {
                             const newI = [...items]; newI[index].qty = Math.max(1, parseInt(e.target.value) || 1); setItems(newI)
                           }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-center outline-none" />
                         </div>
                         <div className="col-span-2">
-                          <input disabled={!!savedBillData} type="number" placeholder="Price" value={item.mrp || ""} onChange={e => {
+                          <input disabled={!!savedQuotationData} type="number" placeholder="Price" value={item.mrp || ""} onChange={e => {
                             const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
                           }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none" />
                         </div>
                         <div className="col-span-1">
-                          <select disabled={!!savedBillData} value={item.taxRate} onChange={e => {
+                          <select disabled={!!savedQuotationData} value={item.taxRate} onChange={e => {
                             const newI = [...items]; newI[index].taxRate = parseFloat(e.target.value) || 0; setItems(newI)
                           }} className="w-full rounded-lg border border-border bg-background px-1 py-1.5 text-xs outline-none">
                             <option value="0">0%</option>
@@ -591,7 +533,7 @@ export default function BillingPage() {
                         {[0, 5, 10, 15, 20].map(d => (
                           <button 
                             key={d}
-                            disabled={!!savedBillData}
+                            disabled={!!savedQuotationData}
                             onClick={() => setGlobalDiscount(d)}
                             className={`px-2 py-1 text-xs font-bold rounded-md border transition-colors ${globalDiscount === d ? 'bg-orange-500 text-white border-orange-600' : 'bg-background text-muted-foreground hover:bg-muted'}`}
                           >
@@ -601,7 +543,7 @@ export default function BillingPage() {
                       </div>
                       <div className="relative">
                         <input 
-                          disabled={!!savedBillData}
+                          disabled={!!savedQuotationData}
                           type="number" 
                           value={globalDiscount || ""} 
                           onChange={e => setGlobalDiscount(parseFloat(e.target.value) || 0)} 
@@ -612,10 +554,10 @@ export default function BillingPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <select disabled={!!savedBillData} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                      <select disabled={!!savedQuotationData} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
                         {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                       </select>
-                      <select disabled={!!savedBillData} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                      <select disabled={!!savedQuotationData} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
                         {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                       </select>
                     </div>
@@ -636,10 +578,10 @@ export default function BillingPage() {
             {/* Right: PDF Preview & Actions */}
             <div className="xl:col-span-5 space-y-4">
               <div className="grid grid-cols-2 gap-2">
-                <Button onClick={handleSaveBill} disabled={isSaving || !!savedBillData} className="rounded-xl w-full">{isSaving ? 'Saving...' : 'Save Bill'}</Button>
-                <Button onClick={() => handlePDF()} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
-                <Button onClick={() => window.print()} disabled={!savedBillData} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
-                <Button onClick={shareWhatsApp} disabled={!savedBillData} className="rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share</Button>
+                <Button onClick={handleSaveQuotation} disabled={isSaving || !!savedQuotationData} className="rounded-xl w-full">{isSaving ? 'Saving...' : 'Save Bill'}</Button>
+                <Button onClick={() => handlePDF()} disabled={!savedQuotationData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
+                <Button onClick={() => window.print()} disabled={!savedQuotationData} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
+                <Button onClick={shareWhatsApp} disabled={!savedQuotationData} className="rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share</Button>
               </div>
 
               {/* PDF Container Wrapper */}
@@ -655,8 +597,8 @@ export default function BillingPage() {
                       <p className="text-xs text-gray-500">Ph: {settings.shop_phone}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
-                      <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
+                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">ESTIMATE / QUOTATION</div>
+                      <div className="mt-2 text-sm"><strong>Quotation No:</strong> {savedQuotationData?.quotation_number || quoteNoStr}</div>
                       <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
                     </div>
                   </div>
@@ -746,7 +688,7 @@ export default function BillingPage() {
           <motion.div key="online" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="grid gap-4">
               {orders.map(order => {
-                const isBilled = bills.some(b => b.order_id === order.order_id)
+                const isBilled = quotations.some(b => b.order_id === order.order_id)
                 return (
                   <div key={order.order_id} className="bg-card border border-border/60 p-5 rounded-2xl flex items-center justify-between">
                     <div>
@@ -764,7 +706,7 @@ export default function BillingPage() {
           </motion.div>
         )}
 
-        {activeTab === "Bill History" && (
+        {activeTab === "Quotation History" && (
           <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="flex gap-4 mb-6">
               <div className="relative flex-1">
@@ -791,10 +733,10 @@ export default function BillingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {filteredBills.map(bill => (
+                  {filteredQuotations.map(bill => (
                     <tr key={bill.id} className="hover:bg-muted/30">
                       <td className="px-6 py-4">{new Date(bill.created_at).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 font-bold">{bill.bill_number}</td>
+                      <td className="px-6 py-4 font-bold">{bill.quotation_number}</td>
                       <td className="px-6 py-4">
                         <div className="font-semibold">{bill.customer_name}</div>
                         <div className="text-xs text-muted-foreground">{bill.customer_phone}</div>
@@ -807,13 +749,14 @@ export default function BillingPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => convertToBill(bill)} className="rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200">Convert to Bill</Button>
                           <Button size="icon" variant="outline" onClick={() => viewHistoricalBill(bill)} className="size-8 rounded-lg"><Eye className="size-4" /></Button>
                           <Button size="icon" variant="destructive" onClick={() => deleteBill(bill.id)} className="size-8 rounded-lg"><Trash2 className="size-4" /></Button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {filteredBills.length === 0 && <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No bills found</td></tr>}
+                  {filteredQuotations.length === 0 && <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No quotations found</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -821,7 +764,7 @@ export default function BillingPage() {
         )}
       </AnimatePresence>
 
-      {/* Bill History Modal */}
+      {/* Quotation History Modal */}
       <AnimatePresence>
         {selectedHistoryBill && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -836,10 +779,10 @@ export default function BillingPage() {
               <div className="p-6 border-b border-border/60 flex justify-between items-center bg-muted/20">
                 <div>
                   <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <FileText className="size-6 text-primary" /> Bill Preview
+                    <FileText className="size-6 text-primary" /> Quotation Preview
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    #{selectedHistoryBill.bill_number} • {new Date(selectedHistoryBill.created_at).toLocaleString()}
+                    #{selectedHistoryBill.quotation_number} • {new Date(selectedHistoryBill.created_at).toLocaleString()}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -850,7 +793,7 @@ export default function BillingPage() {
                     const printWindow = window.open('', '_blank')
                     if (!printWindow) return
                     printWindow.document.write(`
-                      <html><head><title>Print ${selectedHistoryBill.bill_number}</title>
+                      <html><head><title>Print ${selectedHistoryBill.quotation_number}</title>
                       <script src="https://cdn.tailwindcss.com"></script></head>
                       <body class="bg-white"><div style="width: 210mm; margin: 0 auto; padding: 20px;">${pa.innerHTML}</div>
                       <script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 800) }</script></body></html>
@@ -874,8 +817,8 @@ export default function BillingPage() {
                       <p className="text-xs text-gray-500">Ph: {settings.shop_phone}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
-                      <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
+                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">ESTIMATE / QUOTATION</div>
+                      <div className="mt-2 text-sm"><strong>Quotation No:</strong> {selectedHistoryBill.quotation_number}</div>
                       <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
                     </div>
                   </div>

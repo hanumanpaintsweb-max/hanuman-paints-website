@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "motion/react"
-import { ArrowRight, Mail, MapPin, Phone } from "lucide-react"
+import { ArrowRight, Mail, MapPin, Phone, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const cols = [
@@ -77,21 +77,20 @@ export function Footer() {
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             {!isProductsPage && (
-              <Button asChild size="lg" variant="secondary" className="group w-full gap-2 rounded-xl sm:w-auto">
+              <Button asChild size="lg" className="group w-full gap-2 rounded-2xl px-10 py-7 text-lg font-bold bg-gradient-to-r from-orange-400 to-orange-600 border border-orange-300 text-white shadow-xl shadow-orange-500/20 transition-all hover:scale-105 hover:shadow-orange-500/40 sm:w-auto">
                 <Link href="/products">
                   Start Shopping
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
             )}
             <Button
               asChild
               size="lg"
-              variant="outline"
-              className="w-full rounded-xl border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground sm:w-auto"
+              className="group w-full gap-2 rounded-2xl px-8 py-7 text-lg font-bold bg-[#25D366] text-white shadow-xl shadow-[#25D366]/20 transition-all hover:scale-105 hover:bg-[#128C7E] hover:shadow-[#25D366]/40 sm:w-auto"
             >
               <a href={waLink} target="_blank" rel="noopener noreferrer">
-                Consult on WhatsApp
+                <MessageCircle className="size-5" /> Consult on WhatsApp
               </a>
             </Button>
           </div>

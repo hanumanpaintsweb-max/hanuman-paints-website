@@ -11,6 +11,8 @@ export interface CartItem {
   category?: string;
   image?: string;
   selectedSize?: string;
+  wholesale_discount?: number;
+  min_wholesale_qty?: number;
   [key: string]: unknown;
 }
 
@@ -44,6 +46,7 @@ export interface CartContextType {
   clearCart: () => void;
   discountPercent: number;
   DISCOUNT_PERCENT: number;
+  wholesaleItemsCount: number;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -127,7 +130,24 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const subtotal = state.items.reduce((sum: number, item: CartItem) => sum + item.mrp * item.quantity, 0);
-  const discountAmount = Math.round(subtotal * discountPercent / 100);
+  
+  // Calculate wholesale discounts
+  let wholesaleDiscountAmount = 0;
+  let wholesaleItemsCount = 0;
+  
+  state.items.forEach((item: CartItem) => {
+    if (item.min_wholesale_qty && item.quantity >= item.min_wholesale_qty) {
+      wholesaleItemsCount++;
+      const wDiscount = item.wholesale_discount || 10;
+      wholesaleDiscountAmount += (item.mrp * item.quantity * wDiscount) / 100;
+    }
+  });
+
+  // Regular discount applies to non-wholesale items (or all items, depending on logic. Usually wholesale overrides regular)
+  // Let's assume the regular discount applies to the remaining amount or we just add them.
+  const regularDiscountAmount = Math.round((subtotal - wholesaleDiscountAmount) * discountPercent / 100);
+  
+  const discountAmount = Math.round(wholesaleDiscountAmount + regularDiscountAmount);
   const total = subtotal - discountAmount;
   const itemCount = state.items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
 
@@ -173,6 +193,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         clearCart,
         discountPercent,
         DISCOUNT_PERCENT: discountPercent,
+        wholesaleItemsCount,
       }}
     >
       {children}

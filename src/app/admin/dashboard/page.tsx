@@ -15,6 +15,7 @@ import { inr } from "@/lib/format"
 import { PRODUCTS } from "@/data/products"
 import Link from "next/link"
 import { SchemesWidget } from "@/components/schemes/SchemesWidget"
+import { Button } from "@/components/ui/button"
 
 const PIE_COLORS = ["#F97316", "#10B981", "#3B82F6", "#EF4444", "#8B5CF6"]
 const CAT_COLORS = ["#2563EB", "#DB2777", "#D97706", "#059669", "#7C3AED", "#DC2626"]
@@ -85,9 +86,11 @@ export default function DashboardPage() {
   const [topProducts, setTopProducts] = useState<any[]>([])
   const [catData, setCatData] = useState<any[]>([])
 
-  // Recent Activity
   const [recentOrders, setRecentOrders] = useState<any[]>([])
   const [recentBills, setRecentBills] = useState<any[]>([])
+  
+  // Reminders
+  const [reminders, setReminders] = useState<{count: number, amount: number}>({count: 0, amount: 0})
 
   useEffect(() => {
     fetchDashboardData()
@@ -159,6 +162,19 @@ export default function DashboardPage() {
       totalBills: allBills.length,
       outstandingAmount: outstanding
     })
+
+    // Process Reminders (Ledger)
+    const { data: ledger } = await supabase
+      .from('ledger')
+      .select('*')
+      .eq('type', 'receivable')
+      .in('status', ['pending', 'partial', 'unpaid'])
+    
+    if (ledger) {
+      const remCount = ledger.length
+      const remAmount = ledger.reduce((acc, l) => acc + l.amount, 0)
+      setReminders({ count: remCount, amount: remAmount })
+    }
 
     // Process Status Pie
     const statusCount: Record<string, number> = {}
@@ -262,6 +278,26 @@ export default function DashboardPage() {
       </div>
 
       <SchemesWidget />
+
+      {/* OVERDUE REMINDERS WIDGET */}
+      {reminders.count > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="bg-rose-100 p-3 rounded-full">
+              <AlertCircle className="size-6 text-rose-600" />
+            </div>
+            <div>
+              <h3 className="text-rose-900 font-bold text-lg">{reminders.count} Overdue Payments</h3>
+              <p className="text-rose-700 text-sm font-medium">Total Pending Amount: <span className="font-bold">{inr(reminders.amount)}</span></p>
+            </div>
+          </div>
+          <Link href="/admin/reminders">
+            <Button className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm border-none">
+              View Reminders
+            </Button>
+          </Link>
+        </motion.div>
+      )}
 
       {/* TOP STATS */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

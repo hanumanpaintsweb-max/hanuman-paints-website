@@ -5,7 +5,8 @@ import { Loader2, Package, Trash2, Plus, Edit } from "lucide-react"
 import { supabase } from "@/services/supabase"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
+import { X, Save } from "lucide-react"
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Array<{
@@ -16,9 +17,13 @@ export default function AdminProductsPage() {
     price: number;
     mrp: number;
     image_url?: string;
+    wholesale_discount: number;
+    min_wholesale_qty: number;
   }>>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("All")
+  const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [editForm, setEditForm] = useState({ wholesale_discount: 10, min_wholesale_qty: 10 })
   
   const fetchProducts = async () => {
     setLoading(true)
@@ -50,6 +55,26 @@ export default function AdminProductsPage() {
     } else {
       setProducts(prev => prev.filter(p => p.id !== id))
       toast.success(`${name} removed successfully`)
+    }
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingProduct) return
+    const { error } = await supabase
+      .from('products')
+      .update({
+        wholesale_discount: editForm.wholesale_discount,
+        min_wholesale_qty: editForm.min_wholesale_qty
+      })
+      .eq('id', editingProduct.id)
+      
+    if (error) {
+      toast.error("Failed to update product")
+    } else {
+      setProducts(products.map(p => p.id === editingProduct.id ? { ...p, ...editForm } : p))
+      setEditingProduct(null)
+      toast.success("Product updated successfully")
     }
   }
 
@@ -118,7 +143,13 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:ml-auto">
-                  <Button variant="outline" size="sm" className="rounded-lg gap-2 h-9">
+                  <div className="text-xs text-right mr-4 text-muted-foreground hidden sm:block">
+                    Wholesale: {product.wholesale_discount || 0}% off <br/> (Min {product.min_wholesale_qty || 10} qty)
+                  </div>
+                  <Button variant="outline" size="sm" className="rounded-lg gap-2 h-9" onClick={() => {
+                    setEditingProduct(product);
+                    setEditForm({ wholesale_discount: product.wholesale_discount || 10, min_wholesale_qty: product.min_wholesale_qty || 10 })
+                  }}>
                     <Edit className="size-4" /> Edit
                   </Button>
                   <Button 
@@ -135,6 +166,51 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {editingProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-card w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-border"
+            >
+              <div className="p-4 border-b border-border/60 flex justify-between items-center bg-muted/30">
+                <h3 className="font-bold text-lg">Edit {editingProduct.name}</h3>
+                <button onClick={() => setEditingProduct(null)} className="p-1 hover:bg-muted rounded-md"><X className="size-5"/></button>
+              </div>
+              <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">Wholesale Discount (%)</label>
+                  <input 
+                    type="number" min="0" max="100" 
+                    value={editForm.wholesale_discount} 
+                    onChange={e => setEditForm({...editForm, wholesale_discount: parseFloat(e.target.value) || 0})}
+                    className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none bg-background" 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Extra discount applied on top of MRP for wholesale orders.</p>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">Minimum Wholesale Qty</label>
+                  <input 
+                    type="number" min="1" 
+                    value={editForm.min_wholesale_qty} 
+                    onChange={e => setEditForm({...editForm, min_wholesale_qty: parseInt(e.target.value) || 1})}
+                    className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none bg-background" 
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Minimum quantity required to automatically trigger wholesale pricing.</p>
+                </div>
+                <div className="pt-4 flex gap-3">
+                  <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={() => setEditingProduct(null)}>Cancel</Button>
+                  <Button type="submit" className="flex-1 rounded-xl gap-2"><Save className="size-4"/> Save Changes</Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
+

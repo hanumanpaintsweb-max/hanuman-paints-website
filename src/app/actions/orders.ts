@@ -229,5 +229,34 @@ export async function placeCheckoutOrder(input: PlaceOrderInput): Promise<PlaceO
       .eq("id", coupon.id)
   }
 
+  // Auto-link / Update Customer Record
+  const finalTotal = Math.max(0, input.total - couponDiscount)
+  const { data: existingCustomer } = await supabase
+    .from("customers")
+    .select("id, total_orders, total_value")
+    .eq("phone", phone)
+    .single()
+
+  if (existingCustomer) {
+    await supabase
+      .from("customers")
+      .update({
+        name: name,
+        total_orders: (existingCustomer.total_orders || 0) + 1,
+        total_value: (existingCustomer.total_value || 0) + finalTotal
+      })
+      .eq("id", existingCustomer.id)
+  } else {
+    await supabase
+      .from("customers")
+      .insert([{
+        name: name,
+        phone: phone,
+        customer_type: "retail",
+        total_orders: 1,
+        total_value: finalTotal
+      }])
+  }
+
   return { success: true, orderId: oid }
 }

@@ -55,7 +55,7 @@ export default function OffersPage() {
 
   return (
     <SiteShell>
-      <div className="min-h-screen bg-muted/30 pt-24 pb-16">
+      <div className="min-h-screen bg-muted/30 pt-32 pb-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         
         <div className="mb-10 text-center">
@@ -115,21 +115,21 @@ export default function OffersPage() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ delay: idx * 0.05 }}
                     key={offer.id}
-                    className="group relative flex flex-col overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+                    className="group relative flex flex-col overflow-hidden rounded-2xl bg-slate-950 border border-slate-800 shadow-sm transition-all hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
                   >
-                    <div className="h-32 bg-gradient-to-br from-primary/20 to-primary/5 p-6 flex flex-col justify-end relative">
+                    <div className="h-32 bg-gradient-to-br from-primary/30 to-slate-900 p-6 flex flex-col justify-end relative border-b border-slate-800">
                       {offer.badge_text && (
                         <div className="absolute top-4 left-4 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm" style={{ backgroundColor: offer.badge_color || '#F97316' }}>
                           {offer.badge_text}
                         </div>
                       )}
                       {daysLeft !== null && (
-                        <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-background/80 backdrop-blur px-2.5 py-1 text-xs font-semibold text-foreground">
-                          <Clock className="size-3 text-orange-500" /> Ends in {daysLeft}d
+                        <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-slate-900/80 backdrop-blur px-2.5 py-1 text-xs font-semibold text-slate-200 border border-slate-700">
+                          <Clock className="size-3 text-primary" /> Ends in {daysLeft}d
                         </div>
                       )}
                       {offer.discount_value > 0 && (
-                        <div className="text-3xl font-extrabold text-primary">
+                        <div className="text-3xl font-extrabold text-primary drop-shadow-md">
                           {offer.offer_type.includes('Percentage') ? `${offer.discount_value}% OFF` : ''}
                           {offer.offer_type.includes('Fixed') ? `₹${offer.discount_value} OFF` : ''}
                         </div>
@@ -137,15 +137,15 @@ export default function OffersPage() {
                     </div>
                     
                     <div className="flex flex-1 flex-col p-6">
-                      <h3 className="text-xl font-bold leading-tight mb-2">{offer.title}</h3>
-                      {offer.description && <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{offer.description}</p>}
+                      <h3 className="text-xl font-bold leading-tight mb-2 text-white">{offer.title}</h3>
+                      {offer.description && <p className="text-sm text-slate-400 mb-4 line-clamp-2">{offer.description}</p>}
                       
-                      <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div className="mt-auto pt-4 border-t border-slate-800 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                           {offer.applicable_on === 'all' ? 'Sitewide' : offer.applicable_on}
                         </span>
                         
-                        <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">
+                        <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
                           Auto-applied at checkout
                         </span>
                       </div>
