@@ -6,24 +6,20 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { 
-  LogOut, Menu, X, LayoutDashboard, ShoppingBag, Receipt, BarChart3, Package, Users, Tag, Settings, Bell, Gift, Target, FileText, BookOpen, BellRing, CalendarRange
+  LogOut, Menu, X, LayoutDashboard, ShoppingBag, Receipt, BarChart3, Package, Users, Settings, Bell, Gift, Target, BookOpen, BellRing, CalendarRange, ChevronDown, MapPin
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { supabase } from "@/services/supabase"
 const NAV_ITEMS = [
   { label: "Orders", href: "/admin", icon: ShoppingBag, badgeKey: "orders" },
   { label: "Billing", href: "/admin/billing", icon: Receipt },
-  { label: "Quotations", href: "/admin/quotations", icon: FileText },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Ledger", href: "/admin/ledger", icon: BookOpen },
   { label: "Reminders", href: "/admin/reminders", icon: BellRing },
   { label: "Day Book", href: "/admin/daybook", icon: CalendarRange },
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { label: "Inventory", href: "/admin/inventory", icon: Package },
-  { label: "Offers", href: "/admin/offers", icon: Gift },
   { label: "Schemes", href: "/admin/schemes", icon: Target },
-  { label: "Coupons", href: "/admin/coupons", icon: Tag },
+  { label: "Offers & Coupons", href: "/admin/offers", icon: Gift },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
@@ -33,8 +29,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showBrandMenu, setShowBrandMenu] = useState(false)
   
-  const [shopName, setShopName] = useState("Hanuman Admin")
+  const [shopName, setShopName] = useState("Hanuman Paints")
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0)
   
   // Notifications State
@@ -172,11 +169,56 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden relative">
         <header className="flex h-16 items-center justify-between border-b border-border/60 bg-card px-6">
-          <div className="flex items-center">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground hover:text-foreground mr-4">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground hover:text-foreground">
               <Menu className="size-6" />
             </button>
-            <div className="font-bold text-foreground capitalize">{pathname.split('/').pop() || 'Dashboard'}</div>
+
+            {/* Brand Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowBrandMenu(!showBrandMenu)}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted transition-colors"
+              >
+                <div className="flex size-8 items-center justify-center rounded-full bg-primary text-white text-xs font-black">HP</div>
+                <div className="hidden md:block text-left">
+                  <p className="text-sm font-bold text-foreground leading-tight">{shopName}</p>
+                  <p className="text-[10px] text-primary font-medium">Admin Panel</p>
+                </div>
+                <ChevronDown className={`size-4 text-muted-foreground transition-transform ${showBrandMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {showBrandMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowBrandMenu(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 top-full mt-2 w-64 rounded-2xl border border-border/60 bg-card shadow-2xl overflow-hidden z-50"
+                    >
+                      <div className="p-4 bg-primary/5">
+                        <p className="font-black text-base text-foreground">{shopName}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                          <MapPin className="size-3" /> Authorized Dulux Dealer — Madhubani
+                        </p>
+                      </div>
+                      <div className="border-t border-border/60" />
+                      <div className="p-2">
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-500/10 transition-colors"
+                        >
+                          <LogOut className="size-4" /> Logout
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Notification Center */}

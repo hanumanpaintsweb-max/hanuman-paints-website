@@ -14,7 +14,6 @@ import { supabase } from "@/services/supabase"
 import { inr } from "@/lib/format"
 import { PRODUCTS } from "@/data/products"
 import Link from "next/link"
-import { SchemesWidget } from "@/components/schemes/SchemesWidget"
 import { Button } from "@/components/ui/button"
 
 const PIE_COLORS = ["#F97316", "#10B981", "#3B82F6", "#EF4444", "#8B5CF6"]
@@ -277,7 +276,6 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground mt-1">Live analytics integrating all online and offline channels</p>
       </div>
 
-      <SchemesWidget />
 
       {/* OVERDUE REMINDERS WIDGET */}
       {reminders.count > 0 && (

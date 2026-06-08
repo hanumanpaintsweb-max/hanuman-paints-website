@@ -57,7 +57,7 @@ type Order = {
 }
 
 const TABS = ["New Bill", "Online Orders", "Bill History"]
-const PAYMENT_STATUSES = ["paid", "unpaid", "partial"]
+const PAYMENT_STATUSES = ["paid", "unpaid", "udhaar"]
 const PAYMENT_METHODS = ["cash", "upi", "credit"]
 const TIN_WOOD_CATEGORIES = ["Tinters", "Woodcare"] // 12% GST items, rest 18%
 
@@ -78,6 +78,7 @@ export default function BillingPage() {
   const [customerGstin, setCustomerGstin] = useState("")
   const [items, setItems] = useState<BillItem[]>([])
   const [paymentStatus, setPaymentStatus] = useState("paid")
+  const [dueDate, setDueDate] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -295,9 +296,9 @@ export default function BillingPage() {
         toast.error("Bill saved, but stock update failed")
       }
 
-      // Update customer outstanding if unpaid/partial
+      // Update customer outstanding if unpaid/udhaar
       if (paymentStatus !== 'paid' && customerPhone.length === 10) {
-        const remaining = paymentStatus === 'unpaid' ? finalTotal : finalTotal / 2 // simplified for partial
+        const remaining = finalTotal // simplified for unpaid/udhaar
         
         // Auto-add to ledger
         await supabase.from('ledger').insert([{
@@ -307,6 +308,8 @@ export default function BillingPage() {
           amount: remaining,
           description: `Bill #${finalBillNoStr}`,
           date: new Date().toISOString().split('T')[0],
+          due_date: paymentStatus === 'udhaar' && dueDate ? dueDate : null,
+          bill_number: finalBillNoStr,
           status: paymentStatus
         }])
 
@@ -384,6 +387,7 @@ export default function BillingPage() {
     setCustomerGstin("")
     setItems([])
     setPaymentStatus("paid")
+    setDueDate("")
     setPaymentMethod("cash")
     setGlobalDiscount(5)
     setLinkedOrderId(null)
@@ -619,6 +623,13 @@ export default function BillingPage() {
                         {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                       </select>
                     </div>
+
+                    {paymentStatus === "udhaar" && (
+                      <div className="mt-2">
+                        <label className="text-xs font-semibold text-muted-foreground block mb-1">Due Date</label>
+                        <input type="date" disabled={!!savedBillData} value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2 text-sm">

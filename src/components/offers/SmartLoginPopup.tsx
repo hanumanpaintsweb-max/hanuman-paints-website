@@ -22,10 +22,10 @@ export function SmartLoginPopup() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Hide on admin routes completely
-  if (pathname?.startsWith("/admin")) return null;
-
   useEffect(() => {
+    // Don't show on admin routes
+    if (pathname?.startsWith("/admin")) return;
+
     async function init() {
       // 1. Fetch active offers
       const { data } = await supabase
@@ -57,7 +57,10 @@ export function SmartLoginPopup() {
     }
     
     init()
-  }, [])
+  }, [pathname])
+
+  // Hide on admin routes completely
+  if (pathname?.startsWith("/admin")) return null;
 
   const closePopup = () => {
     setIsOpen(false)
