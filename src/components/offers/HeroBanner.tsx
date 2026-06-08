@@ -45,55 +45,71 @@ export function HeroBanner() {
   }
 
   return (
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 mb-8 z-10">
+    <div className="relative mx-auto max-w-4xl px-4 mb-4 z-10">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.5 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/90 to-primary shadow-xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-full bg-slate-950 border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] group"
         >
-          {/* Background pattern */}
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+          {/* Animated Background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-primary/10 to-orange-500/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-in-out" />
           
-          <div className="relative flex flex-col md:flex-row items-center justify-between p-6 md:p-8 gap-6 text-white">
-            <div className="flex-1 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-              <div className="hidden md:flex size-14 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                <Gift className="size-7" />
+          <div className="relative flex items-center justify-between py-2 px-2.5 md:py-2 md:px-3 gap-3 md:gap-4 text-white">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div 
+                className="flex shrink-0 items-center justify-center rounded-full bg-white/10 size-9 md:size-10 shadow-inner"
+                style={{ color: offer.badge_color || '#F97316' }}
+              >
+                <Gift className="size-4 md:size-5" />
               </div>
               
-              <div>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 truncate">
+                <div className="flex items-center gap-2 shrink-0">
                   {offer.badge_text && (
-                    <span className="rounded bg-white px-2.5 py-0.5 text-xs font-black tracking-wider uppercase" style={{ color: offer.badge_color || '#F97316' }}>
+                    <span 
+                      className="rounded-full px-2.5 py-0.5 text-[9px] md:text-[10px] font-black tracking-widest uppercase border"
+                      style={{ 
+                        color: offer.badge_color || '#F97316', 
+                        borderColor: offer.badge_color ? `${offer.badge_color}50` : '#F9731650',
+                        backgroundColor: offer.badge_color ? `${offer.badge_color}10` : '#F9731610'
+                      }}
+                    >
                       {offer.badge_text}
                     </span>
                   )}
                   {daysLeft !== null && (
-                    <span className="flex items-center gap-1 rounded bg-black/20 px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm">
-                      <Clock className="size-3" /> Ends in {daysLeft} days
+                    <span className="flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 px-2 py-0.5 text-[9px] md:text-[10px] font-bold">
+                      <Clock className="size-3" /> Ends in {daysLeft}d
                     </span>
                   )}
                 </div>
-                <h3 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
-                  {offer.title}
+                
+                <div className="flex items-center gap-1.5 md:gap-2 truncate">
+                  <h3 className="text-sm md:text-base font-bold truncate tracking-tight">
+                    {offer.title}
+                  </h3>
                   {offer.discount_value > 0 && (
-                    <span className="ml-3 text-yellow-300 font-extrabold">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-yellow-500 font-black text-sm md:text-base shrink-0">
                       {offer.offer_type.includes('Percentage') ? `${offer.discount_value}% OFF` : ''}
                       {offer.offer_type.includes('Fixed') ? `₹${offer.discount_value} OFF` : ''}
+                      {offer.offer_type.includes('Free delivery') ? `FREE DEL` : ''}
+                      {offer.offer_type.includes('Buy X Get Y') ? `BOGO` : ''}
                     </span>
                   )}
-                </h3>
-                {offer.description && <p className="text-white/80 font-medium">{offer.description}</p>}
+                </div>
               </div>
             </div>
 
-            <Link href="/offers" className="shrink-0">
-              <button className="group flex h-12 items-center gap-2 rounded-xl bg-white px-6 font-bold text-primary transition-all hover:bg-gray-50 hover:shadow-lg">
-                Grab This Deal
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+            <Link href="/products" className="shrink-0 ml-auto">
+              <button className="flex h-9 md:h-10 items-center gap-1.5 md:gap-2 rounded-full bg-white px-4 md:px-6 text-xs md:text-sm font-black text-slate-900 transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                <span className="hidden sm:inline">Grab Deal</span>
+                <span className="sm:hidden">Grab</span>
+                <ArrowRight className="size-3 md:size-4 transition-transform group-hover:translate-x-1" />
               </button>
             </Link>
           </div>
@@ -102,9 +118,9 @@ export function HeroBanner() {
 
       {/* Pagination indicators if multiple offers */}
       {offers.length > 1 && (
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
+        <div className="absolute -bottom-4 left-0 right-0 flex justify-center gap-1.5 z-20">
           {offers.map((_, idx) => (
-            <div key={idx} className={`h-1.5 rounded-full transition-all ${idx === currentIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`} />
+            <div key={idx} className={`h-1 rounded-full transition-all ${idx === currentIndex ? 'w-4 bg-primary' : 'w-1.5 bg-primary/20'}`} />
           ))}
         </div>
       )}

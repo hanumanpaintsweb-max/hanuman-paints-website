@@ -47,7 +47,16 @@ export default function LoginPage() {
 
   return (
     <SiteShell>
-      <div className="flex min-h-[70vh] items-center justify-center px-4 py-32 sm:px-6">
+      <div className="flex flex-col min-h-[70vh] items-center justify-center px-4 py-32 sm:px-6">
+        {/* Animated Marquee Bar */}
+        <div className="w-full max-w-md overflow-hidden bg-primary mb-6 rounded-xl shadow-lg border border-primary/20">
+          <div className="py-2.5 whitespace-nowrap overflow-hidden">
+            <div className="inline-block animate-marquee text-sm font-bold tracking-wide text-white">
+              🎨 Login to avail exclusive offers | Free delivery on ₹5000+ | Sunday Special — 10% Off
+            </div>
+          </div>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

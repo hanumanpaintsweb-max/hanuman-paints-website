@@ -107,7 +107,7 @@ export function ProductsBrowser() {
   )
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-36 pb-16 sm:px-6 sm:pt-40">
+    <div className="w-full pb-16">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">All Products</h1>

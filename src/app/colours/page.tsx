@@ -34,7 +34,7 @@ export default function ColoursPage() {
         </section>
 
         {/* Colours Grid */}
-        <section className="mx-auto max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-screen-2xl px-4 py-8 pb-24 sm:px-6 lg:px-8">
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 sm:gap-4">
             {coloursData.map((family, fIdx) => (
               <div key={family.family} className="flex flex-col">

@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 export default function ProductsPage() {
   return (
     <SiteShell>
-      <div className="pt-24 px-4 sm:px-6 max-w-7xl mx-auto">
+      <div className="pt-28 sm:pt-32 pb-8 max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
         <ProductsOffersStrip />
+        <Suspense fallback={<div className="flex h-[50vh] items-center justify-center">Loading products...</div>}>
+          <ProductsBrowser />
+        </Suspense>
       </div>
-      <Suspense fallback={<div className="flex h-[50vh] items-center justify-center">Loading products...</div>}>
-        <ProductsBrowser />
-      </Suspense>
     </SiteShell>
   )
 }

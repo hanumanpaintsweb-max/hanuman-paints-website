@@ -59,7 +59,7 @@ export function AnnouncementBar() {
               {offer.offer_type.includes('Fixed') ? `₹${offer.discount_value} OFF` : ''}
             </span>
           )}
-          <Link href="/offers" className="underline underline-offset-2 ml-2 hover:text-white/80 transition-colors">
+          <Link href="/products" className="underline underline-offset-2 ml-2 hover:text-white/80 transition-colors">
             Shop Now
           </Link>
         </motion.div>

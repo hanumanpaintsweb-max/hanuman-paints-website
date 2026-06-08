@@ -5,12 +5,14 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Menu, ShoppingCart, User, X, LogOut, Package } from "lucide-react"
+import { Menu, ShoppingCart, User, X, LogOut, Package, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/context/CartContext"
 import { getSession, logoutUser } from "@/app/actions/auth"
+import { AnnouncementBar } from "@/components/offers/AnnouncementBar"
 
 const links = [
+  { label: "Home", href: "/" },
   { label: "Products", href: "/products" },
   { label: "Colours", href: "/colours" },
   { label: "Offers", href: "/offers" },
@@ -26,6 +28,10 @@ export function SiteNavbar() {
   const router = useRouter()
   const { itemCount: cartCount } = useCart()
   const profileRef = useRef<HTMLDivElement>(null)
+
+  const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919204367192"
+  const message = encodeURIComponent("Hello Hanuman Paints, I need consultation")
+  const waLink = `https://wa.me/${phoneNumber}?text=${message}`
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -67,9 +73,11 @@ export function SiteNavbar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed inset-x-0 top-0 z-50 px-4 pt-3 sm:px-6"
+      className="fixed inset-x-0 top-0 z-50 flex flex-col"
     >
-      <nav
+      <AnnouncementBar />
+      <div className="px-4 pt-3 sm:px-6">
+        <nav
         className={`mx-auto flex max-w-7xl items-center justify-between rounded-2xl border px-4 py-3 transition-all duration-300 sm:px-6 ${
           scrolled
             ? "border-border/60 bg-background/70 shadow-lg shadow-black/5 backdrop-blur-xl"
@@ -107,6 +115,14 @@ export function SiteNavbar() {
               </Link>
             )
           })}
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/10 ml-2"
+          >
+            <MessageCircle className="size-4" /> Consult on WhatsApp
+          </a>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -212,6 +228,14 @@ export function SiteNavbar() {
                 {l.label}
               </Link>
             ))}
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-bold text-[#25D366] transition-colors hover:bg-[#25D366]/10"
+            >
+              <MessageCircle className="size-4" /> Consult on WhatsApp
+            </a>
             {session && (
               <button
                 onClick={handleLogout}
@@ -223,6 +247,7 @@ export function SiteNavbar() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </motion.header>
   )
 }

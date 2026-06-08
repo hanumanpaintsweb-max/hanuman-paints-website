@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { Gift, Share2, Filter, Clock } from "lucide-react"
+import { Gift, Filter, Clock } from "lucide-react"
 import { supabase } from "@/services/supabase"
-import { Button } from "@/components/ui/button"
+import { SiteShell } from "@/components/site/site-shell"
 
 type Offer = {
   id: string
@@ -53,13 +53,9 @@ export default function OffersPage() {
           .map(o => o.category_id)
   ))
 
-  const shareOffer = (offer: Offer) => {
-    const text = `🎉 *${offer.title}* 🎉\n${offer.description || ''}\nGrab this offer at Hanuman Paints!\nShop online: https://www.hanumanpaints.in/offers`
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank")
-  }
-
   return (
-    <div className="min-h-screen bg-muted/30 pt-24 pb-16">
+    <SiteShell>
+      <div className="min-h-screen bg-muted/30 pt-24 pb-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         
         <div className="mb-10 text-center">
@@ -149,9 +145,9 @@ export default function OffersPage() {
                           {offer.applicable_on === 'all' ? 'Sitewide' : offer.applicable_on}
                         </span>
                         
-                        <Button variant="ghost" size="sm" onClick={() => shareOffer(offer)} className="gap-2 rounded-xl text-primary hover:text-primary hover:bg-primary/10">
-                          <Share2 className="size-4" /> Share
-                        </Button>
+                        <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">
+                          Auto-applied at checkout
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -162,5 +158,6 @@ export default function OffersPage() {
         )}
       </div>
     </div>
+    </SiteShell>
   )
 }

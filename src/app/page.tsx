@@ -8,9 +8,12 @@ import { WhyOrderOnline } from "@/components/why-order-online"
 export default function Page() {
   return (
     <SiteShell>
-      <div className="pt-24 md:pt-32" />
-      <HeroBanner />
-      <Hero />
+      <div className="pt-28 md:pt-36 pb-2">
+        <HeroBanner />
+      </div>
+      <div className="-mt-32 md:-mt-40">
+        <Hero />
+      </div>
       <Categories />
       <PopularProducts />
       <WhyOrderOnline />
