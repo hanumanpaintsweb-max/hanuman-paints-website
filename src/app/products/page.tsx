@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { SiteShell } from "@/components/site/site-shell"
 import { ProductsBrowser } from "@/components/site/products-browser"
+import { ProductsOffersStrip } from "@/components/offers/ProductsOffersStrip"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -11,6 +12,9 @@ export const metadata: Metadata = {
 export default function ProductsPage() {
   return (
     <SiteShell>
+      <div className="pt-24 px-4 sm:px-6 max-w-7xl mx-auto">
+        <ProductsOffersStrip />
+      </div>
       <Suspense fallback={<div className="flex h-[50vh] items-center justify-center">Loading products...</div>}>
         <ProductsBrowser />
       </Suspense>

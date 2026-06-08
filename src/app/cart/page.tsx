@@ -5,12 +5,41 @@ import { motion, AnimatePresence } from "motion/react"
 import { Minus, Plus, ShoppingBasket, Trash2, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { useCart, type CartItem } from "@/context/CartContext"
+import { useActiveOffers } from "@/hooks/useOffers"
 import { inr } from "@/lib/format"
 import { SiteShell } from "@/components/site/site-shell"
 import { Button } from "@/components/ui/button"
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal, discountAmount, total, DISCOUNT_PERCENT } = useCart()
+  const activeOffers = useActiveOffers()
+
+  // Find applicable offers for cart items
+  const applicableOffers = activeOffers.filter(o => {
+    if (o.applicable_on === 'all') return true
+    return items.some((item: CartItem) => {
+      if (o.applicable_on === 'Specific product' && o.product_id === item.id) return true
+      if (o.applicable_on === 'Specific category' && item.category?.toLowerCase() === o.category_id?.toLowerCase()) return true
+      return false
+    })
+  })
+
+  // Calculate extra savings from offers (mock calculation for UI)
+  let extraSavings = 0
+  applicableOffers.forEach(o => {
+    if (o.offer_type.includes('Fixed')) {
+      extraSavings += o.discount_value
+    } else if (o.offer_type.includes('Percentage')) {
+      extraSavings += (subtotal * o.discount_value) / 100
+    }
+  })
+
+  // Free delivery logic
+  const FREE_DELIVERY_THRESHOLD = 5000
+  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - total)
+  const isFreeDelivery = amountToFreeDelivery === 0
+
+  const totalSavings = discountAmount + extraSavings
 
   if (items.length === 0) {
     return (
@@ -121,10 +150,24 @@ export default function CartPage() {
                 <span className="text-emerald-600 dark:text-emerald-500">Website Discount ({DISCOUNT_PERCENT}%)</span>
                 <span className="font-semibold text-emerald-600 dark:text-emerald-500">-{inr(discountAmount)}</span>
               </div>
+              {extraSavings > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-600 dark:text-emerald-500">Special Offers Applied</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-500">-{inr(extraSavings)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-foreground">
                 <span className="text-muted-foreground">Estimated Shipping</span>
-                <span className="text-xs">Calculated at checkout</span>
+                <span className="text-xs font-medium">
+                  {isFreeDelivery ? <span className="text-emerald-600">FREE</span> : 'Calculated at checkout'}
+                </span>
               </div>
+              
+              {!isFreeDelivery && (
+                <div className="mt-2 text-xs text-muted-foreground bg-muted p-2 rounded-lg">
+                  Add <span className="font-bold text-foreground">{inr(amountToFreeDelivery)}</span> more for FREE delivery!
+                </div>
+              )}
               
               <div className="my-6 h-px w-full bg-border" />
               
@@ -143,10 +186,23 @@ export default function CartPage() {
             <p className="mt-4 text-center text-xs text-muted-foreground">
               Taxes and shipping calculated at checkout.
             </p>
+
+            {totalSavings > 0 && (
+              <div className="mt-4 text-center font-bold text-emerald-600 dark:text-emerald-500 text-sm bg-emerald-50 dark:bg-emerald-500/10 py-2 rounded-xl border border-emerald-200 dark:border-emerald-500/30">
+                🎉 You saved {inr(totalSavings)} today!
+              </div>
+            )}
             
-            <div className="mt-6 rounded-xl border border-dashed border-emerald-500/50 bg-emerald-500/10 p-3 text-center text-xs font-medium text-emerald-700 dark:text-emerald-400">
-              🎉 Use coupon code <strong>SUNDAY10</strong> at checkout for extra savings!
-            </div>
+            {applicableOffers.length > 0 && (
+              <div className="mt-6 rounded-xl border border-dashed border-emerald-500/50 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-700 dark:text-emerald-400 space-y-2">
+                <div className="font-bold">Active Offers Applied:</div>
+                <ul className="list-disc pl-4 space-y-1">
+                  {applicableOffers.map(o => (
+                    <li key={o.id}>{o.title}: {o.offer_type.includes('Percentage') ? `${o.discount_value}% OFF` : `₹${o.discount_value} OFF`}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

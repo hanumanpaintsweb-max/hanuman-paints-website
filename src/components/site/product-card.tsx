@@ -48,12 +48,12 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
               {off}% OFF
             </span>
           )}
-          {applicableOffer && applicableOffer.badge_text && (
+          {applicableOffer && (
             <span 
               className="w-fit rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
               style={{ backgroundColor: applicableOffer.badge_color || '#F97316' }}
             >
-              {applicableOffer.badge_text}
+              {applicableOffer.badge_text || "HOT DEAL 🔥"}
             </span>
           )}
         </div>

@@ -2,36 +2,24 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { supabase } from "@/services/supabase"
 import Link from "next/link"
-
-type Offer = {
-  id: string
-  title: string
-  offer_type: string
-  discount_value: number
-  badge_text: string
-}
+import { useActiveOffers, type Offer } from "@/hooks/useOffers"
 
 export function AnnouncementBar() {
   const [offers, setOffers] = useState<Offer[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  useEffect(() => {
-    async function fetchOffers() {
-      const { data } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('is_active', true)
-        .in('display_location', ['Announcement bar', 'All'])
-        .order('priority', { ascending: false })
+  const activeOffers = useActiveOffers()
 
-      if (data && data.length > 0) {
-        setOffers(data)
-      }
+  useEffect(() => {
+    const applicable = activeOffers.filter(o => 
+      o.display_location?.toLowerCase() === 'announcement bar' || 
+      o.display_location?.toLowerCase() === 'all'
+    )
+    if (applicable.length > 0) {
+      setOffers(applicable)
     }
-    fetchOffers()
-  }, [])
+  }, [activeOffers])
 
   useEffect(() => {
     if (offers.length <= 1) return

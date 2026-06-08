@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/services/supabase"
 
-type Offer = {
+export type Offer = {
   id: string
   title: string
+  description: string
   offer_type: string
   discount_value: number
   applicable_on: string
   category_id: string
   product_id: string
+  display_location: string
+  valid_from: string
+  valid_until: string
   badge_text: string
   badge_color: string
 }

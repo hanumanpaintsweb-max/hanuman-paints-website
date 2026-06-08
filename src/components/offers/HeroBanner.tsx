@@ -2,40 +2,26 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { supabase } from "@/services/supabase"
 import Link from "next/link"
 import { ArrowRight, Clock, Gift } from "lucide-react"
-
-type Offer = {
-  id: string
-  title: string
-  description: string
-  offer_type: string
-  discount_value: number
-  valid_until: string
-  badge_text: string
-  badge_color: string
-}
+import { useActiveOffers, type Offer } from "@/hooks/useOffers"
 
 export function HeroBanner() {
   const [offers, setOffers] = useState<Offer[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  useEffect(() => {
-    async function fetchOffers() {
-      const { data } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('is_active', true)
-        .in('display_location', ['Hero banner', 'All'])
-        .order('priority', { ascending: false })
+  const activeOffers = useActiveOffers()
 
-      if (data && data.length > 0) {
-        setOffers(data)
-      }
+  useEffect(() => {
+    const applicable = activeOffers.filter(o => 
+      o.display_location?.toLowerCase() === 'hero banner' || 
+      o.display_location?.toLowerCase() === 'all'
+    )
+    if (applicable.length > 0) {
+      // Sort by priority if needed (useOffers already sorts if backend did, but let's assume it's sorted)
+      setOffers(applicable)
     }
-    fetchOffers()
-  }, [])
+  }, [activeOffers])
 
   useEffect(() => {
     if (offers.length <= 1) return
@@ -106,7 +92,7 @@ export function HeroBanner() {
 
             <Link href="/offers" className="shrink-0">
               <button className="group flex h-12 items-center gap-2 rounded-xl bg-white px-6 font-bold text-primary transition-all hover:bg-gray-50 hover:shadow-lg">
-                Shop Now
+                Grab This Deal
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </button>
             </Link>

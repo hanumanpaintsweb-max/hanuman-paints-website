@@ -13,6 +13,7 @@ import { getSession, logoutUser } from "@/app/actions/auth"
 const links = [
   { label: "Products", href: "/products" },
   { label: "Colours", href: "/colours" },
+  { label: "Offers", href: "/offers" },
   { label: "My Orders", href: "/my-orders" },
 ]
 

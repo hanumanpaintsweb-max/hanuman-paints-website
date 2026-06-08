@@ -3,47 +3,31 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { X, Gift } from "lucide-react"
-import { supabase } from "@/services/supabase"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-
-type Offer = {
-  id: string
-  title: string
-  description: string
-  offer_type: string
-  discount_value: number
-  badge_text: string
-  badge_color: string
-}
+import { useActiveOffers, type Offer } from "@/hooks/useOffers"
 
 export function FirstVisitPopup() {
   const [isOpen, setIsOpen] = useState(false)
   const [offer, setOffer] = useState<Offer | null>(null)
 
+  const activeOffers = useActiveOffers()
+
   useEffect(() => {
-    // Check if we've already shown the popup
     const hasSeenPopup = localStorage.getItem("has_seen_offer_popup")
     if (hasSeenPopup) return
 
-    async function fetchPopupOffer() {
-      const { data } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('is_active', true)
-        .in('display_location', ['Popup', 'All'])
-        .order('priority', { ascending: false })
-        .limit(1)
-
-      if (data && data.length > 0) {
-        setOffer(data[0])
-        // 5 second delay before showing
-        setTimeout(() => setIsOpen(true), 5000)
-      }
+    const applicable = activeOffers.filter(o => 
+      o.display_location?.toLowerCase() === 'popup' || 
+      o.display_location?.toLowerCase() === 'all'
+    )
+    if (applicable.length > 0) {
+      setOffer(applicable[0])
+      // 5 second delay before showing
+      const timer = setTimeout(() => setIsOpen(true), 5000)
+      return () => clearTimeout(timer)
     }
-
-    fetchPopupOffer()
-  }, [])
+  }, [activeOffers])
 
   const closePopup = () => {
     setIsOpen(false)
