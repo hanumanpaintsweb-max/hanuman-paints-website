@@ -4,10 +4,12 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { X, Gift } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useActiveOffers, type Offer } from "@/hooks/useOffers"
 
 export function FirstVisitPopup() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [offer, setOffer] = useState<Offer | null>(null)
 
@@ -34,6 +36,7 @@ export function FirstVisitPopup() {
     localStorage.setItem("has_seen_offer_popup", "true")
   }
 
+  if (pathname.startsWith('/admin')) return null
   if (!offer) return null
 
   return (

@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useActiveOffers, type Offer } from "@/hooks/useOffers"
 
 export function AnnouncementBar() {
+  const pathname = usePathname()
   const [offers, setOffers] = useState<Offer[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -29,6 +31,7 @@ export function AnnouncementBar() {
     return () => clearInterval(timer)
   }, [offers.length])
 
+  if (pathname.startsWith('/admin')) return null
   if (offers.length === 0) return null
 
   const offer = offers[currentIndex]
