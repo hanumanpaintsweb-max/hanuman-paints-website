@@ -116,9 +116,9 @@ export default function AdminOrdersPage() {
         const newOrder = payload.new as AdminOrder
         setOrders(prev => [newOrder, ...prev])
         if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-          new Notification('Hanuman Paints', { body: 'New order received!', icon: '/favicon.ico' })
+          new Notification('Hanuman Paints', { body: `Naya Order! ${newOrder.customer_name} ne ${inr(newOrder.total_amount)} ka order diya`, icon: '/favicon.ico' })
         }
-        toast.success("New Order Received!", { description: `Order #${newOrder.order_id}` })
+        toast.success(`🔔 Naya Order! ${newOrder.customer_name} ne ₹${newOrder.total_amount} ka order diya`, { description: `Order #${newOrder.order_id}` })
       })
       .subscribe()
 

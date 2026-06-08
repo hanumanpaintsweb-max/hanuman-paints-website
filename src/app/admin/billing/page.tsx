@@ -121,6 +121,24 @@ export default function BillingPage() {
   useEffect(() => {
     fetchInitialData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      Notification.requestPermission()
+    }
+
+    const channel = supabase
+      .channel('bills-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bills' }, (payload) => {
+        const newBill = payload.new as Bill
+        setBills(prev => [newBill, ...prev])
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+          new Notification('Hanuman Paints', { body: `Naya Bill! ${newBill.customer_name} - ${inr(newBill.total_amount)}`, icon: '/favicon.ico' })
+        }
+        toast.success(`🔔 Naya Bill! ${newBill.customer_name} ka ₹${newBill.total_amount} ka bill bana`, { description: `Bill #${newBill.bill_number}` })
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   useEffect(() => {
