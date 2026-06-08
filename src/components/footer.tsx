@@ -5,9 +5,29 @@ import { ArrowRight, Mail, MapPin, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const cols = [
-  { title: "Products", items: ["Interior", "Exterior", "Enamels", "Primers", "Waterproofing"] },
-  { title: "Company", items: ["About us", "Our store", "Careers", "Blog", "Contact"] },
-  { title: "Support", items: ["Delivery info", "Returns", "Color help", "FAQs"] },
+  { 
+    title: "Products", 
+    items: [
+      { label: "Interior", href: "/products" }, 
+      { label: "Exterior", href: "/products" }, 
+      { label: "Waterproofing", href: "/products" }
+    ] 
+  },
+  { 
+    title: "Legal", 
+    items: [
+      { label: "Privacy Policy", href: "/privacy-policy" }, 
+      { label: "Terms of Service", href: "/terms-of-service" }, 
+      { label: "Refund Policy", href: "/refund-policy" }
+    ] 
+  },
+  { 
+    title: "Support", 
+    items: [
+      { label: "Contact on WhatsApp", href: "#" }, 
+      { label: "Track Order", href: "/my-orders" }
+    ] 
+  },
 ]
 
 import { useEffect, useState } from "react"
@@ -106,13 +126,13 @@ export function Footer() {
               <h3 className="text-sm font-semibold">{col.title}</h3>
               <ul className="mt-4 space-y-2.5">
                 {col.items.map((it) => (
-                  <li key={it}>
-                    <a
-                      href="#"
+                  <li key={it.label}>
+                    <Link
+                      href={it.href === "#" ? waLink : it.href}
                       className="text-sm text-secondary-foreground/70 transition-colors hover:text-primary"
                     >
-                      {it}
-                    </a>
+                      {it.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

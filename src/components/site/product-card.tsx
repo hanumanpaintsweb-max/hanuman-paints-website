@@ -8,6 +8,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { inr } from "@/lib/format"
 import { useCart } from "@/context/CartContext"
+import { useActiveOffers } from "@/hooks/useOffers"
 
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const { addItem } = useCart()
@@ -16,6 +17,14 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
   const mrp = selectedSizeObj.mrp || 0
   const price = selectedSizeObj.discounted || 0
   const off = mrp > 0 ? Math.round(((mrp - price) / mrp) * 100) : 0
+
+  const activeOffers = useActiveOffers()
+  const applicableOffer = activeOffers.find(o => {
+    if (o.applicable_on === 'all') return true
+    if (o.applicable_on === 'Specific product' && o.product_id === product.id) return true
+    if (o.applicable_on === 'Specific category' && product.category?.toLowerCase() === o.category_id?.toLowerCase()) return true
+    return false
+  })
 
   return (
     <motion.div
@@ -34,9 +43,17 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
               Popular
             </span>
           )}
-          {off > 0 && (
+          {off > 0 && !applicableOffer && (
             <span className="w-fit rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground">
               {off}% OFF
+            </span>
+          )}
+          {applicableOffer && applicableOffer.badge_text && (
+            <span 
+              className="w-fit rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
+              style={{ backgroundColor: applicableOffer.badge_color || '#F97316' }}
+            >
+              {applicableOffer.badge_text}
             </span>
           )}
         </div>

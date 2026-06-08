@@ -14,6 +14,7 @@ import { supabase } from "@/services/supabase"
 import { inr } from "@/lib/format"
 import { PRODUCTS } from "@/data/products"
 import Link from "next/link"
+import { SchemesWidget } from "@/components/schemes/SchemesWidget"
 
 const PIE_COLORS = ["#F97316", "#10B981", "#3B82F6", "#EF4444", "#8B5CF6"]
 const CAT_COLORS = ["#2563EB", "#DB2777", "#D97706", "#059669", "#7C3AED", "#DC2626"]
@@ -259,6 +260,8 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Business Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Live analytics integrating all online and offline channels</p>
       </div>
+
+      <SchemesWidget />
 
       {/* TOP STATS */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

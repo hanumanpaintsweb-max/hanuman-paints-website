@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { PaintParticles } from "@/components/anim/paint-particles"
 import { useEffect, useState } from "react"
 import { getSettings } from "@/lib/settings"
+import { HeroBanner } from "@/components/offers/HeroBanner"
 
 const swatches = ["#F97316", "#1E3A8A", "#14B8A6", "#E11D48", "#FACC15", "#0EA5E9"]
 const headline = ["Premium", "paint,", "delivered", "to", "your", "doorstep."]
@@ -40,6 +41,8 @@ export function Hero() {
       {/* soft brand glow */}
       <div className="pointer-events-none absolute -top-32 -left-24 size-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute top-20 right-0 size-96 rounded-full bg-secondary/20 blur-3xl" />
+
+      <HeroBanner />
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
         <div>

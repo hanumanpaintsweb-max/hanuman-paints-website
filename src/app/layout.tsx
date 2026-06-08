@@ -6,6 +6,8 @@ import { StoreProvider } from '@/lib/store'
 import { CartProvider } from '@/context/CartContext'
 import { AuthProvider } from '@/context/AuthContext'
 import * as Sentry from '@sentry/nextjs'
+import { AnnouncementBar } from '@/components/offers/AnnouncementBar'
+import { FirstVisitPopup } from '@/components/offers/FirstVisitPopup'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -54,7 +56,11 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <AuthProvider>
           <CartProvider>
-            <StoreProvider>{children}</StoreProvider>
+            <StoreProvider>
+              <AnnouncementBar />
+              {children}
+              <FirstVisitPopup />
+            </StoreProvider>
             <Toaster position="top-right" richColors />
           </CartProvider>
         </AuthProvider>
