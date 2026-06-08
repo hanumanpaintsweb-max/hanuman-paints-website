@@ -283,6 +283,60 @@ export default function BillingPage() {
       order_id: linkedOrderId || null
     }
 
+    let ledgerData: any = null
+    if (paymentStatus !== 'paid' && customerPhone.replace(/\D/g,'').length === 10) {
+      ledgerData = {
+        customer_name: customerName,
+        customer_phone: customerPhone.replace(/\D/g,''),
+        type: 'receivable',
+        amount: finalTotal,
+        description: `Bill #${finalBillNoStr}`,
+        date: new Date().toISOString().split('T')[0],
+        due_date: paymentStatus === 'udhaar' && dueDate ? dueDate : null,
+        bill_number: finalBillNoStr,
+        status: paymentStatus
+      }
+    }
+
+    // Try atomic RPC first
+    const { data: rpcData, error: rpcError } = await supabase.rpc('save_bill_with_ledger', {
+      p_bill: billData,
+      p_ledger: ledgerData
+    })
+
+    if (!rpcError && rpcData?.success) {
+      setIsSaving(false)
+      toast.success("Bill saved successfully! (Atomic)")
+      
+      const newBill = { ...billData, id: rpcData.bill_id, created_at: new Date().toISOString() } as unknown as Bill
+      setSavedBillData(newBill)
+      setBills([newBill, ...bills])
+      
+      // Stock deduction
+      let stockUpdateFailed = false
+      for (const item of items) {
+        if (!item.productId) continue
+        const { error: stockError } = await supabase.rpc('deduct_stock', {
+          p_product_id: item.productId,
+          p_quantity: item.qty,
+          p_changed_by: 'billing-auto'
+        })
+        if (stockError) stockUpdateFailed = true
+      }
+      if (stockUpdateFailed) toast.error("Bill saved, but stock update failed")
+
+      // Update customer outstanding
+      if (ledgerData && customerRecord) {
+        await supabase.from('customers').update({
+          current_outstanding: (customerRecord.current_outstanding || 0) + finalTotal,
+          total_orders: (customerRecord.total_orders || 0) + 1,
+          total_value: (customerRecord.total_value || 0) + finalTotal
+        }).eq('id', customerRecord.id)
+      }
+      return
+    }
+
+    // Fallback if RPC fails or doesn't exist
     const { data, error } = await supabase.from("bills").insert([billData]).select()
 
     setIsSaving(false)
@@ -314,27 +368,16 @@ export default function BillingPage() {
         toast.error("Bill saved, but stock update failed")
       }
 
-      // Update customer outstanding if unpaid/udhaar
-      if (paymentStatus !== 'paid' && customerPhone.length === 10) {
-        const remaining = finalTotal // simplified for unpaid/udhaar
+      if (ledgerData) {
+        const { error: ledgerError } = await supabase.from('ledger').insert([ledgerData])
         
-        // Auto-add to ledger
-        await supabase.from('ledger').insert([{
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          type: 'receivable',
-          amount: remaining,
-          description: `Bill #${finalBillNoStr}`,
-          date: new Date().toISOString().split('T')[0],
-          due_date: paymentStatus === 'udhaar' && dueDate ? dueDate : null,
-          bill_number: finalBillNoStr,
-          status: paymentStatus
-        }])
-
-        // Update outstanding
+        if (ledgerError) {
+          toast.error("⚠️ BILL SAVE HUA BUT UDHAAR ENTRY FAIL HUI. Ledger page mein manually add karo.")
+        }
+        
         if (customerRecord) {
           await supabase.from('customers').update({
-            current_outstanding: (customerRecord.current_outstanding || 0) + remaining,
+            current_outstanding: (customerRecord.current_outstanding || 0) + finalTotal,
             total_orders: (customerRecord.total_orders || 0) + 1,
             total_value: (customerRecord.total_value || 0) + finalTotal
           }).eq('id', customerRecord.id)
