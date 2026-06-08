@@ -1,10 +1,10 @@
 -- Customers Table
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   phone TEXT UNIQUE NOT NULL,
   email TEXT,
-  customer_type TEXT DEFAULT 'retail', -- 'retail' or 'wholesale'
+  customer_type TEXT DEFAULT 'retail',
   credit_limit NUMERIC DEFAULT 0,
   current_outstanding NUMERIC DEFAULT 0,
   total_orders INTEGER DEFAULT 0,
@@ -13,8 +13,17 @@ CREATE TABLE customers (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Alter customers table if it already exists to add missing columns
+ALTER TABLE customers 
+ADD COLUMN IF NOT EXISTS customer_type TEXT DEFAULT 'retail',
+ADD COLUMN IF NOT EXISTS credit_limit NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS current_outstanding NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_orders INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_value NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS notes TEXT;
+
 -- Ledger Table
-CREATE TABLE ledger (
+CREATE TABLE IF NOT EXISTS ledger (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   customer_name TEXT NOT NULL,
   customer_phone TEXT,
@@ -27,7 +36,7 @@ CREATE TABLE ledger (
 );
 
 -- Quotations Table
-CREATE TABLE quotations (
+CREATE TABLE IF NOT EXISTS quotations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   quote_number TEXT UNIQUE NOT NULL,
   customer_name TEXT NOT NULL,
@@ -44,7 +53,7 @@ CREATE TABLE quotations (
 );
 
 -- Payment Reminders Table
-CREATE TABLE payment_reminders (
+CREATE TABLE IF NOT EXISTS payment_reminders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   customer_name TEXT NOT NULL,
   customer_phone TEXT,
@@ -59,5 +68,5 @@ CREATE TABLE payment_reminders (
 
 -- Update Products Table
 ALTER TABLE products 
-ADD COLUMN wholesale_discount NUMERIC DEFAULT 10,
-ADD COLUMN min_wholesale_qty INTEGER DEFAULT 10;
+ADD COLUMN IF NOT EXISTS wholesale_discount NUMERIC DEFAULT 10,
+ADD COLUMN IF NOT EXISTS min_wholesale_qty INTEGER DEFAULT 10;
