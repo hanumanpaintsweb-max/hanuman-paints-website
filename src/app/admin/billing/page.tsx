@@ -34,7 +34,7 @@ type Bill = {
   customer_name: string
   customer_phone: string
   customer_address?: string
-  customer_gstin?: string
+
   items: BillItem[]
   subtotal: number
   discount_amount: number
@@ -78,7 +78,7 @@ export default function BillingPage() {
   const [customerName, setCustomerName] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
-  const [customerGstin, setCustomerGstin] = useState("")
+
   const [items, setItems] = useState<BillItem[]>([])
   const [paymentStatus, setPaymentStatus] = useState("paid")
   const [dueDate, setDueDate] = useState("")
@@ -153,7 +153,7 @@ export default function BillingPage() {
         setCustomerName(quotation.customer_name || "")
         setCustomerPhone(quotation.customer_phone || "")
         setCustomerAddress(quotation.customer_address || "")
-        setCustomerGstin(quotation.customer_gstin || "")
+
         setItems(quotation.items || [])
         setActiveTab("New Bill")
         localStorage.removeItem('convert_quotation')
@@ -273,7 +273,7 @@ export default function BillingPage() {
       customer_name: customerName,
       customer_phone: customerPhone.replace(/\D/g,''),
       customer_address: customerAddress || null,
-      customer_gstin: customerGstin || null,
+
       items: items,
       subtotal: parseFloat(calculations.subtotal.toFixed(2)),
       discount_amount: parseFloat(calculations.discount.toFixed(2)),
@@ -449,7 +449,7 @@ export default function BillingPage() {
     setCustomerName("")
     setCustomerPhone("")
     setCustomerAddress("")
-    setCustomerGstin("")
+
     setItems([])
     setPaymentStatus("paid")
     setDueDate("")
@@ -571,10 +571,6 @@ export default function BillingPage() {
                   <div className="space-y-1 col-span-2">
                     <label className="text-xs font-semibold text-muted-foreground">Address</label>
                     <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <label className="text-xs font-semibold text-muted-foreground">GSTIN (Optional B2B)</label>
-                    <input type="text" value={customerGstin} onChange={e => setCustomerGstin(e.target.value.toUpperCase())} disabled={!!savedBillData} maxLength={15} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                 </div>
               </div>
@@ -770,12 +766,6 @@ export default function BillingPage() {
                         <div className="text-sm text-gray-600">{customerPhone}</div>
                         {customerAddress && <div className="text-sm text-gray-600">{customerAddress}</div>}
                       </div>
-                      {customerGstin && (
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500 font-bold uppercase">Customer GSTIN</div>
-                          <div className="text-sm font-mono">{customerGstin}</div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -842,9 +832,6 @@ export default function BillingPage() {
                   </div>
 
                   <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
-                    {/* // PHASE2_HIDDEN */}
-                    {/* <div>Customer Signature</div>
-                    <div>Authorized Signatory</div> */}
                   </div>
                 </div>
               </div>
@@ -981,8 +968,6 @@ export default function BillingPage() {
                       <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
                       <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
                       <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
-                      {/* // PHASE2_HIDDEN */}
-                      {/* <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p> */}
                       <p className="text-xs text-gray-500">Ph: 8292889540</p>
                     </div>
                     <div className="text-right">
@@ -1001,12 +986,6 @@ export default function BillingPage() {
                         <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
                         {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
                       </div>
-                      {selectedHistoryBill.customer_gstin && (
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500 font-bold uppercase">Customer GSTIN</div>
-                          <div className="text-sm font-mono">{selectedHistoryBill.customer_gstin}</div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
