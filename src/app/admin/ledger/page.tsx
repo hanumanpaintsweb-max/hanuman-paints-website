@@ -21,7 +21,7 @@ type LedgerEntry = {
   created_at: string
 }
 
-export default function LedgerPage() {
+export default function UnpaidBillsPage() {
   const [entries, setEntries] = useState<LedgerEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -81,7 +81,7 @@ export default function LedgerPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-          <BookOpen className="size-8 text-primary" /> Udhaar Ledger
+          <BookOpen className="size-8 text-primary" /> Unpaid Bills
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           All credit/udhaar entries from billing — track and mark payments received.

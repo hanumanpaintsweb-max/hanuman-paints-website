@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
       
       if (res.success) {
         setAdminContext(res.user, rememberMe)
-        window.location.href = "/admin"
+        window.location.href = "/admin/billing"
       } else {
         setError(res.message || "Failed to login.")
         triggerShake()

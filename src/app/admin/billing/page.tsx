@@ -60,7 +60,7 @@ type Order = {
 }
 
 const TABS = ["New Bill", "Bill History"] // PHASE2_HIDDEN: "Online Orders"
-const PAYMENT_STATUSES = ["paid", "unpaid", "udhaar"]
+const PAYMENT_STATUSES = ["paid", "unpaid"]
 const PAYMENT_METHODS = ["cash", "upi", "credit"]
 const TIN_WOOD_CATEGORIES = ["Tinters", "Woodcare"] // 12% GST items, rest 18%
 
@@ -103,7 +103,7 @@ export default function BillingPage() {
       const match = data[0].bill_number.match(/-(\d+)$/)
       if (match) maxNum = parseInt(match[1])
     }
-    setBillNoStr(`HP-F-${(maxNum + 1).toString().padStart(3, '0')}`)
+    setBillNoStr(`HP-S-${(maxNum + 1).toString().padStart(3, '0')}`)
   }
 
   const fetchInitialData = async () => {
@@ -265,7 +265,7 @@ export default function BillingPage() {
       const match = latestData[0].bill_number.match(/-(\d+)$/)
       if (match) maxNum = parseInt(match[1])
     }
-    const finalBillNoStr = `HP-F-${(maxNum + 1).toString().padStart(3, '0')}`
+    const finalBillNoStr = `HP-S-${(maxNum + 1).toString().padStart(3, '0')}`
     setBillNoStr(finalBillNoStr)
 
     const billData = {
@@ -296,9 +296,9 @@ export default function BillingPage() {
         amount: finalTotal,
         description: `Bill #${finalBillNoStr}`,
         date: new Date().toISOString().split('T')[0],
-        due_date: paymentStatus === 'udhaar' && dueDate ? dueDate : null,
+        due_date: paymentStatus === 'unpaid' && dueDate ? dueDate : null,
         bill_number: finalBillNoStr,
-        status: paymentStatus
+        status: paymentStatus === 'unpaid' ? 'pending' : paymentStatus
       }
     }
 
@@ -712,7 +712,7 @@ export default function BillingPage() {
                       </select>
                     </div>
 
-                    {paymentStatus === "udhaar" && (
+                    {paymentStatus === "unpaid" && (
                       <div className="mt-2">
                         <label className="text-xs font-semibold text-muted-foreground block mb-1">Due Date</label>
                         <input type="date" disabled={!!savedBillData} value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
@@ -806,7 +806,7 @@ export default function BillingPage() {
                               {item.colorCode && (
                                 <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
                                   <div>└ Color Code: {item.colorCode}</div>
-                                  <div>└ Colorant Cost: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                  <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
                                 </div>
                               )}
                             </td>
@@ -1036,7 +1036,7 @@ export default function BillingPage() {
                               {item.colorCode && (
                                 <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
                                   <div>└ Color Code: {item.colorCode}</div>
-                                  <div>└ Colorant Cost: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                  <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
                                 </div>
                               )}
                             </td>
