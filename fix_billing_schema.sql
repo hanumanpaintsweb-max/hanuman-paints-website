@@ -4,8 +4,8 @@
 -- 1. Ensure the bill_type column exists in the bills table for the DPL/MRP toggle
 ALTER TABLE public.bills ADD COLUMN IF NOT EXISTS bill_type TEXT DEFAULT 'mrp';
 
--- 2. If save_bill_with_ledger was strictly typed, we might need to recreate it
--- Just in case it explicitly maps columns and misses bill_type, here is the updated function:
+-- 2. Make sure save_bill_with_ledger maps ALL required columns properly.
+-- The previous version missed taxable_value, cgst_amount, sgst_amount, payment_method, etc.
 CREATE OR REPLACE FUNCTION save_bill_with_ledger(p_bill jsonb, p_ledger jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -14,8 +14,9 @@ AS $$
 DECLARE
     v_bill_id uuid;
 BEGIN
-    -- 1. Insert the bill
+    -- 1. Insert the bill with ALL required fields
     INSERT INTO bills (
+        id,
         bill_number,
         customer_name,
         customer_phone,
@@ -23,10 +24,16 @@ BEGIN
         items,
         subtotal,
         discount_amount,
+        taxable_value,
+        cgst_amount,
+        sgst_amount,
         total_amount,
         payment_status,
+        payment_method,
+        order_id,
         bill_type
     ) VALUES (
+        gen_random_uuid(),
         p_bill->>'bill_number',
         p_bill->>'customer_name',
         p_bill->>'customer_phone',
@@ -34,8 +41,13 @@ BEGIN
         (p_bill->>'items')::jsonb,
         (p_bill->>'subtotal')::numeric,
         (p_bill->>'discount_amount')::numeric,
+        (p_bill->>'taxable_value')::numeric,
+        (p_bill->>'cgst_amount')::numeric,
+        (p_bill->>'sgst_amount')::numeric,
         (p_bill->>'total_amount')::numeric,
         p_bill->>'payment_status',
+        p_bill->>'payment_method',
+        p_bill->>'order_id',
         COALESCE(p_bill->>'bill_type', 'mrp')
     )
     RETURNING id INTO v_bill_id;

@@ -302,11 +302,16 @@ export default function BillingPage() {
       }
     }
 
+    console.log('Saving bill:', billData)
+    if (ledgerData) console.log('Saving ledger:', ledgerData)
+
     // Try atomic RPC first
     const { data: rpcData, error: rpcError } = await supabase.rpc('save_bill_with_ledger', {
       p_bill: billData,
       p_ledger: ledgerData
     })
+
+    console.log('Supabase RPC response:', rpcData, rpcError)
 
     if (!rpcError && rpcData?.success) {
       setIsSaving(false)
@@ -345,9 +350,11 @@ export default function BillingPage() {
 
     setIsSaving(false)
 
+    console.log('Supabase Fallback response:', data, error)
+
     if (error) {
       if (error.code === '23505') toast.error("Bill number already exists!") // Unique constraint
-      else toast.error("Failed to save bill")
+      else toast.error(`Failed to save bill: ${error.message || error.details || JSON.stringify(error)} (RPC: ${rpcError?.message})`)
     } else {
       toast.success("Bill saved successfully!")
       const newBill = data[0]
