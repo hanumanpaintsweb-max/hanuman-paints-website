@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
     const allOrders: Order[] = orders || []
     const allBills: Bill[] = bills || []
-    const allSales = [...allOrders, ...allBills]
+    const allSales = [...allBills] // PHASE2_HIDDEN: removed ...allOrders
 
     setRecentOrders(allOrders.slice(0, 10))
     setRecentBills(allBills.slice(0, 5))
@@ -205,7 +205,7 @@ export default function DashboardPage() {
     setTopProducts(Object.keys(prodCount)
       .map(k => ({ name: k.replace("Dulux ", "").substring(0,20), qty: prodCount[k] }))
       .sort((a, b) => b.qty - a.qty)
-      .slice(0, 10))
+      .slice(0, 5))
 
     setCatData(Object.keys(catCount).map(k => ({ name: k, value: catCount[k] })))
 
@@ -278,7 +278,8 @@ export default function DashboardPage() {
 
 
       {/* OVERDUE REMINDERS WIDGET */}
-      {reminders.count > 0 && (
+      {/* // PHASE2_HIDDEN */}
+      {false && reminders.count > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-4">
             <div className="bg-rose-100 p-3 rounded-full">
@@ -302,13 +303,16 @@ export default function DashboardPage() {
         <StatCard title="Today's Sales" value={stats.todaySales} prev={stats.yesterdaySales} icon={IndianRupee} type="currency" />
         <StatCard title="This Week" value={stats.weekSales} prev={stats.lastWeekSales} icon={IndianRupee} type="currency" />
         <StatCard title="This Month" value={stats.monthSales} prev={stats.lastMonthSales} icon={IndianRupee} type="currency" />
-        <StatCard title="Outstanding Amount" value={stats.outstandingAmount} icon={AlertCircle} type="currency" />
-        <StatCard title="Total Orders" value={stats.totalOrders} icon={ShoppingBag} type="number" />
+        <StatCard title="Total Pending Udhaar" value={stats.outstandingAmount} icon={AlertCircle} type="currency" />
+        {/* // PHASE2_HIDDEN */}
+        {/* <StatCard title="Total Orders" value={stats.totalOrders} icon={ShoppingBag} type="number" />
         <StatCard title="Pending Orders" value={stats.pendingOrders} icon={Clock} type="number" />
-        <StatCard title="Total Bills" value={stats.totalBills} icon={Receipt} type="number" />
+        <StatCard title="Total Bills" value={stats.totalBills} icon={Receipt} type="number" /> */}
       </div>
 
       {/* GRAPHS ROW 1 */}
+      {/* // PHASE2_HIDDEN */}
+      {false && (
       <div className="grid gap-6 lg:grid-cols-3">
         {/* REVENUE TIMELINE */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm lg:col-span-2">
@@ -353,12 +357,13 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </div>
+      )}
 
       {/* GRAPHS ROW 2 */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* TOP 10 PRODUCTS */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-6">Top 10 Products (Qty)</h2>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm lg:col-span-2">
+          <h2 className="text-lg font-bold mb-6">Top 5 Products (Qty)</h2>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart layout="vertical" data={topProducts} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
@@ -374,6 +379,8 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* ORDER STATUS PIE */}
+        {/* // PHASE2_HIDDEN */}
+        {false && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
           <h2 className="text-lg font-bold mb-6">Online Order Status</h2>
           <div className="h-[350px] w-full">
@@ -387,9 +394,12 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </motion.div>
+        )}
       </div>
 
       {/* RECENT ACTIVITY */}
+      {/* // PHASE2_HIDDEN */}
+      {false && (
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm flex flex-col">
           <div className="p-6 border-b border-border/60 flex justify-between items-center bg-muted/20">
@@ -437,6 +447,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </div>
+      )}
 
     </div>
   )

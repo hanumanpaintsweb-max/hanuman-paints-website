@@ -10,15 +10,15 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { supabase } from "@/services/supabase"
-const NAV_ITEMS = [
-  { label: "Orders", href: "/admin", icon: ShoppingBag, badgeKey: "orders" },
+const NAV_ITEMS: { label: string; href: string; icon: any; badgeKey?: string }[] = [
+  // { label: "Orders", href: "/admin", icon: ShoppingBag, badgeKey: "orders" }, // PHASE2_HIDDEN
   { label: "Billing", href: "/admin/billing", icon: Receipt },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Ledger", href: "/admin/ledger", icon: BookOpen },
   { label: "Reminders", href: "/admin/reminders", icon: BellRing },
   { label: "Day Book", href: "/admin/daybook", icon: CalendarRange },
   { label: "Schemes", href: "/admin/schemes", icon: Target },
-  { label: "Offers & Coupons", href: "/admin/offers", icon: Gift },
+  // { label: "Offers & Coupons", href: "/admin/offers", icon: Gift }, // PHASE2_HIDDEN
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ]

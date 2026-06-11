@@ -22,6 +22,8 @@ type BillItem = {
   qty: number
   mrp: number
   taxRate: number
+  colorCode?: string
+  colorantCost?: number
 }
 
 type Settings = Record<string, string>
@@ -45,6 +47,7 @@ type Bill = {
   order_id?: string
   created_at: string
   is_deleted: boolean
+  bill_type?: string
 }
 
 type Order = {
@@ -56,7 +59,7 @@ type Order = {
   total_amount: number
 }
 
-const TABS = ["New Bill", "Online Orders", "Bill History"]
+const TABS = ["New Bill", "Bill History"] // PHASE2_HIDDEN: "Online Orders"
 const PAYMENT_STATUSES = ["paid", "unpaid", "udhaar"]
 const PAYMENT_METHODS = ["cash", "upi", "credit"]
 const TIN_WOOD_CATEGORIES = ["Tinters", "Woodcare"] // 12% GST items, rest 18%
@@ -85,6 +88,8 @@ export default function BillingPage() {
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
   const [globalDiscount, setGlobalDiscount] = useState<number>(5)
   const [customerRecord, setCustomerRecord] = useState<any>(null)
+  const [billMode, setBillMode] = useState<"MRP" | "DPL">("MRP")
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
@@ -92,14 +97,13 @@ export default function BillingPage() {
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
   const fetchAndSetNextBillNo = async () => {
-    const year = new Date().getFullYear()
     const { data } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
     let maxNum = 0
     if (data && data.length > 0) {
       const match = data[0].bill_number.match(/-(\d+)$/)
       if (match) maxNum = parseInt(match[1])
     }
-    setBillNoStr(`HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`)
+    setBillNoStr(`HP-F-${(maxNum + 1).toString().padStart(3, '0')}`)
   }
 
   const fetchInitialData = async () => {
@@ -183,7 +187,7 @@ export default function BillingPage() {
   // --- Calculations ---
   const calculations = useMemo(() => {
     return items.reduce((acc, item) => {
-      const gross = item.mrp * item.qty
+      const gross = (item.mrp + (item.colorantCost || 0)) * item.qty
       const discountVal = gross * (globalDiscount / 100)
       const taxable = gross - discountVal
       const gstVal = taxable * (item.taxRate / 100)
@@ -255,14 +259,13 @@ export default function BillingPage() {
     setIsSaving(true)
     
     // Fetch latest number right before saving to prevent duplicates
-    const year = new Date().getFullYear()
     const { data: latestData } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
     let maxNum = 0
     if (latestData && latestData.length > 0) {
       const match = latestData[0].bill_number.match(/-(\d+)$/)
       if (match) maxNum = parseInt(match[1])
     }
-    const finalBillNoStr = `HP-${year}-${(maxNum + 1).toString().padStart(3, '0')}`
+    const finalBillNoStr = `HP-F-${(maxNum + 1).toString().padStart(3, '0')}`
     setBillNoStr(finalBillNoStr)
 
     const billData = {
@@ -280,7 +283,8 @@ export default function BillingPage() {
       total_amount: parseFloat(finalTotal.toFixed(2)),
       payment_status: paymentStatus,
       payment_method: paymentMethod,
-      order_id: linkedOrderId || null
+      order_id: linkedOrderId || null,
+      bill_type: billMode
     }
 
     let ledgerData: any = null
@@ -510,6 +514,10 @@ export default function BillingPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Generate GST invoices and manage accounts</p>
         </div>
+        <div className="flex bg-muted p-1 rounded-xl">
+          <button onClick={() => setBillMode("MRP")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${billMode === "MRP" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}>MRP Bill</button>
+          <button onClick={() => setBillMode("DPL")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${billMode === "DPL" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}>DPL Bill</button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -581,7 +589,7 @@ export default function BillingPage() {
                   <div className="col-span-4">Product</div>
                   <div className="col-span-2">Size</div>
                   <div className="col-span-1 text-center">Qty</div>
-                  <div className="col-span-2 text-center">Price(₹)</div>
+                  <div className="col-span-2 text-center">{billMode === "DPL" ? "DPL(₹)" : "Price(₹)"}</div>
                   <div className="col-span-1 text-center">GST</div>
                   <div className="col-span-2 text-right">Total</div>
                 </div>
@@ -590,49 +598,68 @@ export default function BillingPage() {
                   {items.map((item, index) => {
                     const product = PRODUCTS.find(p => p.id === item.productId)
                     return (
-                      <div key={item.id} className="grid grid-cols-12 gap-2 items-center bg-muted/40 p-3 rounded-xl border border-border/60 relative group">
+                      <div key={item.id} className="bg-muted/40 p-3 rounded-xl border border-border/60 relative group flex flex-col gap-2">
                         {!savedBillData && (
-                          <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-3" /></button>
+                          <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"><Trash2 className="size-3" /></button>
                         )}
-                        <div className="col-span-4">
-                          <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
-                            <option value="">Select Product...</option>
-                            {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                          </select>
+                        <div className="grid grid-cols-12 gap-2 items-center">
+                          <div className="col-span-4">
+                            <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
+                              <option value="">Select Product...</option>
+                              {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-span-2">
+                            <select disabled={!!savedBillData || !product} value={item.size} onChange={e => {
+                              const newI = [...items]; newI[index].size = e.target.value;
+                              newI[index].mrp = product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0;
+                              setItems(newI);
+                            }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
+                              <option value="">Size</option>
+                              {product?.sizes?.map(s => <option key={s.size} value={s.size}>{s.size}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-span-1">
+                            <input disabled={!!savedBillData} type="number" min="1" value={item.qty} onChange={e => {
+                              const newI = [...items]; newI[index].qty = Math.max(1, parseInt(e.target.value) || 1); setItems(newI)
+                            }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-center outline-none" />
+                          </div>
+                          <div className="col-span-2">
+                            <input disabled={!!savedBillData} type="number" placeholder="Price" value={item.mrp || ""} onChange={e => {
+                              const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
+                            }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none" />
+                          </div>
+                          <div className="col-span-1">
+                            <select disabled={!!savedBillData} value={item.taxRate} onChange={e => {
+                              const newI = [...items]; newI[index].taxRate = parseFloat(e.target.value) || 0; setItems(newI)
+                            }} className="w-full rounded-lg border border-border bg-background px-1 py-1.5 text-xs outline-none">
+                              <option value="0">0%</option>
+                              <option value="5">5%</option>
+                              <option value="12">12%</option>
+                              <option value="18">18%</option>
+                              <option value="28">28%</option>
+                            </select>
+                          </div>
+                          <div className="col-span-2 text-right font-bold text-sm text-primary">
+                            {inr(((item.mrp + (item.colorantCost || 0)) * item.qty * (1 - globalDiscount/100)) * (1 + item.taxRate/100))}
+                          </div>
                         </div>
-                        <div className="col-span-2">
-                          <select disabled={!!savedBillData || !product} value={item.size} onChange={e => {
-                            const newI = [...items]; newI[index].size = e.target.value;
-                            newI[index].mrp = product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0;
-                            setItems(newI);
-                          }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
-                            <option value="">Size</option>
-                            {product?.sizes?.map(s => <option key={s.size} value={s.size}>{s.size}</option>)}
-                          </select>
-                        </div>
-                        <div className="col-span-1">
-                          <input disabled={!!savedBillData} type="number" min="1" value={item.qty} onChange={e => {
-                            const newI = [...items]; newI[index].qty = Math.max(1, parseInt(e.target.value) || 1); setItems(newI)
-                          }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-center outline-none" />
-                        </div>
-                        <div className="col-span-2">
-                          <input disabled={!!savedBillData} type="number" placeholder="Price" value={item.mrp || ""} onChange={e => {
-                            const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
-                          }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none" />
-                        </div>
-                        <div className="col-span-1">
-                          <select disabled={!!savedBillData} value={item.taxRate} onChange={e => {
-                            const newI = [...items]; newI[index].taxRate = parseFloat(e.target.value) || 0; setItems(newI)
-                          }} className="w-full rounded-lg border border-border bg-background px-1 py-1.5 text-xs outline-none">
-                            <option value="0">0%</option>
-                            <option value="5">5%</option>
-                            <option value="12">12%</option>
-                            <option value="18">18%</option>
-                            <option value="28">28%</option>
-                          </select>
-                        </div>
-                        <div className="col-span-2 text-right font-bold text-sm text-primary">
-                          {inr((item.mrp * item.qty * (1 - globalDiscount/100)) * (1 + item.taxRate/100))}
+                        <div className="border-t pt-2 border-border/50">
+                          {!expandedItems.has(item.id) ? (
+                            <button onClick={() => { const ns = new Set(expandedItems); ns.add(item.id); setExpandedItems(ns); }} className="text-xs text-primary font-bold hover:underline">[ + Add Colorant Details ]</button>
+                          ) : (
+                            <div className="flex gap-4 items-center">
+                              <div className="flex items-center gap-2">
+                                <label className="text-xs font-semibold text-muted-foreground">Color Code</label>
+                                <input disabled={!!savedBillData} type="text" value={item.colorCode || ""} onChange={e => { const newI = [...items]; newI[index].colorCode = e.target.value; setItems(newI) }} className="w-24 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none" />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <label className="text-xs font-semibold text-muted-foreground">Colorant Cost (₹)</label>
+                                <input disabled={!!savedBillData} type="number" value={item.colorantCost || ""} onChange={e => { const newI = [...items]; newI[index].colorantCost = parseFloat(e.target.value) || 0; setItems(newI) }} className="w-24 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none" />
+                              </div>
+                              {!savedBillData && <button onClick={() => { const ns = new Set(expandedItems); ns.delete(item.id); setExpandedItems(ns); const newI = [...items]; delete newI[index].colorCode; delete newI[index].colorantCost; setItems(newI); }} className="text-xs text-red-500 font-bold hover:underline">[ - Remove ]</button>}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
@@ -721,10 +748,11 @@ export default function BillingPage() {
                   <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
                     <div>
                       <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
-                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Dealer</p>
+                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
                       <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
-                      <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p>
-                      <p className="text-xs text-gray-500">Ph: {settings.shop_phone}</p>
+                      {/* // PHASE2_HIDDEN */}
+                      {/* <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p> */}
+                      <p className="text-xs text-gray-500">Ph: 8292889540</p>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
@@ -758,7 +786,7 @@ export default function BillingPage() {
                         <th className="py-2 px-2 text-left">S.No</th>
                         <th className="py-2 px-2 text-left">Item Description</th>
                         <th className="py-2 px-2 text-center">Qty</th>
-                        <th className="py-2 px-2 text-right">MRP</th>
+                        <th className="py-2 px-2 text-right">{billMode === "DPL" ? "DPL" : "MRP"}</th>
                         <th className="py-2 px-2 text-right">Disc%</th>
                         <th className="py-2 px-2 text-right">Taxable</th>
                         <th className="py-2 px-2 text-right">GST%</th>
@@ -772,7 +800,16 @@ export default function BillingPage() {
                         return (
                           <tr key={i} className="border-b border-gray-200">
                             <td className="py-3 px-2 text-gray-500">{i+1}</td>
-                            <td className="py-3 px-2"><strong>{item.name}</strong><br/><span className="text-xs text-gray-500">{item.size}</span></td>
+                            <td className="py-3 px-2">
+                              <strong>{item.name}</strong><br/>
+                              <span className="text-xs text-gray-500">{item.size}</span>
+                              {item.colorCode && (
+                                <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
+                                  <div>└ Color Code: {item.colorCode}</div>
+                                  <div>└ Colorant Cost: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                </div>
+                              )}
+                            </td>
                             <td className="py-3 px-2 text-center">{item.qty}</td>
                             <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
                             <td className="py-3 px-2 text-right">{globalDiscount}%</td>
@@ -792,6 +829,7 @@ export default function BillingPage() {
                       <p>1. Goods once sold cannot be returned or exchanged.</p>
                       <p>2. Subject to Madhubani jurisdiction only.</p>
                       <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
+                      {billMode === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
                     </div>
                     <div className="w-64">
                       <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
@@ -804,8 +842,9 @@ export default function BillingPage() {
                   </div>
 
                   <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
-                    <div>Customer Signature</div>
-                    <div>Authorized Signatory</div>
+                    {/* // PHASE2_HIDDEN */}
+                    {/* <div>Customer Signature</div>
+                    <div>Authorized Signatory</div> */}
                   </div>
                 </div>
               </div>
@@ -940,10 +979,11 @@ export default function BillingPage() {
                   <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
                     <div>
                       <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
-                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Dealer</p>
+                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
                       <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
-                      <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p>
-                      <p className="text-xs text-gray-500">Ph: {settings.shop_phone}</p>
+                      {/* // PHASE2_HIDDEN */}
+                      {/* <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p> */}
+                      <p className="text-xs text-gray-500">Ph: 8292889540</p>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
@@ -977,7 +1017,7 @@ export default function BillingPage() {
                         <th className="py-2 px-2 text-left">S.No</th>
                         <th className="py-2 px-2 text-left">Item Description</th>
                         <th className="py-2 px-2 text-center">Qty</th>
-                        <th className="py-2 px-2 text-right">MRP</th>
+                        <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
                         <th className="py-2 px-2 text-right">Taxable</th>
                         <th className="py-2 px-2 text-right">GST%</th>
                         <th className="py-2 px-2 text-right">Total</th>
@@ -985,12 +1025,21 @@ export default function BillingPage() {
                     </thead>
                     <tbody className="text-sm border-b-2 border-gray-800">
                       {selectedHistoryBill.items?.map((item: BillItem, i: number) => {
-                        const taxable = item.mrp * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
+                        const taxable = (item.mrp + (item.colorantCost || 0)) * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
                         const gst = taxable * (item.taxRate/100);
                         return (
                           <tr key={i} className="border-b border-gray-200">
                             <td className="py-3 px-2 text-gray-500">{i+1}</td>
-                            <td className="py-3 px-2"><strong>{item.name}</strong><br/><span className="text-xs text-gray-500">{item.size}</span></td>
+                            <td className="py-3 px-2">
+                              <strong>{item.name}</strong><br/>
+                              <span className="text-xs text-gray-500">{item.size}</span>
+                              {item.colorCode && (
+                                <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
+                                  <div>└ Color Code: {item.colorCode}</div>
+                                  <div>└ Colorant Cost: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                </div>
+                              )}
+                            </td>
                             <td className="py-3 px-2 text-center">{item.qty}</td>
                             <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
                             <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
@@ -1009,6 +1058,7 @@ export default function BillingPage() {
                       <p>1. Goods once sold cannot be returned or exchanged.</p>
                       <p>2. Subject to Madhubani jurisdiction only.</p>
                       <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
+                      {selectedHistoryBill.bill_type === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
                     </div>
                     <div className="w-64">
                       <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
@@ -1023,8 +1073,9 @@ export default function BillingPage() {
                   </div>
 
                   <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
-                    <div>Customer Signature</div>
-                    <div>Authorized Signatory</div>
+                    {/* // PHASE2_HIDDEN */}
+                    {/* <div>Customer Signature</div>
+                    <div>Authorized Signatory</div> */}
                   </div>
                 </div>
               </div>

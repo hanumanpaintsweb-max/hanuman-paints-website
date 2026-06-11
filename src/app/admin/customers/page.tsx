@@ -41,7 +41,8 @@ export default function CustomersPage() {
     setLoading(true)
     // Fetch from both tables in parallel
     const [ordersRes, billsRes] = await Promise.all([
-      supabase.from("orders").select("customer_name, customer_phone, total_amount, created_at"),
+      // PHASE2_HIDDEN: supabase.from("orders").select("customer_name, customer_phone, total_amount, created_at"),
+      { data: [] as any[] },
       supabase.from("bills").select("customer_name, customer_phone, total_amount, created_at").eq("is_deleted", false),
     ])
 
@@ -89,7 +90,8 @@ export default function CustomersPage() {
     setSelectedCustomer(customer)
     setHistoryLoading(true)
     const [ordersRes, billsRes] = await Promise.all([
-      supabase.from("orders").select("order_id, total_amount, status, created_at").eq("customer_phone", customer.phone),
+      // PHASE2_HIDDEN: supabase.from("orders").select("order_id, total_amount, status, created_at").eq("customer_phone", customer.phone),
+      { data: [] as any[] },
       supabase.from("bills").select("bill_number, total_amount, payment_status, created_at").eq("customer_phone", customer.phone).eq("is_deleted", false),
     ])
 
@@ -130,7 +132,8 @@ export default function CustomersPage() {
           <Users className="size-8 text-primary" /> Customer Directory
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          All customers who have placed online orders or offline bills — merged by phone number.
+          {/* PHASE2_HIDDEN: All customers who have placed online orders or offline bills — merged by phone number. */}
+          All customers from your offline bills — grouped by phone number.
         </p>
       </div>
 
@@ -153,7 +156,7 @@ export default function CustomersPage() {
             <thead className="bg-muted/50 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-6 py-4 font-semibold">Customer</th>
-                <th className="px-6 py-4 font-semibold text-center">Source</th>
+                {/* <th className="px-6 py-4 font-semibold text-center">Source</th> PHASE2_HIDDEN */}
                 <th className="px-6 py-4 font-semibold text-center">Total Orders</th>
                 <th className="px-6 py-4 font-semibold text-right">Total Value</th>
                 <th className="px-6 py-4 font-semibold text-center">Last Order</th>
@@ -180,6 +183,7 @@ export default function CustomersPage() {
                       <div className="font-bold text-foreground">{c.name || "—"}</div>
                       <div className="text-xs text-muted-foreground font-mono mt-0.5">+91 {c.phone}</div>
                     </td>
+                    {/* PHASE2_HIDDEN:
                     <td className="px-6 py-4 text-center">
                       <span className={`text-xs font-bold uppercase px-2.5 py-1 rounded-full ${
                         c.source === "both" ? "bg-purple-500/10 text-purple-600" :
@@ -189,6 +193,7 @@ export default function CustomersPage() {
                         {c.source === "both" ? "Online + Bill" : c.source === "online" ? "Online" : "Offline Bill"}
                       </span>
                     </td>
+                    */}
                     <td className="px-6 py-4 text-center font-bold text-foreground">{c.total_orders}</td>
                     <td className="px-6 py-4 text-right font-bold text-primary">{inr(c.total_value)}</td>
                     <td className="px-6 py-4 text-center text-muted-foreground text-xs">

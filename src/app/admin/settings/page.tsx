@@ -181,6 +181,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Section 2: WhatsApp Settings */}
+        {/* // PHASE2_HIDDEN */}
+        {false && (
         <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
           <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
             <MessageCircle className="size-5 text-[#25D366]" /> WhatsApp Integration
@@ -219,8 +221,11 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Section 3: Billing Settings */}
+        {/* // PHASE2_HIDDEN */}
+        {false && (
         <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
           <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
             <Receipt className="size-5 text-primary" /> Billing Configurations
@@ -247,8 +252,11 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Section 4 & 5: Delivery & Hours */}
+        {/* // PHASE2_HIDDEN */}
+        {false && (
         <div className="space-y-6">
           <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
             <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
@@ -314,6 +322,7 @@ export default function SettingsPage() {
             </div>
           </section>
         </div>
+        )}
 
       </div>
     </div>
