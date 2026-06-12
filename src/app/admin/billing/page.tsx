@@ -576,13 +576,13 @@ export default function BillingPage() {
           <nav className="flex gap-4">
             <button 
               onClick={() => setActiveTab("New Bill")}
-              className={`pb-1 font-label-md text-label-md transition-all ${activeTab === "New Bill" ? "text-primary border-b-2 border-secondary" : "text-on-surface-variant hover:text-primary"}`}
+              className={`px-1 pb-1 font-label-md text-label-md transition-all relative flex items-center justify-center ${activeTab === "New Bill" ? "text-primary border-b-2 border-secondary" : "text-on-surface-variant hover:text-primary"}`}
             >
               New Bill
             </button>
             <button 
               onClick={() => setActiveTab("Bill History")}
-              className={`pb-1 font-label-md text-label-md transition-all ${activeTab === "Bill History" ? "text-primary border-b-2 border-secondary" : "text-on-surface-variant hover:text-primary"}`}
+              className={`px-1 pb-1 font-label-md text-label-md transition-all relative flex items-center justify-center ${activeTab === "Bill History" ? "text-primary border-b-2 border-secondary" : "text-on-surface-variant hover:text-primary"}`}
             >
               Bill History
             </button>
@@ -646,21 +646,21 @@ export default function BillingPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Phone Number</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-2.5 text-outline size-5" />
                       <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Mobile..." />
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Customer Name</label>
                     <div className="relative">
                       <User className="absolute left-3 top-2.5 text-outline size-5" />
                       <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Name" />
                     </div>
                   </div>
-                  <div className="col-span-2 flex flex-col gap-1">
+                  <div className="col-span-2 flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Address</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-2.5 text-outline size-5" />
@@ -873,12 +873,22 @@ export default function BillingPage() {
                     })}
                   </tbody>
                 </table>
-                <div className="flex flex-col gap-2 font-body-md text-body-md ml-auto w-48 pt-4">
-                  <div className="flex justify-between text-on-surface-variant"><span>Subtotal:</span><span>{inr(calculations.subtotal)}</span></div>
-                  <div className="flex justify-between text-on-surface-variant"><span>Discount:</span><span>-{inr(calculations.discount)}</span></div>
-                  <div className="flex justify-between text-on-surface-variant"><span>GST (18%):</span><span>{inr(calculations.gst)}</span></div>
-                  <div className="flex justify-between font-headline-sm text-headline-sm text-on-surface border-t border-outline-variant pt-2 mt-2">
-                    <span>Total:</span><span>{inr(finalTotal)}</span>
+                <div className="flex flex-col gap-2 font-body-md text-body-md ml-auto w-64 pt-4">
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Subtotal:</span>
+                    <span className="text-right w-24">{inr(calculations.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Discount:</span>
+                    <span className="text-right w-24">-{inr(calculations.discount)}</span>
+                  </div>
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>GST (18%):</span>
+                    <span className="text-right w-24">{inr(calculations.gst)}</span>
+                  </div>
+                  <div className="flex justify-between font-headline-sm text-headline-sm text-on-surface border-t-2 border-outline-variant pt-3 mt-2">
+                    <span className="font-bold">Total:</span>
+                    <span className="text-right w-24 font-bold text-primary">{inr(finalTotal)}</span>
                   </div>
                 </div>
                 <div className="text-center font-label-md text-label-md text-on-surface-variant mt-8 pt-4 border-t border-outline-variant">

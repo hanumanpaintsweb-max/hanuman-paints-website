@@ -234,7 +234,8 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="mt-8 flex justify-between items-center">
-             <button onClick={resetBillsWarning} className="text-error hover:text-error/80 font-label-md text-label-md underline transition-colors">
+             <button onClick={resetBillsWarning} className="bg-error-container/50 hover:bg-error-container text-error px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">restart_alt</span>
                 Reset Sequence
              </button>
              <button onClick={handleSave} disabled={saving} className="bg-[#f97316] hover:bg-[#ea580c] text-white px-6 py-2.5 rounded-lg font-label-md text-label-md transition-colors shadow-sm flex items-center gap-2">
@@ -309,7 +310,7 @@ export default function SettingsPage() {
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
-              <div className="p-3 bg-surface rounded-full shadow-sm text-on-surface-variant">
+              <div className="size-12 shrink-0 bg-surface rounded-full shadow-sm text-on-surface-variant flex items-center justify-center">
                 <span className="material-symbols-outlined">key</span>
               </div>
               <div className="flex-1">
@@ -321,7 +322,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
-              <div className="p-3 bg-surface rounded-full shadow-sm text-on-surface-variant">
+              <div className="size-12 shrink-0 bg-surface rounded-full shadow-sm text-on-surface-variant flex items-center justify-center">
                 <span className="material-symbols-outlined">database</span>
               </div>
               <div className="flex-1">

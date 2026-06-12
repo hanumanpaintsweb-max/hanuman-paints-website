@@ -147,22 +147,22 @@ export default function CustomersPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-element-gap mb-stack-margin">
         {/* Stat Card 1 */}
         <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
+          <div className="h-12 w-12 shrink-0 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
           </div>
-          <div>
-            <p className="font-label-md text-label-md text-outline mb-1">Total Customers</p>
+          <div className="min-w-0">
+            <p className="font-label-md text-label-md text-outline mb-1 truncate">Total Customers</p>
             <p className="font-headline-md text-headline-md text-on-surface">{customers.length}</p>
           </div>
         </div>
 
         {/* Stat Card 2 */}
         <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+          <div className="h-12 w-12 shrink-0 rounded-full bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person_add</span>
           </div>
-          <div>
-            <p className="font-label-md text-label-md text-outline mb-1">Active This Month</p>
+          <div className="min-w-0">
+            <p className="font-label-md text-label-md text-outline mb-1 truncate">Active This Month</p>
             <p className="font-headline-md text-headline-md text-on-surface">{newThisMonth}</p>
           </div>
         </div>
@@ -183,9 +183,7 @@ export default function CustomersPage() {
         {/* Search Bar */}
         <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-white">
           <div className="relative w-full max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-outline">
-              <span className="material-symbols-outlined text-[20px]">search</span>
-            </div>
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline pointer-events-none">search</span>
             <input 
               className="block w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg leading-5 bg-white placeholder-outline-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm font-body-md" 
               placeholder="Search by name or phone number..." 

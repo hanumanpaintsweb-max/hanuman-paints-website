@@ -357,7 +357,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#f1f5f9]">
             <h3 className="font-headline-sm text-headline-sm text-on-surface">Revenue - Last 7 Days</h3>
-            <button className="text-outline hover:text-primary transition-colors">
+            <button className="text-outline hover:text-primary transition-colors flex items-center justify-center">
               <span className="material-symbols-outlined">more_vert</span>
             </button>
           </div>
@@ -382,7 +382,7 @@ export default function DashboardPage() {
           
           <div className="flex justify-around mt-4 text-xs font-semibold text-outline tracking-wider">
             {revenueData.slice(-7).map((d, idx) => (
-              <span key={idx} className={idx === 6 ? "text-secondary" : ""}>{d.date.split(' ')[0]}</span>
+              <div key={idx} className={`w-1/12 text-center ${idx === 6 ? "text-secondary" : ""}`}>{d.date.split(' ')[0]}</div>
             ))}
           </div>
         </div>
@@ -391,7 +391,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#f1f5f9]">
             <h3 className="font-headline-sm text-headline-sm text-on-surface">Top 5 Products</h3>
-            <button className="text-outline hover:text-primary transition-colors">
+            <button className="text-outline hover:text-primary transition-colors flex items-center justify-center">
               <span className="material-symbols-outlined">filter_list</span>
             </button>
           </div>

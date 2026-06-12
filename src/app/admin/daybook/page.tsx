@@ -152,27 +152,24 @@ export default function DayBookPage() {
       <div className="max-w-7xl mx-auto space-y-element-gap pb-20">
         {/* Page Header: Date & Actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm">
-          <div className="flex items-center gap-4">
-            <button onClick={() => changeDate(-1)} className="p-2 rounded-lg border border-outline-variant hover:bg-surface-variant/50 transition-colors text-on-surface">
-              <span className="material-symbols-outlined">chevron_left</span>
+          <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-xl p-1 shadow-sm relative group hover:border-primary/30 transition-colors">
+            <button onClick={() => changeDate(-1)} className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all text-on-surface-variant hover:text-primary">
+              <span className="material-symbols-outlined size-5 flex items-center justify-center">chevron_left</span>
             </button>
-            <div className="flex flex-col relative">
-              <span className="font-headline-md text-headline-md text-on-surface">
-                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+            <div className="relative px-4 py-1 flex items-center gap-2 border-x border-outline-variant/30">
+              <span className="material-symbols-outlined text-primary text-[18px]">calendar_today</span> 
+              <span className="font-headline-sm text-headline-sm text-on-surface whitespace-nowrap min-w-[130px] text-center pointer-events-none">
+                {new Date(selectedDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
               </span>
-              <span className="font-body-md text-body-md text-on-surface-variant flex items-center gap-1 cursor-pointer hover:text-primary">
-                <span className="material-symbols-outlined text-[18px]">calendar_today</span> 
-                <input 
-                  type="date" 
-                  value={selectedDate} 
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-transparent outline-none border-none cursor-pointer absolute opacity-0 w-full h-full left-0 top-0"
-                />
-                Select Date
-              </span>
+              <input 
+                type="date" 
+                value={selectedDate} 
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
             </div>
-            <button onClick={() => changeDate(1)} disabled={selectedDate === new Date().toISOString().split('T')[0]} className="p-2 rounded-lg border border-outline-variant hover:bg-surface-variant/50 transition-colors text-on-surface disabled:opacity-50">
-              <span className="material-symbols-outlined">chevron_right</span>
+            <button onClick={() => changeDate(1)} disabled={selectedDate === new Date().toISOString().split('T')[0]} className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all text-on-surface-variant hover:text-primary disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none">
+              <span className="material-symbols-outlined size-5 flex items-center justify-center">chevron_right</span>
             </button>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -230,9 +227,11 @@ export default function DayBookPage() {
 
         {/* Transaction Table Section */}
         <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center">
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Day's Transactions</h3>
-            <div className="text-sm font-semibold text-outline">{entries.length} entries</div>
+          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-3">
+              Day's Transactions
+              <span className="px-2.5 py-0.5 rounded-full bg-primary-container/10 text-primary text-xs font-bold border border-primary/20">{entries.length} entries</span>
+            </h3>
           </div>
 
           <div className="overflow-x-auto">
@@ -242,7 +241,7 @@ export default function DayBookPage() {
                   <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Time</th>
                   <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Type</th>
                   <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Customer / Party</th>
-                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Status</th>
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold text-center">Status</th>
                   <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Method</th>
                   <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold text-right">Amount</th>
                 </tr>
@@ -265,8 +264,8 @@ export default function DayBookPage() {
                       </span>
                     </td>
                     <td className="p-4 font-bold">{entry.name}</td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    <td className="p-4 text-center">
+                      <span className={`inline-flex items-center justify-center min-w-[80px] px-2.5 py-1 rounded-full text-xs font-semibold border ${
                         entry.status === 'paid' ? 'bg-[#d1fae5] text-[#065f46] border-[#a7f3d0]' :
                         entry.status === 'partial' ? 'bg-[#ffedd5] text-[#9a3412] border-[#fed7aa]' :
                         entry.status === 'unpaid' ? 'bg-[#fee2e2] text-[#991b1b] border-[#fecaca]' : 'bg-surface-variant text-on-surface-variant border-outline-variant'

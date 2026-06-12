@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       {/* SideNavBar */}
-      <aside className={`fixed left-0 top-0 h-screen w-[280px] bg-[#0f172a] shadow-sm z-50 flex flex-col transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed left-0 top-0 h-screen w-[280px] bg-[#1e293b] shadow-sm z-50 flex flex-col transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full py-6">
           <div className="px-6 mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 mx-2 transition-all duration-200 border-l-4 ${
                     active 
-                    ? "text-secondary border-secondary bg-white/5 rounded-r-lg opacity-90 scale-[0.99]" 
+                    ? "text-white border-secondary bg-white/5 rounded-r-lg opacity-90 scale-[0.99]" 
                     : "text-outline-variant hover:text-white hover:bg-white/5 rounded-lg border-transparent"
                   }`}
                 >
