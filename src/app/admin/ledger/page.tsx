@@ -77,160 +77,146 @@ export default function UnpaidBillsPage() {
   }).length
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-          <BookOpen className="size-8 text-primary" /> Unpaid Bills
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          All credit/udhaar entries from billing — track and mark payments received.
-        </p>
+    <div className="pt-8 px-4 md:px-container-padding pb-container-padding max-w-7xl mx-auto w-full flex-grow flex flex-col gap-element-gap">
+      <div className="flex items-center justify-between">
+        <h1 className="font-headline-md text-headline-md text-on-surface">Unpaid Bills</h1>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <Clock className="size-3.5" /> Total Pending / Udhaar
-          </p>
-          <p className="text-3xl font-black text-amber-500 mt-2">{inr(totalPending)}</p>
+      {/* Top Section: Total Outstanding Amount */}
+      <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 p-8 flex items-center justify-between">
+        <div>
+          <p className="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Total Outstanding Amount</p>
+          <p className="font-headline-lg text-headline-lg text-primary-container tracking-tight">{inr(totalPending)}</p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <CheckCircle2 className="size-3.5" /> Total Received
-          </p>
-          <p className="text-3xl font-black text-emerald-500 mt-2">{inr(totalPaid)}</p>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <AlertTriangle className="size-3.5" /> Overdue Entries
-          </p>
-          <p className={`text-3xl font-black mt-2 ${overdueCount > 0 ? "text-red-500" : "text-foreground"}`}>{overdueCount}</p>
+        <div className="h-16 w-16 bg-error-container rounded-full flex items-center justify-center text-error">
+          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>money_off</span>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search customer, phone, bill#..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary"
-          />
+      {/* Main Section: Data Table Area */}
+      <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 flex-grow flex flex-col overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-6 border-b border-outline-variant/30 flex flex-col md:flex-row gap-4 justify-between items-center bg-surface-bright">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-outline-variant" />
+            <input 
+              className="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-transparent font-body-md text-body-md text-on-surface placeholder-outline-variant transition-all" 
+              placeholder="Search customer, phone or bill no..." 
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-4 w-full md:w-auto">
+             <div className="flex gap-2 bg-surface p-1 rounded-lg border border-outline-variant/50 overflow-x-auto max-w-full">
+               {(["all", "pending", "partial", "paid"] as const).map((s) => (
+                 <button
+                   key={s}
+                   onClick={() => setFilterStatus(s)}
+                   className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all capitalize whitespace-nowrap ${
+                     filterStatus === s
+                       ? "bg-primary-container text-on-primary"
+                       : "text-on-surface-variant hover:bg-surface-variant/50"
+                   }`}
+                 >
+                   {s === "all" ? "All" : s}
+                 </button>
+               ))}
+             </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          {(["all", "pending", "partial", "paid"] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all capitalize ${
-                filterStatus === s
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-muted text-muted-foreground hover:bg-muted-foreground/10"
-              }`}
-            >
-              {s === "all" ? "All" : s}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-muted/50 text-muted-foreground border-b border-border">
-              <tr>
-                <th className="px-5 py-4 font-semibold">Customer</th>
-                <th className="px-5 py-4 font-semibold">Bill #</th>
-                <th className="px-5 py-4 font-semibold text-right">Amount</th>
-                <th className="px-5 py-4 font-semibold text-center">Due Date</th>
-                <th className="px-5 py-4 font-semibold text-center">Status</th>
-                <th className="px-5 py-4 font-semibold text-right">Action</th>
+        {/* Table */}
+        <div className="overflow-x-auto flex-grow">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-surface-container-low border-b border-outline-variant/30">
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Customer</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Phone</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Bill No</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Date</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Amount</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Status</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-outline-variant/20 bg-surface-container-lowest">
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center">
-                    <Loader2 className="size-6 animate-spin mx-auto text-primary" />
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="py-12 text-center text-outline">Loading unpaid bills...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
-                    No udhaar entries found.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((e) => {
-                  const isOverdue = e.status !== "paid" && e.due_date && new Date(e.due_date) < new Date()
-                  return (
-                    <tr key={e.id} className={`transition-colors hover:bg-muted/20 ${isOverdue ? "bg-red-500/5" : ""}`}>
-                      <td className="px-5 py-4">
-                        <p className="font-bold text-foreground">{e.customer_name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{e.customer_phone}</p>
-                        {e.description && <p className="text-xs text-muted-foreground mt-0.5 italic">{e.description}</p>}
-                      </td>
-                      <td className="px-5 py-4 font-mono text-sm text-muted-foreground">
-                        {e.bill_number ? `#${e.bill_number}` : "—"}
-                      </td>
-                      <td className="px-5 py-4 text-right font-black text-amber-600">{inr(e.amount)}</td>
-                      <td className="px-5 py-4 text-center">
-                        {e.due_date ? (
-                          <span className={`text-xs font-semibold ${isOverdue ? "text-red-500" : "text-muted-foreground"}`}>
-                            {isOverdue && "⚠️ "}
-                            {new Date(e.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span className={`text-xs font-bold uppercase px-2.5 py-1 rounded-full ${
-                          e.status === "paid"
-                            ? "bg-emerald-500/10 text-emerald-600"
-                            : e.status === "partial"
-                            ? "bg-amber-500/10 text-amber-600"
-                            : "bg-red-500/10 text-red-600"
-                        }`}>
-                          {e.status === "paid" ? "✅ Paid" : e.status === "partial" ? "Partial" : "Udhaar"}
+                <tr><td colSpan={7} className="py-12 text-center text-outline">No entries found.</td></tr>
+              ) : filtered.map(e => {
+                const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'NA';
+                const isOverdue = e.status !== "paid" && e.due_date && new Date(e.due_date) < new Date();
+                
+                return (
+                  <tr key={e.id} className="hover:bg-surface-container-low/50 transition-colors group">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full ${isOverdue ? 'bg-primary-container text-on-primary' : 'bg-tertiary-container text-on-tertiary'} flex items-center justify-center font-label-md text-label-md`}>
+                          {getInitials(e.customer_name)}
+                        </div>
+                        <div>
+                          <span className="font-body-md text-body-md font-medium text-on-surface block">{e.customer_name}</span>
+                          {e.description && <span className="text-xs text-on-surface-variant mt-0.5 italic block">{e.description}</span>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 font-body-md text-body-md text-on-surface-variant">{e.customer_phone}</td>
+                    <td className="py-4 px-6 font-body-md text-body-md text-on-surface-variant">{e.bill_number ? `#${e.bill_number}` : '—'}</td>
+                    <td className="py-4 px-6 font-body-md text-body-md text-on-surface-variant">{new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    <td className="py-4 px-6 font-body-md text-body-md font-semibold text-on-surface text-right">{inr(e.amount)}</td>
+                    <td className="py-4 px-6 text-center">
+                      {e.status === "paid" ? (
+                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-tertiary-container text-on-tertiary">
+                           Paid
+                         </span>
+                      ) : e.status === "partial" ? (
+                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+                           Partial
+                         </span>
+                      ) : isOverdue ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error-container text-on-error-container border border-error/20">
+                          Overdue
                         </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        {e.status !== "paid" && (
-                          <div className="flex justify-end gap-2">
-                            {e.status === "pending" && (
-                              <button
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+                          Recent
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      {e.status !== "paid" ? (
+                         <div className="flex justify-end gap-2">
+                           {e.status === "pending" && (
+                              <button 
                                 onClick={() => updateStatus(e.id, "partial")}
-                                className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 font-semibold transition-colors"
+                                className="bg-transparent border border-outline-variant hover:border-primary-container hover:text-primary-container text-on-surface-variant font-label-md text-label-md py-2 px-4 rounded-lg transition-colors whitespace-nowrap"
                               >
                                 Part Paid
                               </button>
-                            )}
-                            <button
-                              onClick={() => updateStatus(e.id, "paid")}
-                              className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-semibold transition-colors"
-                            >
-                              Mark Paid ✓
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
+                           )}
+                           <button 
+                             onClick={() => updateStatus(e.id, "paid")}
+                             className="bg-secondary-container hover:bg-secondary text-on-secondary font-label-md text-label-md py-2 px-4 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+                           >
+                             Mark as Paid
+                           </button>
+                         </div>
+                      ) : (
+                         <span className="text-on-surface-variant text-sm font-bold">✓</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
+        
         {!loading && (
-          <div className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
-            Showing {filtered.length} of {entries.length} entries
+          <div className="p-4 border-t border-outline-variant/30 flex items-center justify-between bg-surface-container-lowest">
+            <span className="font-body-md text-body-md text-on-surface-variant">Showing {filtered.length} entries</span>
           </div>
         )}
       </div>

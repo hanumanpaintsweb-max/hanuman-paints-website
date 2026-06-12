@@ -116,21 +116,21 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-container-padding max-w-5xl mx-auto space-y-element-gap w-full pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <Settings className="size-8 text-primary" /> Settings
-          </h1>
+    <div className="p-container-padding max-w-[1000px] mx-auto w-full pb-20 space-y-element-gap pt-4">
+      
+      {/* Title is handled by Layout, but if we need a specific page title we can add it here. The design just has sections. */}
+      {unsavedChanges && (
+        <div className="bg-orange-500/10 border border-orange-500/20 text-orange-700 p-4 rounded-xl flex items-center justify-between shadow-sm mb-4">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined">info</span>
+            <span className="font-label-md text-label-md">You have unsaved changes. Please save your preferences.</span>
+          </div>
+          <button onClick={handleSave} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
+             {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+             Save All Changes
+          </button>
         </div>
-        <div className="flex items-center gap-4">
-          {unsavedChanges && <span className="text-sm font-bold text-orange-500 animate-pulse">Unsaved changes...</span>}
-          <Button onClick={handleSave} disabled={saving || !unsavedChanges} className="rounded-xl px-8 shadow-sm">
-            {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
-            {saving ? "Saving..." : "Save Settings"}
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Section 1: Shop Information */}
       <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
@@ -177,6 +177,12 @@ export default function SettingsPage() {
               />
             </div>
           </div>
+          <div className="mt-8 flex justify-end">
+             <button onClick={handleSave} disabled={saving} className="bg-[#f97316] hover:bg-[#ea580c] text-white px-6 py-2.5 rounded-lg font-label-md text-label-md transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2">
+                 {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+                 Update Information
+             </button>
+          </div>
         </div>
       </section>
 
@@ -197,7 +203,16 @@ export default function SettingsPage() {
                 onChange={e => handleChange('bill_prefix', e.target.value)} 
               />
             </div>
-            <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Starting Bill Number (Info)</label>
+              <input 
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface font-mono opacity-50 cursor-not-allowed" 
+                type="number" 
+                disabled
+                value={10001} 
+              />
+            </div>
+            <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block font-label-md text-label-md text-on-surface-variant">Default GST (%)</label>
                 <input 
@@ -207,10 +222,8 @@ export default function SettingsPage() {
                   onChange={e => handleChange('default_gst', e.target.value)} 
                 />
               </div>
-            </div>
-            <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <label className="block font-label-md text-label-md text-on-surface-variant">Default Discount (%)</label>
+                <label className="block font-label-md text-label-md text-on-surface-variant">Discount (%)</label>
                 <input 
                   className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
                   type="number" 
@@ -220,14 +233,73 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="mt-8 flex justify-start">
-             <Button onClick={resetBillsWarning} variant="destructive" className="rounded-lg shadow-sm border border-red-500/20">
-                Reset Bill Number Sequence
-             </Button>
+          <div className="mt-8 flex justify-between items-center">
+             <button onClick={resetBillsWarning} className="text-error hover:text-error/80 font-label-md text-label-md underline transition-colors">
+                Reset Sequence
+             </button>
+             <button onClick={handleSave} disabled={saving} className="bg-[#f97316] hover:bg-[#ea580c] text-white px-6 py-2.5 rounded-lg font-label-md text-label-md transition-colors shadow-sm flex items-center gap-2">
+                 {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+                 Save Preferences
+             </button>
           </div>
         </div>
       </section>
-      
+
+      {/* Section 3: Print & Export Settings (Static UI from redesign) */}
+      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
+          <span className="material-symbols-outlined text-primary-container">print</span>
+          <h3 className="font-headline-sm text-headline-sm">Print & Export Settings</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Default Paper Size</label>
+              <div className="grid grid-cols-3 gap-3">
+                <label className="cursor-pointer">
+                  <input type="radio" name="paper_size" className="peer sr-only" defaultChecked />
+                  <div className="px-4 py-3 border border-outline-variant rounded-lg text-center peer-checked:border-primary-container peer-checked:bg-surface-container peer-checked:text-primary transition-all">
+                    <span className="font-label-md text-label-md block">A4</span>
+                    <span className="text-xs text-outline opacity-80 mt-1 block">Standard</span>
+                  </div>
+                </label>
+                <label className="cursor-pointer">
+                  <input type="radio" name="paper_size" className="peer sr-only" />
+                  <div className="px-4 py-3 border border-outline-variant rounded-lg text-center peer-checked:border-primary-container peer-checked:bg-surface-container peer-checked:text-primary transition-all">
+                    <span className="font-label-md text-label-md block">A5</span>
+                    <span className="text-xs text-outline opacity-80 mt-1 block">Half Size</span>
+                  </div>
+                </label>
+                <label className="cursor-pointer opacity-50">
+                  <input type="radio" name="paper_size" className="peer sr-only" disabled />
+                  <div className="px-4 py-3 border border-outline-variant rounded-lg text-center peer-checked:border-primary-container peer-checked:bg-surface-container peer-checked:text-primary transition-all">
+                    <span className="font-label-md text-label-md block">Thermal</span>
+                    <span className="text-xs text-outline opacity-80 mt-1 block">Receipt</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div className="space-y-4 flex flex-col justify-center">
+              <div className="flex items-center justify-between p-4 border border-outline-variant rounded-lg bg-surface-container-low">
+                <div>
+                  <p className="font-label-md text-label-md text-on-surface">Show Logo on Bills</p>
+                  <p className="text-xs text-on-surface-variant mt-1">Include shop logo in printed receipts</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-outline after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f97316]"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 flex justify-end">
+             <button className="bg-surface border border-outline-variant hover:bg-surface-variant text-on-surface px-6 py-2.5 rounded-lg font-label-md text-label-md transition-colors shadow-sm">
+                 Save Print Settings
+             </button>
+          </div>
+        </div>
+      </section>
+
       {/* Section 4: System & Security */}
       <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden mb-12">
         <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
@@ -236,6 +308,18 @@ export default function SettingsPage() {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
+              <div className="p-3 bg-surface rounded-full shadow-sm text-on-surface-variant">
+                <span className="material-symbols-outlined">key</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-label-md text-label-md text-on-surface mb-1">Change Password</h4>
+                <p className="text-sm text-on-surface-variant mb-4">Update your admin login password to maintain security.</p>
+                <button className="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:border-primary-container hover:text-primary-container transition-colors bg-white shadow-sm">
+                  Update Password
+                </button>
+              </div>
+            </div>
             <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
               <div className="p-3 bg-surface rounded-full shadow-sm text-on-surface-variant">
                 <span className="material-symbols-outlined">database</span>
