@@ -270,185 +270,153 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Business Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">Live analytics integrating all online and offline channels</p>
+    <div className="p-container-padding flex flex-col gap-element-gap max-w-7xl mx-auto w-full">
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface">Dashboard Overview</h2>
+          <p className="font-body-md text-body-md text-outline mt-1">Monitor your business performance and recent activities.</p>
+        </div>
+        <div className="text-sm font-medium text-outline bg-white px-3 py-1.5 border border-outline-variant rounded-lg shadow-sm hidden sm:block">
+          Last updated: {new Date().toLocaleString('en-IN', { hour: 'numeric', minute: 'numeric', hour12: true })}
+        </div>
       </div>
 
-
-      {/* OVERDUE REMINDERS WIDGET */}
-      {/* // PHASE2_HIDDEN */}
-      {false && reminders.count > 0 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="bg-rose-100 p-3 rounded-full">
-              <AlertCircle className="size-6 text-rose-600" />
-            </div>
-            <div>
-              <h3 className="text-rose-900 font-bold text-lg">{reminders.count} Overdue Payments</h3>
-              <p className="text-rose-700 text-sm font-medium">Total Pending Amount: <span className="font-bold">{inr(reminders.amount)}</span></p>
-            </div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 1 */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <span className="material-symbols-outlined text-[64px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
           </div>
-          <Link href="/admin/reminders">
-            <Button className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm border-none">
-              View Reminders
-            </Button>
-          </Link>
-        </motion.div>
-      )}
-
-      {/* TOP STATS */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Today's Sales" value={stats.todaySales} prev={stats.yesterdaySales} icon={IndianRupee} type="currency" />
-        <StatCard title="This Week" value={stats.weekSales} prev={stats.lastWeekSales} icon={IndianRupee} type="currency" />
-        <StatCard title="This Month" value={stats.monthSales} prev={stats.lastMonthSales} icon={IndianRupee} type="currency" />
-        <StatCard title="Total Pending Udhaar" value={stats.outstandingAmount} icon={AlertCircle} type="currency" />
-        {/* // PHASE2_HIDDEN */}
-        {/* <StatCard title="Total Orders" value={stats.totalOrders} icon={ShoppingBag} type="number" />
-        <StatCard title="Pending Orders" value={stats.pendingOrders} icon={Clock} type="number" />
-        <StatCard title="Total Bills" value={stats.totalBills} icon={Receipt} type="number" /> */}
-      </div>
-
-      {/* GRAPHS ROW 1 */}
-      {/* // PHASE2_HIDDEN */}
-      {false && (
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* REVENUE TIMELINE */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm lg:col-span-2">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold">Revenue Timeline (30 Days)</h2>
-            <div className="flex gap-2">
-              {/* Future toggle implementation placeholder */}
-              <select className="bg-muted text-xs font-bold px-3 py-1.5 rounded-lg outline-none border border-border">
-                <option value="daily">Daily</option>
-              </select>
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
+              <span className="material-symbols-outlined">payments</span>
             </div>
           </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} dy={10} minTickGap={20} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${v/1000}k`} />
-                <RechartsTooltip 
-                  contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                  formatter={(val: any) => [inr(val), "Revenue"]}
-                />
-                <Line type="monotone" dataKey="revenue" stroke="#F97316" strokeWidth={3} dot={false} activeDot={{ r: 8, fill: "#F97316", stroke: "#fff", strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="relative z-10">
+            <p className="font-label-md text-label-md text-outline uppercase tracking-wider mb-1">Today's Sales</p>
+            <h3 className="font-headline-lg text-headline-lg text-on-surface">{inr(stats.todaySales)}</h3>
           </div>
-        </motion.div>
+        </div>
 
-        {/* CATEGORY SALES DONUT */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-6">Category Sales</h2>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={catData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                  {catData.map((entry, index) => <Cell key={`cell-${index}`} fill={CAT_COLORS[index % CAT_COLORS.length]} />)}
-                </Pie>
-                <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 'bold' }} />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* Card 2 */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <span className="material-symbols-outlined text-[64px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>monitoring</span>
           </div>
-        </motion.div>
-      </div>
-      )}
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
+              <span className="material-symbols-outlined">monitoring</span>
+            </div>
+          </div>
+          <div className="relative z-10">
+            <p className="font-label-md text-label-md text-outline uppercase tracking-wider mb-1">This Week Sales</p>
+            <h3 className="font-headline-lg text-headline-lg text-on-surface">{inr(stats.weekSales)}</h3>
+          </div>
+        </div>
 
-      {/* GRAPHS ROW 2 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* TOP 10 PRODUCTS */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm lg:col-span-2">
-          <h2 className="text-lg font-bold mb-6">Top 5 Products (Qty)</h2>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={topProducts} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={140} axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 600 }} />
-                <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} />
-                <Bar dataKey="qty" fill="#F97316" radius={[0, 4, 4, 0]} barSize={16}>
-                  {topProducts.map((entry, index) => <Cell key={`cell-${index}`} fill={`hsl(24, 93%, ${50 + (index * 3)}%)`} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Card 3 */}
+        <div className="bg-white p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <span className="material-symbols-outlined text-[64px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>insert_chart</span>
           </div>
-        </motion.div>
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary-container">
+              <span className="material-symbols-outlined">insert_chart</span>
+            </div>
+          </div>
+          <div className="relative z-10">
+            <p className="font-label-md text-label-md text-outline uppercase tracking-wider mb-1">This Month Sales</p>
+            <h3 className="font-headline-lg text-headline-lg text-on-surface">{inr(stats.monthSales)}</h3>
+          </div>
+        </div>
 
-        {/* ORDER STATUS PIE */}
-        {/* // PHASE2_HIDDEN */}
-        {false && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-6">Online Order Status</h2>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={statusData} cx="50%" cy="50%" outerRadius={120} paddingAngle={2} dataKey="value" label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`} labelLine={false}>
-                  {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />)}
-                </Pie>
-                <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }} />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* Card 4 */}
+        <div className="bg-white p-6 rounded-xl border border-[#f97316]/30 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <span className="material-symbols-outlined text-[64px] text-[#f97316]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
           </div>
-        </motion.div>
-        )}
+          <div className="flex justify-between items-start mb-4 relative z-10">
+            <div className="w-10 h-10 rounded-lg bg-[#f97316]/10 flex items-center justify-center text-[#f97316]">
+              <span className="material-symbols-outlined">money_off</span>
+            </div>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#f97316] bg-[#f97316]/10 px-2 py-1 rounded-full">
+              Action Needed
+            </span>
+          </div>
+          <div className="relative z-10">
+            <p className="font-label-md text-label-md text-outline uppercase tracking-wider mb-1">Pending Unpaid Total</p>
+            <h3 className="font-headline-lg text-headline-lg text-[#f97316]">{inr(stats.outstandingAmount)}</h3>
+          </div>
+        </div>
       </div>
 
-      {/* RECENT ACTIVITY */}
-      {/* // PHASE2_HIDDEN */}
-      {false && (
-      <div className="grid gap-6 lg:grid-cols-2">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm flex flex-col">
-          <div className="p-6 border-b border-border/60 flex justify-between items-center bg-muted/20">
-            <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Recent Orders</h2>
-            <Link href="/admin/billing" className="text-xs font-bold text-primary hover:underline flex items-center">View All <ChevronRight className="size-3" /></Link>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Chart */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#f1f5f9]">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">Revenue - Last 7 Days</h3>
+            <button className="text-outline hover:text-primary transition-colors">
+              <span className="material-symbols-outlined">more_vert</span>
+            </button>
           </div>
-          <div className="divide-y divide-border/60 flex-1">
-            {recentOrders.map(order => (
-              <div key={order.id} className="p-4 hover:bg-muted/30 transition-colors flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm">{order.customer_name}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString()}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-primary">{inr(order.total_amount || order.total)}</div>
-                  <div className="text-[10px] font-bold uppercase bg-muted px-2 py-0.5 rounded text-muted-foreground mt-1 inline-block">{order.status}</div>
-                </div>
-              </div>
-            ))}
-            {recentOrders.length === 0 && <div className="p-8 text-center text-muted-foreground text-sm">No recent orders</div>}
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm flex flex-col">
-          <div className="p-6 border-b border-border/60 flex justify-between items-center bg-muted/20">
-            <h2 className="text-lg font-bold flex items-center gap-2"><Receipt className="size-5 text-emerald-500" /> Recent Bills</h2>
-            <Link href="/admin/billing" className="text-xs font-bold text-primary hover:underline flex items-center">View All <ChevronRight className="size-3" /></Link>
-          </div>
-          <div className="divide-y divide-border/60 flex-1">
-            {recentBills.map(bill => (
-              <div key={bill.id} className="p-4 hover:bg-muted/30 transition-colors flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-sm">{bill.customer_name || 'Walk-in Customer'} <span className="text-xs font-mono text-muted-foreground ml-1">#{bill.bill_number}</span></div>
-                  <div className="text-xs text-muted-foreground">{new Date(bill.created_at).toLocaleString()}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-emerald-600">{inr(bill.total_amount)}</div>
-                  <div className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded mt-1 inline-block ${bill.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                    {bill.payment_status}
+          
+          <div className="flex-1 min-h-[300px] relative w-full bg-slate-50/50 rounded-lg flex items-end justify-around p-4 pt-10 border border-[#f1f5f9]">
+            {(() => {
+              const last7Days = revenueData.slice(-7);
+              const maxRev = Math.max(...last7Days.map(d => d.revenue), 1);
+              return last7Days.map((data, idx) => {
+                const heightPercent = Math.max((data.revenue / maxRev) * 100, 5);
+                const isToday = idx === last7Days.length - 1;
+                return (
+                  <div key={idx} className={`w-1/12 ${isToday ? 'bg-secondary' : 'bg-primary-container/20 hover:bg-primary-container transition-colors'} rounded-t-md relative group`} style={{ height: `${heightPercent}%` }}>
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+                      {isToday ? 'Today: ' : ''}{inr(data.revenue)}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-            {recentBills.length === 0 && <div className="p-8 text-center text-muted-foreground text-sm">No recent bills</div>}
+                );
+              });
+            })()}
           </div>
-        </motion.div>
-      </div>
-      )}
+          
+          <div className="flex justify-around mt-4 text-xs font-semibold text-outline tracking-wider">
+            {revenueData.slice(-7).map((d, idx) => (
+              <span key={idx} className={idx === 6 ? "text-secondary" : ""}>{d.date.split(' ')[0]}</span>
+            ))}
+          </div>
+        </div>
 
+        {/* Secondary Chart */}
+        <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col">
+          <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#f1f5f9]">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">Top 5 Products</h3>
+            <button className="text-outline hover:text-primary transition-colors">
+              <span className="material-symbols-outlined">filter_list</span>
+            </button>
+          </div>
+          <div className="flex-1 space-y-5">
+            {(() => {
+              const maxQty = Math.max(...topProducts.map(p => p.qty), 1);
+              return topProducts.map((product, index) => {
+                const opacity = 100 - (index * 20); // 100, 80, 60, 40, 20
+                return (
+                  <div key={index}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-on-surface">{product.name}</span>
+                      <span className="font-semibold text-primary">{product.qty} units</span>
+                    </div>
+                    <div className="w-full bg-[#f1f5f9] rounded-full h-2">
+                      <div className="bg-primary-container h-2 rounded-full" style={{ width: `${(product.qty / maxQty) * 100}%`, opacity: opacity / 100 }}></div>
+                    </div>
+                  </div>
+                )
+              });
+            })()}
+            {topProducts.length === 0 && <div className="text-center text-outline-variant py-8">No product data available</div>}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
