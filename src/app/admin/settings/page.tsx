@@ -92,6 +92,45 @@ export default function SettingsPage() {
     }
   }
 
+  const handleBackup = async () => {
+    setSaving(true)
+    try {
+      const [billsRes, customersRes, ledgerRes] = await Promise.all([
+        supabase.from('bills').select('*'),
+        supabase.from('customers').select('*'),
+        supabase.from('ledger').select('*')
+      ])
+
+      if (billsRes.error) throw billsRes.error;
+      if (customersRes.error) throw customersRes.error;
+      if (ledgerRes.error) throw ledgerRes.error;
+
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        bills: billsRes.data,
+        customers: customersRes.data,
+        ledger: ledgerRes.data
+      }
+
+      const jsonString = JSON.stringify(backupData, null, 2)
+      const blob = new Blob([jsonString], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `hanuman_paints_backup_${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      toast.success("Backup generated successfully!")
+    } catch (e: any) {
+      toast.error(`Backup failed: ${e.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const sendTestWhatsApp = () => {
     if (!testPhone) {
       toast.error("Enter a test number")
@@ -186,120 +225,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Section 2: Billing Preferences */}
-      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
-        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
-          <span className="material-symbols-outlined text-primary-container">receipt</span>
-          <h3 className="font-headline-sm text-headline-sm">Billing Preferences</h3>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="block font-label-md text-label-md text-on-surface-variant">Bill Number Prefix</label>
-              <input 
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface font-mono uppercase" 
-                type="text" 
-                value={settings.bill_prefix} 
-                onChange={e => handleChange('bill_prefix', e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block font-label-md text-label-md text-on-surface-variant">Starting Bill Number (Info)</label>
-              <input 
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface font-mono opacity-50 cursor-not-allowed" 
-                type="number" 
-                disabled
-                value={10001} 
-              />
-            </div>
-            <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block font-label-md text-label-md text-on-surface-variant">Default GST (%)</label>
-                <input 
-                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
-                  type="number" 
-                  value={settings.default_gst} 
-                  onChange={e => handleChange('default_gst', e.target.value)} 
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block font-label-md text-label-md text-on-surface-variant">Discount (%)</label>
-                <input 
-                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
-                  type="number" 
-                  value={settings.default_discount} 
-                  onChange={e => handleChange('default_discount', e.target.value)} 
-                />
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 flex justify-between items-center">
-             <button onClick={resetBillsWarning} className="bg-error-container/50 hover:bg-error-container text-error px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">restart_alt</span>
-                Reset Sequence
-             </button>
-             <button onClick={handleSave} disabled={saving} className="bg-[#f97316] hover:bg-[#ea580c] text-white px-6 py-2.5 rounded-lg font-label-md text-label-md transition-colors shadow-sm flex items-center gap-2">
-                 {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-                 Save Preferences
-             </button>
-          </div>
-        </div>
-      </section>
 
-      {/* Section 3: Print & Export Settings (Static UI from redesign) */}
-      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
-        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
-          <span className="material-symbols-outlined text-primary-container">print</span>
-          <h3 className="font-headline-sm text-headline-sm">Print & Export Settings</h3>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="block font-label-md text-label-md text-on-surface-variant">Default Paper Size</label>
-              <div className="grid grid-cols-3 gap-3">
-                <label className="cursor-pointer">
-                  <input type="radio" name="paper_size" className="peer sr-only" defaultChecked />
-                  <div className="px-4 py-3 border border-outline-variant rounded-lg text-center peer-checked:border-primary-container peer-checked:bg-surface-container peer-checked:text-primary transition-all">
-                    <span className="font-label-md text-label-md block">A4</span>
-                    <span className="text-xs text-outline opacity-80 mt-1 block">Standard</span>
-                  </div>
-                </label>
-                <label className="cursor-pointer">
-                  <input type="radio" name="paper_size" className="peer sr-only" />
-                  <div className="px-4 py-3 border border-outline-variant rounded-lg text-center peer-checked:border-primary-container peer-checked:bg-surface-container peer-checked:text-primary transition-all">
-                    <span className="font-label-md text-label-md block">A5</span>
-                    <span className="text-xs text-outline opacity-80 mt-1 block">Half Size</span>
-                  </div>
-                </label>
-                <label className="cursor-pointer opacity-50">
-                  <input type="radio" name="paper_size" className="peer sr-only" disabled />
-                  <div className="px-4 py-3 border border-outline-variant rounded-lg text-center peer-checked:border-primary-container peer-checked:bg-surface-container peer-checked:text-primary transition-all">
-                    <span className="font-label-md text-label-md block">Thermal</span>
-                    <span className="text-xs text-outline opacity-80 mt-1 block">Receipt</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-            <div className="space-y-4 flex flex-col justify-center">
-              <div className="flex items-center justify-between p-4 border border-outline-variant rounded-lg bg-surface-container-low">
-                <div>
-                  <p className="font-label-md text-label-md text-on-surface">Show Logo on Bills</p>
-                  <p className="text-xs text-on-surface-variant mt-1">Include shop logo in printed receipts</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-outline after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f97316]"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 flex justify-end">
-             <button className="bg-surface border border-outline-variant hover:bg-surface-variant text-on-surface px-6 py-2.5 rounded-lg font-label-md text-label-md transition-colors shadow-sm">
-                 Save Print Settings
-             </button>
-          </div>
-        </div>
-      </section>
 
       {/* Section 4: System & Security */}
       <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden mb-12">
@@ -308,28 +234,16 @@ export default function SettingsPage() {
           <h3 className="font-headline-sm text-headline-sm">System & Security</h3>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
-              <div className="size-12 shrink-0 bg-surface rounded-full shadow-sm text-on-surface-variant flex items-center justify-center">
-                <span className="material-symbols-outlined">key</span>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-label-md text-label-md text-on-surface mb-1">Change Password</h4>
-                <p className="text-sm text-on-surface-variant mb-4">Update your admin login password to maintain security.</p>
-                <button className="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:border-primary-container hover:text-primary-container transition-colors bg-white shadow-sm">
-                  Update Password
-                </button>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-6">
             <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
               <div className="size-12 shrink-0 bg-surface rounded-full shadow-sm text-on-surface-variant flex items-center justify-center">
                 <span className="material-symbols-outlined">database</span>
               </div>
               <div className="flex-1">
                 <h4 className="font-label-md text-label-md text-on-surface mb-1">Backup Data</h4>
-                <p className="text-sm text-on-surface-variant mb-4">Download a complete backup of your current database.</p>
-                <button className="px-4 py-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors shadow-sm flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">download</span>
+                <p className="text-sm text-on-surface-variant mb-4">Download a complete backup of your current database including bills, customers, and ledger.</p>
+                <button onClick={handleBackup} disabled={saving} className="px-4 py-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors shadow-sm flex items-center gap-2">
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <span className="material-symbols-outlined text-[18px]">download</span>}
                   Generate Backup
                 </button>
               </div>

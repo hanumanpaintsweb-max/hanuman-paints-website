@@ -104,6 +104,7 @@ export default function BillingPage() {
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
   const [historyFilter, setHistoryFilter] = useState("All")
+  const [historyDate, setHistoryDate] = useState("")
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
   const fetchAndSetNextBillNo = async () => {
@@ -345,7 +346,7 @@ export default function BillingPage() {
     }
 
     let ledgerData: any = null
-    if (paymentStatus !== 'paid' && customerPhone.replace(/\D/g,'').length === 10) {
+    if (paymentStatus !== 'Paid' && customerPhone.replace(/\D/g,'').length === 10) {
       ledgerData = {
         customer_name: customerName,
         customer_phone: customerPhone.replace(/\D/g,''),
@@ -353,9 +354,9 @@ export default function BillingPage() {
         amount: finalTotal,
         description: `Bill #${finalBillNoStr}`,
         date: new Date().toISOString().split('T')[0],
-        due_date: paymentStatus === 'unpaid' && dueDate ? dueDate : null,
+        due_date: paymentStatus === 'Unpaid' && dueDate ? dueDate : null,
         bill_number: finalBillNoStr,
-        status: paymentStatus === 'unpaid' ? 'pending' : paymentStatus
+        status: paymentStatus === 'Unpaid' ? 'pending' : paymentStatus
       }
     }
 
@@ -527,13 +528,11 @@ export default function BillingPage() {
   const resetForm = async () => {
     setCustomerName("")
     setCustomerPhone("")
-    setCustomerAddress("")
-
-    setItems([])
-    setPaymentStatus("paid")
-    setDueDate("")
-    setPaymentMethod("Cash")
     setGlobalDiscount(5)
+    setDueDate("")
+    setPaymentStatus("Paid")
+    setPaymentMethod("Cash")
+    setItems([])
     setLinkedOrderId(null)
     setSavedBillData(null)
     setEditBillId(null)
@@ -586,13 +585,28 @@ export default function BillingPage() {
 
   // Filter Bills
   const filteredBills = bills.filter(b => {
-    if (historyFilter !== "All" && b.payment_status !== historyFilter.toLowerCase()) return false
+    if (historyFilter !== "All" && b.payment_status.toLowerCase() !== historyFilter.toLowerCase()) return false
+    if (historyDate) {
+      const bDate = new Date(b.created_at).toISOString().split('T')[0]
+      if (bDate !== historyDate) return false
+    }
     if (historySearch) {
       const s = historySearch.toLowerCase()
       return b.bill_number.toLowerCase().includes(s) || b.customer_name.toLowerCase().includes(s) || b.customer_phone.includes(s)
     }
     return true
   })
+
+  // Group filtered bills by date
+  const groupedBills = filteredBills.reduce((groups, bill) => {
+    const dateStr = new Date(bill.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    if (!groups[dateStr]) groups[dateStr] = []
+    groups[dateStr].push(bill)
+    return groups
+  }, {} as Record<string, Bill[]>)
+  
+  // Get sorted dates (newest first assuming bills are already sorted, but let's be safe)
+  const sortedDates = Object.keys(groupedBills)
 
   const updateItem = (id: string, updates: Partial<any>) => {
     setItems(items.map(item => item.id === id ? { ...item, ...updates } : item))
@@ -683,17 +697,17 @@ export default function BillingPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="font-label-md text-label-md text-on-surface-variant">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-2.5 text-outline size-5" />
-                      <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Mobile..." />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Customer Name</label>
                     <div className="relative">
                       <User className="absolute left-3 top-2.5 text-outline size-5" />
                       <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Name" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-md text-label-md text-on-surface-variant">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-2.5 text-outline size-5" />
+                      <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Mobile..." />
                     </div>
                   </div>
                   <div className="col-span-2 flex flex-col gap-2">
@@ -844,6 +858,7 @@ export default function BillingPage() {
                   <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
                     <label className="font-label-md text-label-md text-on-surface-variant">GST Configuration</label>
                     <div className="flex gap-2 items-center flex-wrap">
+                      <button onClick={() => handleGlobalGstChange(0)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 0 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
                       <button onClick={() => handleGlobalGstChange(18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>+18%</button>
                       <button onClick={() => handleGlobalGstChange(-18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === -18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>-18%</button>
                       <input type="number" disabled={!!savedBillData} value={typeof globalGst === "number" ? globalGst : ""} onChange={(e) => handleGlobalGstChange(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Manual %" />
@@ -853,16 +868,16 @@ export default function BillingPage() {
                   <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30 mt-2">
                     <div className="flex flex-col gap-1 w-full sm:w-[200px]">
                       <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
-                      <select disabled={!!savedBillData} value={paymentStatus === 'unpaid' ? 'Unpaid' : paymentMethod === 'UPI' ? 'UPI' : 'Cash'} onChange={(e) => {
+                      <select disabled={!!savedBillData} value={paymentStatus === 'Unpaid' ? 'Unpaid' : paymentMethod === 'UPI' ? 'UPI' : 'Cash'} onChange={(e) => {
                         const val = e.target.value;
                         if (val === 'Unpaid') {
-                          setPaymentStatus('unpaid');
+                          setPaymentStatus('Unpaid');
                           setPaymentMethod('Unpaid');
                         } else if (val === 'UPI') {
-                          setPaymentStatus('paid');
+                          setPaymentStatus('Paid');
                           setPaymentMethod('UPI');
                         } else {
-                          setPaymentStatus('paid');
+                          setPaymentStatus('Paid');
                           setPaymentMethod('Cash');
                         }
                       }} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
@@ -1002,7 +1017,7 @@ export default function BillingPage() {
                           <div className="w-64">
                             <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Base Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
                             {calculations.discount > 0 && <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>}
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Base</span><span>{calculations.taxable.toFixed(2)}</span></div>
+
                             {calculations.gst !== 0 && (
                               <>
                                 <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
@@ -1027,16 +1042,17 @@ export default function BillingPage() {
           </>
         ) : (
           /* BILL HISTORY TAB */
-          <div className="w-full h-full p-container-padding overflow-y-auto">
-            <div className="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col h-full max-h-[800px]">
-              <div className="p-4 border-b border-outline-variant flex flex-col md:flex-row justify-between gap-4 items-center bg-surface-bright">
+          <div className="w-full h-full p-container-padding">
+            <div className="bg-white border border-outline-variant rounded-xl shadow-sm flex flex-col h-full max-h-full">
+              <div className="p-4 border-b border-outline-variant flex flex-col md:flex-row justify-between gap-4 items-center bg-surface-bright shrink-0">
                 <h2 className="text-lg font-bold">Past Invoices</h2>
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                  <div className="relative flex-1 md:w-64">
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  <div className="relative flex-1 md:w-48">
                     <Search className="absolute left-3 top-2.5 size-4 text-outline" />
                     <input type="text" placeholder="Search bill, phone..." value={historySearch} onChange={e => setHistorySearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-surface rounded-lg border border-outline-variant text-sm outline-none focus:border-primary" />
                   </div>
-                  <select value={historyFilter} onChange={(e) => setHistoryFilter(e.target.value)} className="bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm outline-none">
+                  <input type="date" value={historyDate} onChange={e => setHistoryDate(e.target.value)} className="bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm outline-none w-full md:w-auto" />
+                  <select value={historyFilter} onChange={(e) => setHistoryFilter(e.target.value)} className="bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm outline-none w-full md:w-auto">
                     <option value="All">All Status</option>
                     <option value="Paid">Paid</option>
                     <option value="Unpaid">Unpaid</option>
@@ -1044,48 +1060,63 @@ export default function BillingPage() {
                   </select>
                 </div>
               </div>
-              <div className="overflow-x-auto flex-1">
+              <div className="overflow-x-auto flex-1 overflow-y-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-outline-variant sticky top-0">
+                  <thead className="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-outline-variant sticky top-0 z-10 shadow-sm">
                     <tr>
-                      <th className="px-6 py-4">Date</th>
-                      <th className="px-6 py-4">Bill No</th>
+                      <th className="px-6 py-4 w-32">Time</th>
+                      <th className="px-6 py-4 w-32">Bill No</th>
                       <th className="px-6 py-4">Customer</th>
-                      <th className="px-6 py-4">Amount</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Actions</th>
+                      <th className="px-6 py-4 w-32 text-right">Amount</th>
+                      <th className="px-6 py-4 w-32 text-center">Status</th>
+                      <th className="px-6 py-4 w-32 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBills.map((b) => (
-                      <tr key={b.id} className="border-b border-outline-variant/50 hover:bg-surface-bright transition-colors">
-                        <td className="px-6 py-4 font-medium">{new Date(b.created_at).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-primary font-semibold">{b.bill_number}</td>
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-on-surface">{b.customer_name}</div>
-                          <div className="text-xs text-on-surface-variant">{b.customer_phone}</div>
-                        </td>
-                        <td className="px-6 py-4 font-bold text-on-surface">{inr(b.total_amount)}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                            b.payment_status === "paid" ? "bg-emerald-100 text-emerald-700" :
-                            b.payment_status === "unpaid" ? "bg-rose-100 text-rose-700" : "bg-orange-100 text-orange-700"
-                          }`}>
-                            {b.payment_status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => viewHistoricalBill(b)} className="p-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors" title="View"><Eye className="size-4" /></button>
-                            <button onClick={() => handlePDF('print-a4-container', b)} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
-                            <button onClick={() => loadBillForEdit(b)} className="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors" title="Edit"><Edit className="size-4" /></button>
-                            <button onClick={() => deleteBill(b)} className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors" title="Delete"><Trash2 className="size-4" /></button>
-                          </div>
+                    {sortedDates.map(dateStr => (
+                      <React.Fragment key={dateStr}>
+                        {/* Sticky Date Header Row */}
+                        <tr className="bg-surface-container-highest sticky top-[53px] z-10 border-b border-outline-variant/50">
+                          <td colSpan={6} className="px-6 py-2 text-xs font-bold text-on-surface uppercase tracking-wider">
+                            {dateStr}
+                          </td>
+                        </tr>
+                        {/* Bills for this Date */}
+                        {groupedBills[dateStr].map((b) => (
+                          <tr key={b.id} className="border-b border-outline-variant/50 hover:bg-surface-bright transition-colors">
+                            <td className="px-6 py-4 font-medium text-xs text-on-surface-variant">{new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                            <td className="px-6 py-4 text-primary font-semibold">{b.bill_number}</td>
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-on-surface">{b.customer_name}</div>
+                              <div className="text-xs text-on-surface-variant">{b.customer_phone}</div>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-on-surface text-right">{inr(b.total_amount)}</td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                b.payment_status.toLowerCase() === "paid" ? "bg-emerald-100 text-emerald-700" :
+                                b.payment_status.toLowerCase() === "unpaid" ? "bg-rose-100 text-rose-700" : "bg-orange-100 text-orange-700"
+                              }`}>
+                                {b.payment_status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex gap-2 justify-end">
+                                <button onClick={() => viewHistoricalBill(b)} className="p-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors" title="View"><Eye className="size-4" /></button>
+                                <button onClick={() => handlePDF('print-a4-container', b)} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
+                                <button onClick={() => loadBillForEdit(b)} className="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors" title="Edit"><Edit className="size-4" /></button>
+                                <button onClick={() => deleteBill(b)} className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors" title="Delete"><Trash2 className="size-4" /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                    {sortedDates.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-on-surface-variant">
+                          No bills found matching your criteria.
                         </td>
                       </tr>
-                    ))}
-                    {filteredBills.length === 0 && (
-                      <tr><td colSpan={6} className="px-6 py-12 text-center text-on-surface-variant">No bills found matching your criteria.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -1232,7 +1263,7 @@ export default function BillingPage() {
                               {selectedHistoryBill.discount_amount > 0 && (
                                 <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
                               )}
-                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Base</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
+
                               {(selectedHistoryBill.cgst_amount || 0) !== 0 && (
                                 <>
                                   <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
