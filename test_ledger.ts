@@ -1,4 +1,8 @@
-import { supabase } from './src/services/supabase';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 async function test() {
   const { data, error } = await supabase.from('ledger').insert([
@@ -8,7 +12,8 @@ async function test() {
         type: 'receivable',
         amount: 500,
         description: `Bill #TEST-123`,
-        bill_number: 'TEST-123'
+        date: new Date().toISOString().split('T')[0],
+        status: 'pending'
     }
   ]);
   console.log('Result:', data, 'Error:', error);

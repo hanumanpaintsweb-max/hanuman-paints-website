@@ -326,7 +326,10 @@ export default function BillingPage() {
       setBillNoStr(finalBillNoStr)
     }
 
-    const billData = {
+    const newBillId = editBillId || crypto.randomUUID()
+
+    const billData: any = {
+      id: newBillId,
       bill_number: finalBillNoStr,
       customer_name: customerName,
       customer_phone: customerPhone.replace(/\D/g, ''),
@@ -348,6 +351,7 @@ export default function BillingPage() {
     let ledgerData: any = null
     if (paymentStatus !== 'Paid' && customerPhone.replace(/\D/g, '').length === 10) {
       ledgerData = {
+        id: crypto.randomUUID(),
         customer_name: customerName,
         customer_phone: customerPhone.replace(/\D/g, ''),
         type: 'receivable',
