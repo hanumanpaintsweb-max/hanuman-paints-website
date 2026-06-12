@@ -116,215 +116,143 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-20 max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-10 bg-muted/40 backdrop-blur-md py-4">
+    <div className="p-container-padding max-w-5xl mx-auto space-y-element-gap w-full pb-20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <Settings className="size-8 text-primary" /> System Settings
+            <Settings className="size-8 text-primary" /> Settings
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage store preferences, billing configs, and notifications</p>
         </div>
         <div className="flex items-center gap-4">
           {unsavedChanges && <span className="text-sm font-bold text-orange-500 animate-pulse">Unsaved changes...</span>}
-          <Button onClick={handleSave} disabled={saving || !unsavedChanges} className="rounded-xl px-8 shadow-lg shadow-primary/20">
+          <Button onClick={handleSave} disabled={saving || !unsavedChanges} className="rounded-xl px-8 shadow-sm">
             {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
             {saving ? "Saving..." : "Save Settings"}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Section 1: Shop Information */}
-        <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
-            <Store className="size-5 text-primary" /> Shop Information
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">Shop Name</label>
-              <input type="text" value={settings.shop_name} onChange={e => handleChange('shop_name', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">Full Address</label>
-              <textarea value={settings.shop_address} onChange={e => handleChange('shop_address', e.target.value)} rows={2} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none resize-none" />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-1">
-                <label className="text-xs font-semibold text-muted-foreground">City</label>
-                <input type="text" value={settings.shop_city} onChange={e => handleChange('shop_city', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-              <div className="col-span-1">
-                <label className="text-xs font-semibold text-muted-foreground">State</label>
-                <input type="text" value={settings.shop_state} onChange={e => handleChange('shop_state', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-              <div className="col-span-1">
-                <label className="text-xs font-semibold text-muted-foreground">Pincode</label>
-                <input type="text" value={settings.shop_pincode} onChange={e => handleChange('shop_pincode', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Phone Number</label>
-                <input type="text" value={settings.shop_phone} onChange={e => handleChange('shop_phone', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Email Address</label>
-                <input type="email" value={settings.shop_email} onChange={e => handleChange('shop_email', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">GSTIN Number</label>
-              <input type="text" value={settings.shop_gstin} onChange={e => handleChange('shop_gstin', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm uppercase font-mono focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: WhatsApp Settings */}
-        {/* // PHASE2_HIDDEN */}
-        {false && (
-        <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
-            <MessageCircle className="size-5 text-[#25D366]" /> WhatsApp Integration
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">Official WhatsApp Number</label>
-              <div className="flex gap-2 mt-1">
-                <input type="text" value={settings.whatsapp_number} onChange={e => handleChange('whatsapp_number', e.target.value)} className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-[#25D366] outline-none" />
-              </div>
-            </div>
-            
-            <div className="bg-muted/30 p-3 rounded-xl border border-border/60 mt-4 space-y-2">
-              <label className="text-xs font-bold text-muted-foreground">Test Configuration</label>
-              <div className="flex gap-2">
-                <input type="text" placeholder="Enter your number to test" value={testPhone} onChange={e => setTestPhone(e.target.value)} className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-[#25D366] outline-none" />
-                <Button onClick={sendTestWhatsApp} variant="secondary" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl"><Send className="size-4 mr-2"/> Test</Button>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <label className="text-xs font-bold text-foreground">Message Templates</label>
-              <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground">Order Accepted Template</label>
-                <textarea value={settings.whatsapp_msg_accepted} onChange={e => handleChange('whatsapp_msg_accepted', e.target.value)} rows={2} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-[#25D366] outline-none resize-none" />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground">Out for Delivery Template</label>
-                <textarea value={settings.whatsapp_msg_out} onChange={e => handleChange('whatsapp_msg_out', e.target.value)} rows={2} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-[#25D366] outline-none resize-none" />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground">Delivered Template</label>
-                <textarea value={settings.whatsapp_msg_delivered} onChange={e => handleChange('whatsapp_msg_delivered', e.target.value)} rows={2} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-xs focus:ring-2 focus:ring-[#25D366] outline-none resize-none" />
-              </div>
-              <p className="text-[10px] text-muted-foreground italic">Available variables: {'{name}'}, {'{orderId}'}, {'{amount}'}</p>
-            </div>
-          </div>
-        </section>
-        )}
-
-        {/* Section 3: Billing Settings */}
-        {/* // PHASE2_HIDDEN */}
-        {false && (
-        <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
-            <Receipt className="size-5 text-primary" /> Billing Configurations
-          </h2>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Default Discount (%)</label>
-                <input type="number" value={settings.default_discount} onChange={e => handleChange('default_discount', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Default GST (%)</label>
-                <input type="number" value={settings.default_gst} onChange={e => handleChange('default_gst', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">Bill Number Prefix</label>
-              <input type="text" value={settings.bill_prefix} onChange={e => handleChange('bill_prefix', e.target.value)} placeholder="HP" className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm uppercase font-mono focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-            <div className="pt-2">
-              <Button onClick={resetBillsWarning} variant="destructive" className="w-full rounded-xl bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/20">
-                Reset Bill Number Sequence
-              </Button>
-            </div>
-          </div>
-        </section>
-        )}
-
-        {/* Section 4 & 5: Delivery & Hours */}
-        {/* // PHASE2_HIDDEN */}
-        {false && (
-        <div className="space-y-6">
-          <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
-              <Truck className="size-5 text-primary" /> Delivery Options
-            </h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground">Min Order Value (₹)</label>
-                  <input type="number" value={settings.min_order_value} onChange={e => handleChange('min_order_value', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground">Delivery Charge (₹)</label>
-                  <input type="number" value={settings.delivery_charge} onChange={e => handleChange('delivery_charge', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Free Delivery Above (₹)</label>
-                <input type="number" value={settings.free_delivery_above} onChange={e => handleChange('free_delivery_above', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Serviceable Pincodes (comma separated)</label>
-                <textarea value={settings.serviceable_pincodes} onChange={e => handleChange('serviceable_pincodes', e.target.value)} rows={2} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary outline-none resize-none" />
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold flex items-center gap-2 border-b border-border/60 pb-3 mb-4">
-              <Clock className="size-5 text-primary" /> Business Hours
-            </h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground">Opening Time</label>
-                  <input type="time" value={settings.opening_time} onChange={e => handleChange('opening_time', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground">Closing Time</label>
-                  <input type="time" value={settings.closing_time} onChange={e => handleChange('closing_time', e.target.value)} className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">Closed Days</label>
-                <input type="text" value={settings.closed_days} onChange={e => handleChange('closed_days', e.target.value)} placeholder="e.g. Sunday" className="w-full mt-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl mt-4">
-                <div>
-                  <div className="font-bold text-orange-700">Holiday Mode</div>
-                  <div className="text-xs text-orange-600/80">Display "Store Closed" on website</div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
-                    checked={settings.holiday_mode === "true"}
-                    onChange={() => handleToggle('holiday_mode')} 
-                  />
-                  <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                </label>
-              </div>
-            </div>
-          </section>
+      {/* Section 1: Shop Information */}
+      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
+          <span className="material-symbols-outlined text-primary-container">storefront</span>
+          <h3 className="font-headline-sm text-headline-sm">Shop Information</h3>
         </div>
-        )}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Shop Name</label>
+              <input 
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
+                type="text" 
+                value={settings.shop_name} 
+                onChange={e => handleChange('shop_name', e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Phone Number</label>
+              <input 
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
+                type="tel" 
+                value={settings.shop_phone} 
+                onChange={e => handleChange('shop_phone', e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Address</label>
+              <textarea 
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface resize-none" 
+                rows={2}
+                value={settings.shop_address} 
+                onChange={e => handleChange('shop_address', e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block font-label-md text-label-md text-on-surface-variant">GSTIN</label>
+              <input 
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface uppercase font-mono" 
+                type="text" 
+                value={settings.shop_gstin} 
+                onChange={e => handleChange('shop_gstin', e.target.value)} 
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-      </div>
+      {/* Section 2: Billing Preferences */}
+      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
+          <span className="material-symbols-outlined text-primary-container">receipt</span>
+          <h3 className="font-headline-sm text-headline-sm">Billing Preferences</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Bill Number Prefix</label>
+              <input 
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface font-mono uppercase" 
+                type="text" 
+                value={settings.bill_prefix} 
+                onChange={e => handleChange('bill_prefix', e.target.value)} 
+              />
+            </div>
+            <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="block font-label-md text-label-md text-on-surface-variant">Default GST (%)</label>
+                <input 
+                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
+                  type="number" 
+                  value={settings.default_gst} 
+                  onChange={e => handleChange('default_gst', e.target.value)} 
+                />
+              </div>
+            </div>
+            <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <label className="block font-label-md text-label-md text-on-surface-variant">Default Discount (%)</label>
+                <input 
+                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all text-on-surface" 
+                  type="number" 
+                  value={settings.default_discount} 
+                  onChange={e => handleChange('default_discount', e.target.value)} 
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 flex justify-start">
+             <Button onClick={resetBillsWarning} variant="destructive" className="rounded-lg shadow-sm border border-red-500/20">
+                Reset Bill Number Sequence
+             </Button>
+          </div>
+        </div>
+      </section>
+      
+      {/* Section 4: System & Security */}
+      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden mb-12">
+        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
+          <span className="material-symbols-outlined text-primary-container">shield</span>
+          <h3 className="font-headline-sm text-headline-sm">System & Security</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
+              <div className="p-3 bg-surface rounded-full shadow-sm text-on-surface-variant">
+                <span className="material-symbols-outlined">database</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-label-md text-label-md text-on-surface mb-1">Backup Data</h4>
+                <p className="text-sm text-on-surface-variant mb-4">Download a complete backup of your current database.</p>
+                <button className="px-4 py-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors shadow-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">download</span>
+                  Generate Backup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }
