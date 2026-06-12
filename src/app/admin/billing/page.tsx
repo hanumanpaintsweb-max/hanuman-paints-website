@@ -202,8 +202,8 @@ export default function BillingPage() {
     items.forEach(item => {
       if(!item.productId) return
       
-      const price = item.mrp || 0
-      const cPrice = item.colorantCost || 0
+      const price = Number(item.mrp || 0)
+      const cPrice = Number(item.colorantCost || 0)
       let ltrQty = 1
       if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1
       if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000
@@ -957,7 +957,7 @@ export default function BillingPage() {
                             if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
                             if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
                             
-                            const baseGross = item.mrp * item.qty;
+                            const baseGross = Number(item.mrp || 0) * item.qty;
                             const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
                             
                             return (
@@ -969,7 +969,7 @@ export default function BillingPage() {
                                     <span className="text-xs text-gray-500">Base: {item.size}</span>
                                   </td>
                                   <td className="py-3 px-2 text-center">{item.qty}</td>
-                                  <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{Number(item.mrp || 0).toFixed(2)}</td>
                                   <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
                                 </tr>
                                 {item.colorantCost !== undefined && item.colorantCost > 0 && (
@@ -977,10 +977,10 @@ export default function BillingPage() {
                                     <td className="py-2 px-2 text-gray-400 text-xs"></td>
                                     <td className="py-2 px-2 text-xs text-gray-600">
                                       └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br/>
-                                      <span className="text-[10px] text-gray-400">Rate: ₹{item.colorantCost.toFixed(2)}/L × {ltrQty}L</span>
+                                      <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}/L × {ltrQty}L</span>
                                     </td>
                                     <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
-                                    <td className="py-2 px-2 text-right text-xs">{(item.colorantCost * ltrQty).toFixed(2)}</td>
+                                    <td className="py-2 px-2 text-right text-xs">{(Number(item.colorantCost || 0) * ltrQty).toFixed(2)}</td>
                                     <td className="py-2 px-2 text-right font-bold text-xs">{colGross.toFixed(2)}</td>
                                   </tr>
                                 )}
@@ -1184,7 +1184,7 @@ export default function BillingPage() {
                               if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
                               if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
                               
-                              const baseGross = item.mrp * item.qty;
+                              const baseGross = Number(item.mrp || 0) * item.qty;
                               const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
                               
                               return (
@@ -1196,7 +1196,7 @@ export default function BillingPage() {
                                       <span className="text-xs text-gray-500">Base: {item.size}</span>
                                     </td>
                                     <td className="py-3 px-2 text-center">{item.qty}</td>
-                                    <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                    <td className="py-3 px-2 text-right">{Number(item.mrp || 0).toFixed(2)}</td>
                                     <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
                                   </tr>
                                   {item.colorantCost !== undefined && item.colorantCost > 0 && (
@@ -1204,10 +1204,10 @@ export default function BillingPage() {
                                       <td className="py-2 px-2 text-gray-400 text-xs"></td>
                                       <td className="py-2 px-2 text-xs text-gray-600">
                                         └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br/>
-                                        <span className="text-[10px] text-gray-400">Rate: ₹{item.colorantCost.toFixed(2)}/L × {ltrQty}L</span>
+                                        <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}/L × {ltrQty}L</span>
                                       </td>
                                       <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
-                                      <td className="py-2 px-2 text-right text-xs">{(item.colorantCost * ltrQty).toFixed(2)}</td>
+                                      <td className="py-2 px-2 text-right text-xs">{(Number(item.colorantCost || 0) * ltrQty).toFixed(2)}</td>
                                       <td className="py-2 px-2 text-right font-bold text-xs">{colGross.toFixed(2)}</td>
                                     </tr>
                                   )}
