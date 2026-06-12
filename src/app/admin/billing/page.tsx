@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "motion/react"
 import { 
   Plus, Trash2, Printer, Download, MessageCircle, FileText, 
   CheckCircle2, User, Receipt, 
-  Search, FileSpreadsheet, Eye, ShoppingBag, X, Edit
+  Search, FileSpreadsheet, Eye, ShoppingBag, X, Edit,
+  Bell, Phone, MapPin, ScanBarcode, Minus, Building, CircleUserRound
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/services/supabase"
@@ -562,14 +563,22 @@ export default function BillingPage() {
     <div className="space-y-6 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <Receipt className="size-8 text-primary" /> Billing System
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            {activeTab === "New Bill" ? "Create New Bill" : activeTab}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Generate GST invoices and manage accounts</p>
         </div>
-        <div className="flex bg-muted p-1 rounded-xl">
-          <button onClick={() => setBillMode("MRP")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${billMode === "MRP" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}>MRP Bill</button>
-          <button onClick={() => setBillMode("DPL")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-colors ${billMode === "DPL" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}>DPL Bill</button>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input type="text" placeholder="Search..." className="pl-9 pr-4 py-2 border border-border/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64 bg-background" />
+          </div>
+          <button className="p-2 border border-border/60 rounded-xl hover:bg-muted relative">
+            <Bell className="size-5 text-muted-foreground" />
+            <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full"></span>
+          </button>
+          <button className="p-1 border border-border/60 rounded-full bg-muted">
+            <CircleUserRound className="size-7 text-muted-foreground" />
+          </button>
         </div>
       </div>
 
@@ -583,6 +592,11 @@ export default function BillingPage() {
             {t}
           </button>
         ))}
+        {/* Helper toggles moved here for neatness */}
+        <div className="ml-auto flex bg-muted p-1 rounded-xl">
+          <button onClick={() => setBillMode("MRP")} className={`px-4 py-1 text-xs font-bold rounded-lg transition-colors ${billMode === "MRP" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}>MRP Bill</button>
+          <button onClick={() => setBillMode("DPL")} className={`px-4 py-1 text-xs font-bold rounded-lg transition-colors ${billMode === "DPL" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground"}`}>DPL Bill</button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -590,7 +604,7 @@ export default function BillingPage() {
           <motion.div key="new-bill" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid gap-6 xl:grid-cols-12">
             
             {/* Left: Form */}
-            <div className="xl:col-span-7 space-y-6">
+            <div className="xl:col-span-8 space-y-6">
               {savedBillData && (
                 <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 p-4 rounded-2xl flex justify-between items-center">
                   <div className="flex items-center gap-2"><CheckCircle2 className="size-5" /> Bill #{savedBillData.bill_number} Saved</div>
@@ -598,200 +612,300 @@ export default function BillingPage() {
                 </div>
               )}
 
-              {/* Customer Info */}
-              <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm space-y-3">
+              {/* Customer Info Card */}
+              <div className="bg-white border border-border/60 rounded-2xl p-6 shadow-sm space-y-4">
                 <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-lg font-bold flex items-center gap-2"><User className="size-5 text-primary" /> Customer Info</h2>
-                  <div className="flex gap-2">
+                  <h2 className="text-lg font-bold flex items-center gap-2"><User className="size-5 text-primary" /> Customer Details</h2>
+                  <div className="flex gap-2 items-center">
                     {customerRecord && customerRecord.credit_limit > 0 && (
                       <div className={`text-xs font-bold px-3 py-1 rounded-lg ${customerRecord.current_outstanding + finalTotal > customerRecord.credit_limit ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         Credit Limit: {inr(customerRecord.credit_limit)} | Out: {inr(customerRecord.current_outstanding)}
                         {customerRecord.current_outstanding + finalTotal > customerRecord.credit_limit && ' (LIMIT EXCEEDED)'}
                       </div>
                     )}
-                    <div className="text-sm font-bold bg-muted px-3 py-1 rounded-lg">No: {billNoStr}</div>
+                    <div className="text-sm font-bold bg-muted px-3 py-1 rounded-lg text-muted-foreground border border-border/60">No: {billNoStr}</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Mobile Number *</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                      <input type="tel" placeholder="Enter mobile number" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Customer Name *</label>
-                    <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    <div className="relative">
+                      <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                      <input type="text" placeholder="Enter customer name" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Phone Number *</label>
-                    <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                  </div>
-                  <div className="space-y-1 md:col-span-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Address</label>
-                    <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="text-xs font-semibold text-muted-foreground">Billing Address</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                      <input type="text" placeholder="Enter full address" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Products</h2>
-                  {!savedBillData && <Button onClick={handleAddRow} size="sm" variant="secondary" className="rounded-lg h-8 gap-1"><Plus className="size-4" /> Add Item</Button>}
+              {/* Products & Items Card */}
+              <div className="bg-white border border-border/60 rounded-2xl p-6 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Products & Items</h2>
+                  {!savedBillData && <Button onClick={handleAddRow} size="sm" className="rounded-xl h-9 gap-1 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold"><Plus className="size-4" /> Add Item</Button>}
                 </div>
 
-                <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground mb-2 px-2">
-                  <div className="col-span-4">Product</div>
-                  <div className="col-span-2">Size</div>
-                  <div className="col-span-1 text-center">Qty</div>
-                  <div className="col-span-2 text-center">{billMode === "DPL" ? "DPL(₹)" : "Price(₹)"}</div>
-                  <div className="col-span-1 text-center">GST</div>
-                  <div className="col-span-2 text-right">Total</div>
-                </div>
+                {!savedBillData && (
+                  <div className="mb-6 space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Item Search</label>
+                    <div className="relative">
+                      <ScanBarcode className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+                      <input type="text" placeholder="Scan barcode or search by name" className="w-full rounded-xl border border-border bg-background pl-10 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
+                    </div>
+                  </div>
+                )}
 
-                <div className="space-y-3">
-                  {items.map((item, index) => {
-                    const product = PRODUCTS.find(p => p.id === item.productId)
-                    return (
-                      <div key={item.id} className="bg-muted/40 p-3 rounded-xl border border-border/60 relative group flex flex-col gap-2">
-                        {!savedBillData && (
-                          <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="absolute -right-2 -top-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"><Trash2 className="size-3" /></button>
-                        )}
-                        <div className="grid grid-cols-12 gap-2 items-center">
-                          <div className="col-span-4">
-                            <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
-                              <option value="">Select Product...</option>
-                              {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                            </select>
-                          </div>
-                          <div className="col-span-2">
-                            <select disabled={!!savedBillData || !product} value={item.size} onChange={e => {
-                              const newI = [...items]; newI[index].size = e.target.value;
-                              newI[index].mrp = product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0;
-                              setItems(newI);
-                            }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none">
-                              <option value="">Size</option>
-                              {product?.sizes?.map(s => <option key={s.size} value={s.size}>{s.size}</option>)}
-                            </select>
-                          </div>
-                          <div className="col-span-1">
-                            <input disabled={!!savedBillData} type="number" min="1" value={item.qty} onChange={e => {
-                              const newI = [...items]; newI[index].qty = Math.max(1, parseInt(e.target.value) || 1); setItems(newI)
-                            }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-center outline-none" />
-                          </div>
-                          <div className="col-span-2">
-                            <input disabled={!!savedBillData} type="number" placeholder="Price" value={item.mrp || ""} onChange={e => {
-                              const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
-                            }} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none" />
-                          </div>
-                          <div className="col-span-1">
-                            <select disabled={!!savedBillData} value={item.taxRate} onChange={e => {
-                              const newI = [...items]; newI[index].taxRate = parseFloat(e.target.value) || 0; setItems(newI)
-                            }} className="w-full rounded-lg border border-border bg-background px-1 py-1.5 text-xs outline-none">
-                              <option value="0">0%</option>
-                              <option value="5">5%</option>
-                              <option value="12">12%</option>
-                              <option value="18">18%</option>
-                              <option value="28">28%</option>
-                            </select>
-                          </div>
-                          <div className="col-span-2 text-right font-bold text-sm text-primary">
-                            {inr(((item.mrp + (item.colorantCost || 0)) * item.qty * (1 - globalDiscount/100)) * (1 + item.taxRate/100))}
-                          </div>
-                        </div>
-                        <div className="border-t pt-2 border-border/50">
-                          {!expandedItems.has(item.id) ? (
-                            <button onClick={() => { const ns = new Set(expandedItems); ns.add(item.id); setExpandedItems(ns); }} className="text-xs text-primary font-bold hover:underline">[ + Add Colorant Details ]</button>
-                          ) : (
-                            <div className="flex gap-4 items-center">
-                              <div className="flex items-center gap-2">
-                                <label className="text-xs font-semibold text-muted-foreground">Color Code</label>
-                                <input disabled={!!savedBillData} type="text" value={item.colorCode || ""} onChange={e => { const newI = [...items]; newI[index].colorCode = e.target.value; setItems(newI) }} className="w-24 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none" />
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <label className="text-xs font-semibold text-muted-foreground">Colorant Cost (₹)</label>
-                                <input disabled={!!savedBillData} type="number" value={item.colorantCost || ""} onChange={e => { const newI = [...items]; newI[index].colorantCost = parseFloat(e.target.value) || 0; setItems(newI) }} className="w-24 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none" />
-                              </div>
-                              {!savedBillData && <button onClick={() => { const ns = new Set(expandedItems); ns.delete(item.id); setExpandedItems(ns); const newI = [...items]; delete newI[index].colorCode; delete newI[index].colorantCost; setItems(newI); }} className="text-xs text-red-500 font-bold hover:underline">[ - Remove ]</button>}
+                <div className="border border-border/60 rounded-xl overflow-hidden">
+                  <div className="grid grid-cols-12 gap-2 text-xs font-bold text-muted-foreground bg-muted/40 p-3 border-b border-border/60">
+                    <div className="col-span-6">Item Description</div>
+                    <div className="col-span-2 text-center">Qty</div>
+                    <div className="col-span-2 text-center">Rate</div>
+                    <div className="col-span-2 text-right">Amount</div>
+                  </div>
+
+                  <div className="divide-y divide-border/60">
+                    {items.map((item, index) => {
+                      const product = PRODUCTS.find(p => p.id === item.productId)
+                      const itemAmount = ((item.mrp + (item.colorantCost || 0)) * item.qty * (1 - globalDiscount/100)) * (1 + item.taxRate/100);
+                      return (
+                        <div key={item.id} className="p-3 relative group flex flex-col gap-3 bg-white">
+                          <div className="grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-6 flex flex-col gap-2">
+                              <select disabled={!!savedBillData} value={item.productId} onChange={(e) => handleProductSelect(index, e.target.value)} className="w-full rounded-lg border-0 bg-transparent text-sm font-semibold focus:ring-0 p-0 cursor-pointer appearance-none outline-none">
+                                <option value="" disabled>Select Product...</option>
+                                {PRODUCTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </select>
+                              <select disabled={!!savedBillData || !product} value={item.size} onChange={e => {
+                                const newI = [...items]; newI[index].size = e.target.value;
+                                newI[index].mrp = product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0;
+                                setItems(newI);
+                              }} className="text-xs text-muted-foreground bg-transparent border-0 p-0 cursor-pointer outline-none w-max">
+                                <option value="" disabled>Size</option>
+                                {product?.sizes?.map(s => <option key={s.size} value={s.size}>{s.size}</option>)}
+                              </select>
                             </div>
-                          )}
+                            
+                            <div className="col-span-2 flex justify-center">
+                              <div className="flex items-center border border-border/60 rounded-lg overflow-hidden bg-background">
+                                <button disabled={!!savedBillData} onClick={() => { const newI = [...items]; newI[index].qty = Math.max(1, newI[index].qty - 1); setItems(newI) }} className="px-2 py-1.5 text-muted-foreground hover:bg-muted border-r border-border/60"><Minus className="size-3" /></button>
+                                <input disabled={!!savedBillData} type="number" min="1" value={item.qty} onChange={e => {
+                                  const newI = [...items]; newI[index].qty = Math.max(1, parseInt(e.target.value) || 1); setItems(newI)
+                                }} className="w-10 text-center text-xs font-semibold p-0 border-0 outline-none focus:ring-0 bg-transparent" />
+                                <button disabled={!!savedBillData} onClick={() => { const newI = [...items]; newI[index].qty += 1; setItems(newI) }} className="px-2 py-1.5 text-muted-foreground hover:bg-muted border-l border-border/60"><Plus className="size-3" /></button>
+                              </div>
+                            </div>
+                            
+                            <div className="col-span-2 flex items-center justify-center gap-1 text-sm">
+                              <span className="text-muted-foreground">₹</span>
+                              <input disabled={!!savedBillData} type="number" value={item.mrp || ""} onChange={e => {
+                                const newI = [...items]; newI[index].mrp = parseFloat(e.target.value) || 0; setItems(newI)
+                              }} className="w-16 text-center text-sm p-0 border-0 outline-none focus:ring-0 bg-transparent" />
+                            </div>
+                            
+                            <div className="col-span-2 flex items-center justify-end gap-2 text-sm font-bold">
+                              ₹ {itemAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              {!savedBillData && (
+                                <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="text-red-500 hover:text-red-700 p-1 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="size-4" /></button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-4 items-center">
+                            {!expandedItems.has(item.id) ? (
+                              <button onClick={() => { const ns = new Set(expandedItems); ns.add(item.id); setExpandedItems(ns); }} className="text-xs text-primary hover:underline">+ Add Colorant / Tax</button>
+                            ) : (
+                              <div className="flex gap-4 items-center bg-muted/20 p-2 rounded-lg w-full border border-border/40">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-[10px] font-semibold text-muted-foreground uppercase">Color Code</label>
+                                  <input disabled={!!savedBillData} type="text" value={item.colorCode || ""} onChange={e => { const newI = [...items]; newI[index].colorCode = e.target.value; setItems(newI) }} className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-[10px] font-semibold text-muted-foreground uppercase">Colorant Cost</label>
+                                  <input disabled={!!savedBillData} type="number" value={item.colorantCost || ""} onChange={e => { const newI = [...items]; newI[index].colorantCost = parseFloat(e.target.value) || 0; setItems(newI) }} className="w-16 rounded-md border border-border bg-background px-2 py-1 text-xs outline-none" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-[10px] font-semibold text-muted-foreground uppercase">GST %</label>
+                                  <select disabled={!!savedBillData} value={item.taxRate} onChange={e => {
+                                    const newI = [...items]; newI[index].taxRate = parseFloat(e.target.value) || 0; setItems(newI)
+                                  }} className="rounded-md border border-border bg-background px-1 py-1 text-xs outline-none">
+                                    <option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
+                                  </select>
+                                </div>
+                                {!savedBillData && <button onClick={() => { const ns = new Set(expandedItems); ns.delete(item.id); setExpandedItems(ns); const newI = [...items]; delete newI[index].colorCode; delete newI[index].colorantCost; setItems(newI); }} className="text-xs text-red-500 font-bold hover:underline ml-auto">Hide</button>}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                  {items.length === 0 && <div className="text-center py-6 text-muted-foreground border border-dashed rounded-xl text-sm">No items. Click Add Item to start.</div>}
+                      )
+                    })}
+                    {items.length === 0 && <div className="text-center py-10 text-muted-foreground text-sm">No items added. Search or add a new item above.</div>}
+                  </div>
                 </div>
               </div>
 
               {/* Payment Section */}
-              <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h2 className="text-sm font-bold uppercase text-muted-foreground mb-3">Payment Info</h2>
-                  <div className="space-y-4">
-                    
-                    {/* Global Discount */}
+              <div className="bg-white border border-border/60 rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-bold flex items-center gap-2 mb-6"><Receipt className="size-5 text-primary" /> Payment & Remarks</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
                     <div>
-                      <div className="flex justify-between items-center mb-1.5">
-                        <label className="text-xs font-semibold text-muted-foreground">Global Discount</label>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {[0, 5, 10, 15, 20].map(d => (
+                      <label className="text-xs font-semibold text-muted-foreground block mb-2">Quick Discounts</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[{val: 0, label: "None"}, {val: 2, label: "2% Cash"}, {val: 5, label: "5% Trade"}, {val: 10, label: "10%"}, {val: 15, label: "15%"}].map(d => (
                           <button 
-                            key={d}
+                            key={d.val}
                             disabled={!!savedBillData}
-                            onClick={() => setGlobalDiscount(d)}
-                            className={`px-2 py-1 text-xs font-bold rounded-md border transition-colors ${globalDiscount === d ? 'bg-orange-500 text-white border-orange-600' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                            onClick={() => setGlobalDiscount(d.val)}
+                            className={`px-4 py-1.5 text-xs font-semibold rounded-full border transition-colors ${globalDiscount === d.val ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-background text-muted-foreground border-border hover:bg-muted'}`}
                           >
-                            {d}%
+                            {d.label}
+                          </button>
+                        ))}
+                        <div className="flex items-center">
+                           <input 
+                              disabled={!!savedBillData}
+                              type="number" 
+                              placeholder="Custom"
+                              value={![0,2,5,10,15].includes(globalDiscount) ? globalDiscount : ""} 
+                              onChange={e => setGlobalDiscount(parseFloat(e.target.value) || 0)} 
+                              className={`w-20 rounded-full border px-3 py-1.5 text-xs outline-none transition-colors ${![0,2,5,10,15].includes(globalDiscount) ? 'bg-blue-100 text-blue-700 border-blue-200 focus:ring-2 focus:ring-blue-500' : 'bg-background text-muted-foreground border-border focus:ring-2 focus:ring-primary'}`} 
+                            />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-2">Payment Mode</label>
+                      <div className="flex flex-wrap gap-2">
+                        {PAYMENT_METHODS.map(p => (
+                          <button 
+                            key={p}
+                            disabled={!!savedBillData}
+                            onClick={() => setPaymentMethod(p)}
+                            className={`px-6 py-2 text-sm font-semibold rounded-xl border transition-colors capitalize ${paymentMethod === p ? 'bg-[#0f2142] text-white border-[#0f2142]' : 'bg-background text-muted-foreground border-border hover:bg-muted'}`}
+                          >
+                            {p}
                           </button>
                         ))}
                       </div>
-                      <div className="relative">
-                        <input 
-                          disabled={!!savedBillData}
-                          type="number" 
-                          value={globalDiscount || ""} 
-                          onChange={e => setGlobalDiscount(parseFloat(e.target.value) || 0)} 
-                          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none" 
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-semibold">%</span>
-                      </div>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <select disabled={!!savedBillData} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
-                        {PAYMENT_STATUSES.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
-                      </select>
-                      <select disabled={!!savedBillData} value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
-                        {PAYMENT_METHODS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
-                      </select>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-2">Remarks / Internal Note</label>
+                      <textarea 
+                        disabled={!!savedBillData}
+                        placeholder="Add any notes here..."
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none h-24 resize-none"
+                      />
                     </div>
-
-                    {paymentStatus === "unpaid" && (
-                      <div className="mt-2">
-                        <label className="text-xs font-semibold text-muted-foreground block mb-1">Due Date</label>
-                        <input type="date" disabled={!!savedBillData} value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                      </div>
-                    )}
                   </div>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{inr(calculations.subtotal)}</span></div>
-                  <div className="flex justify-between text-emerald-600"><span>Discount</span><span>-{inr(calculations.discount)}</span></div>
-                  <div className="flex justify-between text-muted-foreground"><span>Taxable Value</span><span>{inr(calculations.taxable)}</span></div>
-                  <div className="flex justify-between text-muted-foreground text-xs"><span>CGST 9%</span><span>+{inr(cgst)}</span></div>
-                  <div className="flex justify-between text-muted-foreground text-xs border-b border-border pb-2"><span>SGST 9%</span><span>+{inr(sgst)}</span></div>
-                  <div className="flex justify-between font-extrabold text-lg text-foreground pt-1"><span>Grand Total</span><span className="text-primary">{inr(finalTotal)}</span></div>
+
+                <div className="mt-8 flex gap-4">
+                  <Button onClick={handleSaveBill} disabled={isSaving || !!savedBillData} className="rounded-xl w-full h-12 text-lg font-bold bg-[#0f2142] hover:bg-[#0f2142]/90 shadow-md">
+                    <Printer className="size-5 mr-2" /> {isSaving ? 'Saving...' : 'Generate Bill'}
+                  </Button>
                 </div>
               </div>
 
             </div>
 
             {/* Right: PDF Preview & Actions */}
-            <div className="xl:col-span-5 space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <Button onClick={handleSaveBill} disabled={isSaving || !!savedBillData} className="rounded-xl w-full">{isSaving ? 'Saving...' : 'Save Bill'}</Button>
-                <Button onClick={() => handlePDF()} disabled={!savedBillData} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
-                <Button onClick={() => window.print()} disabled={!savedBillData} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
-                <Button onClick={shareWhatsApp} disabled={!savedBillData} className="rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share</Button>
+            <div className="xl:col-span-4 space-y-4">
+              
+              {savedBillData && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <Button onClick={() => handlePDF()} variant="secondary" className="rounded-xl w-full"><Download className="size-4 mr-2"/> PDF</Button>
+                  <Button onClick={() => window.print()} variant="outline" className="rounded-xl w-full"><Printer className="size-4 mr-2"/> Print</Button>
+                  <Button onClick={shareWhatsApp} className="col-span-2 rounded-xl w-full bg-[#25D366] hover:bg-[#128C7E] text-white"><MessageCircle className="size-4 mr-2"/> Share on WhatsApp</Button>
+                </div>
+              )}
+
+              {/* LIVE RECEIPT PREVIEW */}
+              <div className="bg-white border border-border/60 rounded-2xl p-6 shadow-sm flex flex-col font-mono text-sm print:hidden">
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl font-black tracking-wider text-[#0f2142]">{settings.shop_name || "HANUMAN PAINTS"}</h1>
+                  <p className="text-xs text-muted-foreground mt-1">{settings.shop_address || "123 Market Road, Central District"}</p>
+                  <p className="text-xs text-muted-foreground">Ph: 8292889540</p>
+                  <p className="text-xs text-muted-foreground font-bold mt-1">GSTIN: {settings.shop_gstin || "22AAAAA0000A1Z5"}</p>
+                </div>
+
+                <div className="flex justify-between text-xs mb-1">
+                  <span>Bill No: <strong>{savedBillData?.bill_number || billNoStr}</strong></span>
+                  <span>Time: <strong>{new Date().toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'})}</strong></span>
+                </div>
+                <div className="flex justify-between text-xs mb-4">
+                  <span>Date: <strong>{new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})}</strong></span>
+                  <span className="capitalize">Mode: <strong>{paymentMethod}</strong></span>
+                </div>
+
+                <div className="border-t border-dashed border-gray-300 py-3 mb-3 text-xs">
+                  <p>Customer: {customerName || "Walking Customer"}</p>
+                  <p>Phone: {customerPhone || "-"}</p>
+                </div>
+
+                <table className="w-full text-xs mb-4">
+                  <thead className="border-y border-dashed border-gray-300">
+                    <tr>
+                      <th className="py-2 text-left font-normal">Item</th>
+                      <th className="py-2 text-center font-normal">Qty</th>
+                      <th className="py-2 text-right font-normal">Amt(₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, i) => {
+                      const itemAmount = ((item.mrp + (item.colorantCost || 0)) * item.qty * (1 - globalDiscount/100)) * (1 + item.taxRate/100);
+                      return (
+                        <tr key={item.id} className="border-b border-gray-50/50">
+                          <td className="py-2 pr-2">
+                            <div className="font-semibold truncate max-w-[160px]">{item.name}</div>
+                            <div className="text-[10px] text-muted-foreground">{item.size}</div>
+                          </td>
+                          <td className="py-2 text-center">{item.qty}</td>
+                          <td className="py-2 text-right font-semibold">{itemAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+                      )
+                    })}
+                    {items.length === 0 && (
+                      <tr><td colSpan={3} className="py-4 text-center text-muted-foreground italic">No items</td></tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <div className="border-t border-dashed border-gray-300 pt-3 text-xs space-y-1">
+                  <div className="flex justify-between"><span>Subtotal</span><span>₹ {calculations.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                  {calculations.discount > 0 && <div className="flex justify-between text-blue-600"><span>Discount ({globalDiscount}%)</span><span>- ₹ {calculations.discount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>}
+                  <div className="flex justify-between"><span>GST</span><span>₹ {calculations.gst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                </div>
+
+                <div className="border-t-2 border-gray-800 mt-3 pt-3 flex justify-between items-center mb-6">
+                  <span className="text-base font-bold text-[#0f2142]">Net Total</span>
+                  <span className="text-xl font-black text-[#0f2142]">₹ {finalTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+
+                <div className="text-center text-[10px] text-muted-foreground italic">
+                  *** Thank you for your business! ***
+                </div>
               </div>
 
-              {/* PDF Container Wrapper */}
-              <div className="border border-border/60 bg-white rounded-2xl overflow-hidden shadow-inner flex justify-center p-4 print:border-none print:p-0 print:shadow-none">
+              {/* EXACT A4 PRINT LAYOUT - HIDDEN ON SCREEN */}
+              <div className="hidden print:block">
                 <div id="bill-print-area" ref={printRef} className="print-area flex flex-col items-center">
                   {(() => {
                     const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
@@ -903,7 +1017,6 @@ export default function BillingPage() {
             </div>
           </motion.div>
         )}
-
         {activeTab === "Online Orders" && (
           <motion.div key="online" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="grid gap-4">
