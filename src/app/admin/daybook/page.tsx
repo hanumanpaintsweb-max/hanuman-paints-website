@@ -144,9 +144,7 @@ export default function DayBookPage() {
   const totalSales = entries.filter(e => e.type.includes('Order') || e.type.includes('Bill')).reduce((a, b) => a + b.amount, 0)
   const totalReceived = entries.filter(e => (e.type.includes('Order') || e.type.includes('Bill')) && e.status === 'paid').reduce((a, b) => a + b.amount, 0)
     + entries.filter(e => e.type === 'Ledger Received' && e.status === 'paid').reduce((a, b) => a + b.amount, 0)
-  const totalCredit = entries.filter(e => (e.type.includes('Order') || e.type.includes('Bill')) && (e.status === 'unpaid' || e.status === 'partial')).reduce((a, b) => a + b.amount, 0)
-  const totalPaidOut = entries.filter(e => e.type === 'Ledger Paid' && e.status === 'paid').reduce((a, b) => a + b.amount, 0)
-
+  const totalNotPaid = entries.filter(e => e.status === 'unpaid').reduce((a, b) => a + b.amount, 0)
   return (
     <div className="p-container-padding bg-background w-full h-full">
       <div className="max-w-7xl mx-auto space-y-element-gap pb-20 print-area">
@@ -183,7 +181,7 @@ export default function DayBookPage() {
         </div>
 
         {/* Summary Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Sales</h3>
@@ -206,22 +204,12 @@ export default function DayBookPage() {
 
           <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-amber-500/30 transition-colors">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Credit Given</h3>
+              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Not Paid</h3>
               <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card</span>
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>money_off</span>
               </div>
             </div>
-            <div className="font-headline-lg text-headline-lg text-amber-700">{inr(totalCredit)}</div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-rose-500/30 transition-colors">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Paid Out</h3>
-              <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
-                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>north_east</span>
-              </div>
-            </div>
-            <div className="font-headline-lg text-headline-lg text-rose-700">{inr(totalPaidOut)}</div>
+            <div className="font-headline-lg text-headline-lg text-amber-700">{inr(totalNotPaid)}</div>
           </div>
         </div>
 

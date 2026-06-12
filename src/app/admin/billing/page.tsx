@@ -81,10 +81,10 @@ export default function BillingPage() {
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
 
-  const [items, setItems] = useState<BillItem[]>([])
-  const [paymentStatus, setPaymentStatus] = useState("paid")
+  const [items, setItems] = useState<BillItem[]>([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 18 }])
+  const [paymentStatus, setPaymentStatus] = useState("Paid")
   const [dueDate, setDueDate] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState("cash")
+  const [paymentMethod, setPaymentMethod] = useState("Cash")
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
@@ -196,10 +196,8 @@ export default function BillingPage() {
 
   // --- Calculations ---
   const calculations = useMemo(() => {
-    let subtotal = 0
-    let discount = 0
-    let taxable = 0
-    let gst = 0
+    let baseSubtotal = 0
+    let colorantTotal = 0
     
     items.forEach(item => {
       if(!item.productId) return
@@ -210,28 +208,36 @@ export default function BillingPage() {
       if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1
       if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000
       
-      const itemGross = (price + (cPrice * ltrQty)) * item.qty
-      const itemDisc = itemGross * (globalDiscount / 100)
-      let itemTaxable = itemGross - itemDisc
-      
-      let itemGst = 0
-      if (item.taxRate > 0) {
-        itemGst = itemTaxable * (item.taxRate / 100)
-      } else if (item.taxRate < 0) {
-        const rate = Math.abs(item.taxRate) / 100
-        const originalTotal = itemTaxable
-        itemTaxable = originalTotal / (1 + rate)
-        itemGst = originalTotal - itemTaxable
-      }
-      
-      subtotal += itemGross
-      discount += itemDisc
-      taxable += itemTaxable
-      gst += itemGst
+      baseSubtotal += price * item.qty
+      colorantTotal += cPrice * ltrQty * item.qty
     })
     
-    return { subtotal, discount, taxable, gst, total: taxable + gst }
-  }, [items, globalDiscount])
+    const discount = baseSubtotal * (globalDiscount / 100)
+    let taxableBase = baseSubtotal - discount
+    let gst = 0
+    
+    const effectiveGst = typeof globalGst === 'number' ? globalGst : 18;
+    
+    if (effectiveGst > 0) {
+      gst = taxableBase * (effectiveGst / 100)
+    } else if (effectiveGst < 0) {
+      const rate = Math.abs(effectiveGst) / 100
+      const originalTaxable = taxableBase
+      taxableBase = originalTaxable / (1 + rate)
+      gst = originalTaxable - taxableBase
+    }
+    
+    const finalTotal = taxableBase + gst + colorantTotal
+    
+    return { 
+      subtotal: baseSubtotal, 
+      colorantTotal,
+      discount, 
+      taxable: taxableBase, 
+      gst, 
+      total: finalTotal 
+    }
+  }, [items, globalDiscount, globalGst])
 
   const cgst = calculations.gst / 2
   const sgst = calculations.gst / 2
@@ -243,8 +249,8 @@ export default function BillingPage() {
     setCustomerPhone(bill.customer_phone || "")
     setCustomerAddress(bill.customer_address || "")
     setItems(bill.items || [])
-    setPaymentStatus(bill.payment_status || "paid")
-    setPaymentMethod(bill.payment_method || "cash")
+    setPaymentStatus(bill.payment_status || "Paid")
+    setPaymentMethod(bill.payment_method || "Cash")
     setBillNoStr(bill.bill_number)
     setBillMode((bill.bill_type as "MRP" | "DPL") || "MRP")
     const gross = bill.subtotal || 1
@@ -257,8 +263,7 @@ export default function BillingPage() {
 
   const handleAddRow = () => {
     setItems([...items, {
-      id: Math.random().toString(36).substr(2, 9),
-      productId: "", name: "", size: "", qty: 1, mrp: 0, taxRate: 18
+      id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 18
     }])
   }
 
@@ -527,7 +532,7 @@ export default function BillingPage() {
     setItems([])
     setPaymentStatus("paid")
     setDueDate("")
-    setPaymentMethod("cash")
+    setPaymentMethod("Cash")
     setGlobalDiscount(5)
     setLinkedOrderId(null)
     setSavedBillData(null)
@@ -771,7 +776,7 @@ export default function BillingPage() {
                         
                         <div className="w-32 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Rate</label>
-                          <input type="number" disabled={!!savedBillData} value={item.mrp || 0} onChange={(e) => updateItem(item.id, { mrp: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 h-[38px] border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                          <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-[38px] border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
                         
                         {!savedBillData && (
@@ -784,7 +789,7 @@ export default function BillingPage() {
                       {/* Colorant Expandable logic */}
                       {true && (
                         <div className="border-t border-outline-variant pt-3 mt-1">
-                          {item.colorantCost !== undefined && item.colorantCost > 0 ? (
+                          {item.colorantCost !== undefined && (item.colorantCost > 0 || item.colorantCost === ("" as any)) ? (
                             <div className="flex items-center gap-4">
                               <div className="flex flex-col gap-1">
                                 <label className="text-[10px] text-outline">Colorant Name</label>
@@ -792,7 +797,7 @@ export default function BillingPage() {
                               </div>
                               <div className="flex flex-col gap-1">
                                 <label className="text-[10px] text-outline">Colorant Price (per Ltr)</label>
-                                <input type="number" disabled={!!savedBillData} value={item.colorantCost || 0} onChange={(e) => updateItem(item.id, { colorantCost: parseFloat(e.target.value) || 0 })} className="px-3 py-1.5 text-sm border border-outline-variant rounded-md w-32 outline-none focus:border-primary" />
+                                <input type="number" disabled={!!savedBillData} value={item.colorantCost === "" as any ? "" : (item.colorantCost || "")} onChange={(e) => updateItem(item.id, { colorantCost: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="px-3 py-1.5 text-sm border border-outline-variant rounded-md w-32 outline-none focus:border-primary" />
                               </div>
                               {!savedBillData && (
                                 <button onClick={() => updateItem(item.id, { colorantCost: 0, colorCode: "" })} className="mt-5 text-error p-1 hover:bg-error/10 rounded">
@@ -802,7 +807,7 @@ export default function BillingPage() {
                             </div>
                           ) : (
                             !savedBillData && (
-                              <button onClick={() => updateItem(item.id, { colorantCost: 1, colorCode: "" })} className="flex items-center gap-2 text-primary font-label-md text-label-md hover:underline">
+                              <button onClick={() => updateItem(item.id, { colorantCost: "" as any, colorCode: "" })} className="flex items-center gap-2 text-primary font-label-md text-label-md hover:underline">
                                 <PlusCircle className="size-4" /> Add Colorant / Base
                               </button>
                             )
@@ -848,22 +853,22 @@ export default function BillingPage() {
                   <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30 mt-2">
                     <div className="flex flex-col gap-1 w-full sm:w-[200px]">
                       <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
-                      <select disabled={!!savedBillData} value={paymentStatus === 'unpaid' ? 'unpaid' : paymentMethod === 'UPI' ? 'upi' : 'paid'} onChange={(e) => {
+                      <select disabled={!!savedBillData} value={paymentStatus === 'unpaid' ? 'Unpaid' : paymentMethod === 'UPI' ? 'UPI' : 'Cash'} onChange={(e) => {
                         const val = e.target.value;
-                        if (val === 'unpaid') {
+                        if (val === 'Unpaid') {
                           setPaymentStatus('unpaid');
-                          setPaymentMethod('CREDIT');
-                        } else if (val === 'upi') {
+                          setPaymentMethod('Unpaid');
+                        } else if (val === 'UPI') {
                           setPaymentStatus('paid');
                           setPaymentMethod('UPI');
                         } else {
                           setPaymentStatus('paid');
-                          setPaymentMethod('CASH');
+                          setPaymentMethod('Cash');
                         }
                       }} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
-                        <option value="paid">Cash</option>
-                        <option value="upi">UPI</option>
-                        <option value="unpaid">Unpaid</option>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Unpaid">Unpaid</option>
                       </select>
                     </div>
                   </div>
@@ -934,6 +939,7 @@ export default function BillingPage() {
                       </div>
 
                       {/* Items Table */}
+                      {/* Items Table */}
                       <table className="w-full mb-6 border-collapse">
                         <thead>
                           <tr className="bg-gray-800 text-white text-xs uppercase">
@@ -941,9 +947,6 @@ export default function BillingPage() {
                             <th className="py-2 px-2 text-left">Item Description</th>
                             <th className="py-2 px-2 text-center">Qty</th>
                             <th className="py-2 px-2 text-right">{billMode === "DPL" ? "DPL" : "MRP"}</th>
-                            <th className="py-2 px-2 text-right">Disc%</th>
-                            <th className="py-2 px-2 text-right">Taxable</th>
-                            <th className="py-2 px-2 text-right">GST%</th>
                             <th className="py-2 px-2 text-right">Total</th>
                           </tr>
                         </thead>
@@ -957,22 +960,6 @@ export default function BillingPage() {
                             const baseGross = item.mrp * item.qty;
                             const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
                             
-                            const baseDisc = baseGross * (globalDiscount/100);
-                            const colDisc = colGross * (globalDiscount/100);
-                            
-                            let baseTaxable = baseGross - baseDisc;
-                            let colTaxable = colGross - colDisc;
-                            let baseGst = 0; let colGst = 0;
-                            
-                            if (item.taxRate > 0) {
-                              baseGst = baseTaxable * (item.taxRate/100);
-                              colGst = colTaxable * (item.taxRate/100);
-                            } else if (item.taxRate < 0) {
-                              const rate = Math.abs(item.taxRate) / 100;
-                              const origBase = baseTaxable; baseTaxable = origBase / (1 + rate); baseGst = origBase - baseTaxable;
-                              const origCol = colTaxable; colTaxable = origCol / (1 + rate); colGst = origCol - colTaxable;
-                            }
-                            
                             return (
                               <React.Fragment key={globalIndex}>
                                 <tr className="border-b border-gray-100">
@@ -983,10 +970,7 @@ export default function BillingPage() {
                                   </td>
                                   <td className="py-3 px-2 text-center">{item.qty}</td>
                                   <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                                  <td className="py-3 px-2 text-right">{globalDiscount}%</td>
-                                  <td className="py-3 px-2 text-right">{baseTaxable.toFixed(2)}</td>
-                                  <td className="py-3 px-2 text-right">{item.taxRate}%</td>
-                                  <td className="py-3 px-2 text-right font-bold">{(baseTaxable + baseGst).toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
                                 </tr>
                                 {item.colorantCost !== undefined && item.colorantCost > 0 && (
                                   <tr className="border-b border-gray-200 bg-blue-50/30">
@@ -997,10 +981,7 @@ export default function BillingPage() {
                                     </td>
                                     <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
                                     <td className="py-2 px-2 text-right text-xs">{(item.colorantCost * ltrQty).toFixed(2)}</td>
-                                    <td className="py-2 px-2 text-right text-xs">{globalDiscount}%</td>
-                                    <td className="py-2 px-2 text-right text-xs">{colTaxable.toFixed(2)}</td>
-                                    <td className="py-2 px-2 text-right text-xs">{item.taxRate}%</td>
-                                    <td className="py-2 px-2 text-right font-bold text-xs">{(colTaxable + colGst).toFixed(2)}</td>
+                                    <td className="py-2 px-2 text-right font-bold text-xs">{colGross.toFixed(2)}</td>
                                   </tr>
                                 )}
                               </React.Fragment>
@@ -1019,12 +1000,17 @@ export default function BillingPage() {
                             {billMode === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
                           </div>
                           <div className="w-64">
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{calculations.taxable.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{sgst.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Base Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
+                            {calculations.discount > 0 && <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>}
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Base</span><span>{calculations.taxable.toFixed(2)}</span></div>
+                            {calculations.gst !== 0 && (
+                              <>
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>SGST</span><span>{sgst.toFixed(2)}</span></div>
+                              </>
+                            )}
+                            {calculations.colorantTotal > 0 && <div className="flex justify-between text-sm py-1 border-b border-gray-800 text-blue-800 font-semibold"><span>Colorant Total</span><span>{calculations.colorantTotal.toFixed(2)}</span></div>}
+                            <div className="flex justify-between text-xl font-black py-2 border-t border-gray-800 mt-1"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
                           </div>
                         </div>
                       )}
@@ -1188,8 +1174,6 @@ export default function BillingPage() {
                               <th className="py-2 px-2 text-left">Item Description</th>
                               <th className="py-2 px-2 text-center">Qty</th>
                               <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
-                              <th className="py-2 px-2 text-right">Taxable</th>
-                              <th className="py-2 px-2 text-right">GST%</th>
                               <th className="py-2 px-2 text-right">Total</th>
                             </tr>
                           </thead>
@@ -1202,20 +1186,6 @@ export default function BillingPage() {
                               
                               const baseGross = item.mrp * item.qty;
                               const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
-                              const globalDiscountRatio = selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1);
-                              
-                              let baseTaxable = baseGross * (1 - globalDiscountRatio);
-                              let colTaxable = colGross * (1 - globalDiscountRatio);
-                              let baseGst = 0; let colGst = 0;
-                              
-                              if (item.taxRate > 0) {
-                                baseGst = baseTaxable * (item.taxRate/100);
-                                colGst = colTaxable * (item.taxRate/100);
-                              } else if (item.taxRate < 0) {
-                                const rate = Math.abs(item.taxRate) / 100;
-                                const origBase = baseTaxable; baseTaxable = origBase / (1 + rate); baseGst = origBase - baseTaxable;
-                                const origCol = colTaxable; colTaxable = origCol / (1 + rate); colGst = origCol - colTaxable;
-                              }
                               
                               return (
                                 <React.Fragment key={globalIndex}>
@@ -1227,9 +1197,7 @@ export default function BillingPage() {
                                     </td>
                                     <td className="py-3 px-2 text-center">{item.qty}</td>
                                     <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                                    <td className="py-3 px-2 text-right">{baseTaxable.toFixed(2)}</td>
-                                    <td className="py-3 px-2 text-right">{item.taxRate}%</td>
-                                    <td className="py-3 px-2 text-right font-bold">{(baseTaxable + baseGst).toFixed(2)}</td>
+                                    <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
                                   </tr>
                                   {item.colorantCost !== undefined && item.colorantCost > 0 && (
                                     <tr className="border-b border-gray-200 bg-blue-50/30">
@@ -1240,9 +1208,7 @@ export default function BillingPage() {
                                       </td>
                                       <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
                                       <td className="py-2 px-2 text-right text-xs">{(item.colorantCost * ltrQty).toFixed(2)}</td>
-                                      <td className="py-2 px-2 text-right text-xs">{colTaxable.toFixed(2)}</td>
-                                      <td className="py-2 px-2 text-right text-xs">{item.taxRate}%</td>
-                                      <td className="py-2 px-2 text-right font-bold text-xs">{(colTaxable + colGst).toFixed(2)}</td>
+                                      <td className="py-2 px-2 text-right font-bold text-xs">{colGross.toFixed(2)}</td>
                                     </tr>
                                   )}
                                 </React.Fragment>
@@ -1262,14 +1228,21 @@ export default function BillingPage() {
                               {selectedHistoryBill.bill_type === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
                             </div>
                             <div className="w-64">
-                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Base Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
                               {selectedHistoryBill.discount_amount > 0 && (
                                 <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
                               )}
-                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
-                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
-                              <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
-                              <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Base</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
+                              {(selectedHistoryBill.cgst_amount || 0) !== 0 && (
+                                <>
+                                  <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
+                                  <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
+                                </>
+                              )}
+                              {selectedHistoryBill.total_amount - (selectedHistoryBill.taxable_value + selectedHistoryBill.cgst_amount + selectedHistoryBill.sgst_amount) > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-800 text-blue-800 font-semibold"><span>Colorant Total</span><span>{(selectedHistoryBill.total_amount - (selectedHistoryBill.taxable_value + selectedHistoryBill.cgst_amount + selectedHistoryBill.sgst_amount)).toFixed(2)}</span></div>
+                              )}
+                              <div className="flex justify-between text-xl font-black py-2 border-t border-gray-800 mt-1"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
                             </div>
                           </div>
                         )}
