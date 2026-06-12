@@ -82,122 +82,110 @@ export default function RemindersPage() {
   const overdueReminders = filtered.filter(r => r.days_overdue > 0)
   const upcomingReminders = filtered.filter(r => r.days_overdue < 0)
 
+  const totalOutstanding = filtered.reduce((sum, r) => sum + Number(r.amount), 0);
+
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="pt-8 px-4 md:px-container-padding pb-container-padding max-w-7xl mx-auto w-full flex-grow flex flex-col gap-element-gap">
+      <div className="flex items-center justify-between">
+        <h1 className="font-headline-md text-headline-md text-on-surface">Unpaid Bills</h1>
+      </div>
+
+      {/* Top Section: Total Outstanding Amount */}
+      <div className="bg-white rounded-xl shadow-sm border border-outline-variant/30 p-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <Bell className="size-8 text-rose-500" /> Payment Reminders
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Auto-generated reminders from Udhaar Ledger</p>
+          <p className="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Total Outstanding Amount</p>
+          <p className="font-headline-lg text-headline-lg text-primary-container tracking-tight">{inr(totalOutstanding)}</p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input 
-            type="text" 
-            placeholder="Search customer..." 
-            value={search} 
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-          />
+        <div className="h-16 w-16 bg-error-container rounded-full flex items-center justify-center text-error">
+          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>money_off</span>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="size-8 animate-spin text-primary" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-          No pending reminders found! 🎉
+      {/* Main Section: Data Table Area */}
+      <div className="bg-white rounded-xl shadow-sm border border-outline-variant/30 flex-grow flex flex-col overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-6 border-b border-outline-variant/30 flex flex-col md:flex-row gap-4 justify-between items-center bg-surface-bright">
+          <div className="relative w-full md:w-96">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">search</span>
+            <input 
+              className="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-transparent font-body-md text-body-md text-on-surface placeholder-outline-variant transition-all" 
+              placeholder="Search customer, phone or bill no..." 
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
         </div>
-      ) : (
-        <div className="space-y-8">
-          
-          {/* TODAY'S REMINDERS */}
-          {todayReminders.length > 0 && (
-            <div>
-              <h2 className="text-lg font-black text-rose-500 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                <AlertCircle className="size-5" /> Due Today
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {todayReminders.map(r => (
-                  <div key={r.id} className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-2 h-full bg-rose-500" />
-                    <div>
-                      <p className="text-sm font-bold text-rose-600 mb-1">Aaj {r.customer_name} se {inr(r.amount)} lena tha</p>
-                      <p className="text-xs text-rose-500/80 font-mono">({r.bill_number ? `Bill #${r.bill_number}` : r.description})</p>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="text-xs font-semibold text-rose-600 flex items-center gap-1">
-                        <Phone className="size-3" /> {r.customer_phone}
+
+        {/* Table */}
+        <div className="overflow-x-auto flex-grow">
+          <table className="w-full text-left border-collapse min-w-[800px]">
+            <thead>
+              <tr className="bg-surface-container-low border-b border-outline-variant/30">
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Customer</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Phone</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Bill/Desc</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Due Date</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Amount</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Status</th>
+                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant/20 bg-white">
+              {loading ? (
+                <tr><td colSpan={7} className="py-12 text-center text-outline">Loading unpaid bills...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={7} className="py-12 text-center text-outline">No pending reminders found! 🎉</td></tr>
+              ) : filtered.map(r => {
+                const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'NA';
+                const isOverdue = r.days_overdue > 0;
+                
+                return (
+                  <tr key={r.id} className="hover:bg-surface-container-low/50 transition-colors group">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full ${isOverdue ? 'bg-primary-container text-white' : 'bg-tertiary-container text-white'} flex items-center justify-center font-label-md text-label-md`}>
+                          {getInitials(r.customer_name)}
+                        </div>
+                        <span className="font-body-md text-body-md font-medium text-on-surface">{r.customer_name}</span>
                       </div>
-                      <Button onClick={() => sendReminder(r)} size="sm" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg gap-2 h-8">
+                    </td>
+                    <td className="py-4 px-6 font-body-md text-body-md text-on-surface-variant">{r.customer_phone}</td>
+                    <td className="py-4 px-6 font-body-md text-body-md text-on-surface-variant">{r.bill_number ? `Bill #${r.bill_number}` : r.description}</td>
+                    <td className="py-4 px-6 font-body-md text-body-md text-on-surface-variant">{new Date(r.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
+                    <td className="py-4 px-6 font-body-md text-body-md font-semibold text-on-surface text-right">{inr(r.amount)}</td>
+                    <td className="py-4 px-6 text-center">
+                      {isOverdue ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error-container text-on-error-container border border-error/20">
+                          Overdue ({r.days_overdue} days)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+                          Upcoming ({Math.abs(r.days_overdue)} days)
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <button 
+                        onClick={() => sendReminder(r)}
+                        className={`${isOverdue ? 'bg-secondary-container hover:bg-secondary text-on-secondary shadow-sm' : 'bg-transparent border border-outline-variant hover:border-primary-container hover:text-primary-container text-on-surface-variant'} font-label-md text-label-md py-2 px-4 rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ml-auto`}
+                      >
                         <MessageCircle className="size-3.5" /> Remind
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* OVERDUE REMINDERS */}
-          {overdueReminders.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-              <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                <h2 className="font-bold text-foreground">Overdue Payments</h2>
-                <div className="text-sm font-semibold text-muted-foreground">{overdueReminders.length} pending</div>
-              </div>
-              <div className="divide-y divide-border">
-                {overdueReminders.map(r => (
-                  <div key={r.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/10 transition-colors">
-                    <div>
-                      <div className="font-bold text-foreground">{r.customer_name}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{r.customer_phone}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">{r.bill_number ? `Bill #${r.bill_number}` : r.description}</div>
-                      <div className="text-xs font-bold text-rose-500 mt-0.5">Overdue by {r.days_overdue} days (Due: {new Date(r.due_date).toLocaleDateString()})</div>
-                    </div>
-                    <div className="font-black text-rose-600 text-right">{inr(r.amount)}</div>
-                    <Button onClick={() => sendReminder(r)} size="sm" className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-lg gap-2 shrink-0">
-                      <MessageCircle className="size-4" /> Remind
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* UPCOMING REMINDERS */}
-          {upcomingReminders.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm opacity-80">
-              <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
-                <h2 className="font-bold text-foreground">Upcoming Payments</h2>
-                <div className="text-sm font-semibold text-muted-foreground">{upcomingReminders.length} upcoming</div>
-              </div>
-              <div className="divide-y divide-border">
-                {upcomingReminders.map(r => (
-                  <div key={r.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="font-bold text-foreground">{r.customer_name}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{r.customer_phone}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-foreground">{r.bill_number ? `Bill #${r.bill_number}` : r.description}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">Due in {Math.abs(r.days_overdue)} days ({new Date(r.due_date).toLocaleDateString()})</div>
-                    </div>
-                    <div className="font-bold text-amber-600 text-right">{inr(r.amount)}</div>
-                    <Button onClick={() => sendReminder(r)} size="sm" variant="outline" className="rounded-lg gap-2 shrink-0 text-[#25D366] border-[#25D366] hover:bg-[#25D366]/10">
-                      <MessageCircle className="size-4" /> Advance Reminder
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+        
+        {!loading && (
+          <div className="p-4 border-t border-outline-variant/30 flex items-center justify-between bg-white">
+            <span className="font-body-md text-body-md text-on-surface-variant">Showing {filtered.length} entries</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
