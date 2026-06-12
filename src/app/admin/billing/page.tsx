@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo, useRef, Fragment } from "react"
 import { motion, AnimatePresence } from "motion/react"
-import { 
-  Plus, Trash2, Printer, Download, MessageCircle, FileText, 
-  CheckCircle2, User, Receipt, 
+import {
+  Plus, Trash2, Printer, Download, MessageCircle, FileText,
+  CheckCircle2, User, Receipt,
   Search, FileSpreadsheet, Eye, ShoppingBag, X, Edit,
   Share2, FileDown, PlusCircle, Phone, MapPin, Save
 } from "lucide-react"
@@ -125,7 +125,7 @@ export default function BillingPage() {
     // 2. Bills
     const { data: bData } = await supabase.from('bills').select('*').eq('is_deleted', false).order('created_at', { ascending: false })
     if (bData) setBills(bData)
-    
+
     await fetchAndSetNextBillNo()
 
     // 3. Orders (for Tab 2)
@@ -199,26 +199,26 @@ export default function BillingPage() {
   const calculations = useMemo(() => {
     let baseSubtotal = 0
     let colorantTotal = 0
-    
+
     items.forEach(item => {
-      if(!item.productId) return
-      
+      if (!item.productId) return
+
       const price = Number(item.mrp || 0)
       const cPrice = Number(item.colorantCost || 0)
       let ltrQty = 1
-      if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1
-      if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000
-      
+      if (item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1
+      if (item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000
+
       baseSubtotal += price * item.qty
-      colorantTotal += cPrice * ltrQty * item.qty
+      colorantTotal += cPrice * item.qty
     })
-    
+
     const discount = baseSubtotal * (globalDiscount / 100)
     let taxableBase = baseSubtotal - discount
     let gst = 0
-    
+
     const effectiveGst = typeof globalGst === 'number' ? globalGst : 18;
-    
+
     if (effectiveGst > 0) {
       gst = taxableBase * (effectiveGst / 100)
     } else if (effectiveGst < 0) {
@@ -227,16 +227,16 @@ export default function BillingPage() {
       taxableBase = originalTaxable / (1 + rate)
       gst = originalTaxable - taxableBase
     }
-    
+
     const finalTotal = taxableBase + gst + colorantTotal
-    
-    return { 
-      subtotal: baseSubtotal, 
+
+    return {
+      subtotal: baseSubtotal,
       colorantTotal,
-      discount, 
-      taxable: taxableBase, 
-      gst, 
-      total: finalTotal 
+      discount,
+      taxable: taxableBase,
+      gst,
+      total: finalTotal
     }
   }, [items, globalDiscount, globalGst])
 
@@ -283,7 +283,7 @@ export default function BillingPage() {
     setCustomerPhone(order.customer_phone)
     setCustomerAddress(order.customer_address)
     setLinkedOrderId(order.order_id)
-    
+
     const mappedItems: BillItem[] = order.items?.map((item) => {
       const product = PRODUCTS.find(p => p.id === item.id)
       return {
@@ -302,7 +302,7 @@ export default function BillingPage() {
   }
 
   const handleSaveBill = async () => {
-    if (!customerName || customerPhone.replace(/\D/g,'').length !== 10) {
+    if (!customerName || customerPhone.replace(/\D/g, '').length !== 10) {
       toast.error("Valid customer name and 10-digit phone required")
       return
     }
@@ -312,7 +312,7 @@ export default function BillingPage() {
     }
 
     setIsSaving(true)
-    
+
     let finalBillNoStr = billNoStr;
     if (!editBillId) {
       // Fetch latest number right before saving to prevent duplicates
@@ -329,7 +329,7 @@ export default function BillingPage() {
     const billData = {
       bill_number: finalBillNoStr,
       customer_name: customerName,
-      customer_phone: customerPhone.replace(/\D/g,''),
+      customer_phone: customerPhone.replace(/\D/g, ''),
       customer_address: customerAddress || null,
 
       items: items,
@@ -346,10 +346,10 @@ export default function BillingPage() {
     }
 
     let ledgerData: any = null
-    if (paymentStatus !== 'Paid' && customerPhone.replace(/\D/g,'').length === 10) {
+    if (paymentStatus !== 'Paid' && customerPhone.replace(/\D/g, '').length === 10) {
       ledgerData = {
         customer_name: customerName,
-        customer_phone: customerPhone.replace(/\D/g,''),
+        customer_phone: customerPhone.replace(/\D/g, ''),
         type: 'receivable',
         amount: finalTotal,
         description: `Bill #${finalBillNoStr}`,
@@ -389,11 +389,11 @@ export default function BillingPage() {
     if (!rpcError && rpcData?.success) {
       setIsSaving(false)
       toast.success("Bill saved successfully! (Atomic)")
-      
+
       const newBill = { ...billData, id: rpcData.bill_id, created_at: new Date().toISOString() } as unknown as Bill
       setSavedBillData(newBill)
       setBills([newBill, ...bills])
-      
+
       // Stock deduction
       let stockUpdateFailed = false
       for (const item of items) {
@@ -454,11 +454,11 @@ export default function BillingPage() {
 
       if (ledgerData) {
         const { error: ledgerError } = await supabase.from('ledger').insert([ledgerData])
-        
+
         if (ledgerError) {
           toast.error("⚠️ BILL SAVE HUA BUT UDHAAR ENTRY FAIL HUI. Ledger page mein manually add karo.")
         }
-        
+
         if (customerRecord) {
           await supabase.from('customers').update({
             current_outstanding: (customerRecord.current_outstanding || 0) + finalTotal,
@@ -470,53 +470,47 @@ export default function BillingPage() {
     }
   }
 
-  const handlePDF = (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
+  const handlePDF = async (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
     const printArea = document.getElementById(targetId)
     if (!printArea) return
-    
+
     const bd = providedBillData || savedBillData
     const billNumber = bd?.bill_number || billNoStr
     const cName = bd?.customer_name ? `-${bd.customer_name.replace(/[^a-zA-Z0-9]/g, '')}` : (customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : '')
-    const fileName = `${billNumber}${cName}`
+    const fileName = `${billNumber}${cName}.pdf`
 
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) {
-      toast.error("Please allow popups to download PDF")
-      return
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      
+      const originalDisplay = printArea.style.display;
+      const originalPosition = printArea.style.position;
+      const originalLeft = printArea.style.left;
+      
+      if (window.getComputedStyle(printArea).display === 'none') {
+        printArea.style.display = 'block';
+      }
+      printArea.style.position = 'absolute';
+      printArea.style.left = '-9999px';
+
+      const canvas = await html2canvas(printArea, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(fileName);
+      
+      printArea.style.display = originalDisplay;
+      printArea.style.position = originalPosition;
+      printArea.style.left = originalLeft;
+      
+      toast.success('PDF downloaded successfully');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to generate PDF');
     }
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${fileName}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            body { 
-              margin: 0;
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact; 
-            }
-            @media print {
-              @page { size: A4 portrait; margin: 5mm; }
-            }
-          </style>
-        </head>
-        <body class="bg-white">
-          <div style="width: 210mm; margin: 0 auto; padding: 20px;">
-            ${printArea.innerHTML}
-          </div>
-          <script>
-            window.onload = () => {
-              setTimeout(() => {
-                window.print()
-                window.close()
-              }, 800) // Wait for tailwind to apply
-            }
-          </script>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
   }
 
   const shareWhatsApp = () => {
@@ -540,7 +534,7 @@ export default function BillingPage() {
   }
 
   const exportToExcel = () => {
-    const csvContent = "data:text/csv;charset=utf-8," + 
+    const csvContent = "data:text/csv;charset=utf-8," +
       "Date,Bill Number,Customer,Phone,Total Amount,Status,Method\n" +
       filteredBills.map(b => `${new Date(b.created_at).toLocaleDateString()},${b.bill_number},${b.customer_name},${b.customer_phone},${b.total_amount},${b.payment_status},${b.payment_method}`).join("\n")
     const encodedUri = encodeURI(csvContent)
@@ -604,7 +598,7 @@ export default function BillingPage() {
     groups[dateStr].push(bill)
     return groups
   }, {} as Record<string, Bill[]>)
-  
+
   // Get sorted dates (newest first assuming bills are already sorted, but let's be safe)
   const sortedDates = Object.keys(groupedBills)
 
@@ -623,14 +617,14 @@ export default function BillingPage() {
         <div className="flex items-center gap-6">
           <Receipt className="size-6 text-primary" />
           <nav className="flex p-1 bg-surface-container rounded-lg border border-outline-variant/50">
-            <button 
+            <button
               onClick={() => setActiveTab("New Bill")}
               className={`px-4 py-1.5 font-bold text-sm rounded-md transition-all ${activeTab === "New Bill" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
             >
               New Bill
             </button>
             <div className="w-px bg-outline-variant/50 mx-1 my-1"></div>
-            <button 
+            <button
               onClick={() => setActiveTab("Bill History")}
               className={`px-4 py-1.5 font-bold text-sm rounded-md transition-all ${activeTab === "Bill History" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
             >
@@ -638,7 +632,7 @@ export default function BillingPage() {
             </button>
           </nav>
         </div>
-        
+
         {activeTab === "New Bill" && (
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-surface-container rounded-full p-1 border border-outline-variant">
@@ -681,7 +675,7 @@ export default function BillingPage() {
           <>
             {/* Left Column (Form) */}
             <div className="w-full lg:w-[60%] h-full overflow-y-auto p-container-padding flex flex-col gap-element-gap">
-              
+
               {/* Customer Info */}
               <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6">
                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant">
@@ -725,7 +719,7 @@ export default function BillingPage() {
                 <div className="flex justify-between items-center pb-2 border-b border-outline-variant">
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">Products</h3>
                 </div>
-                
+
                 {items.map((item, index) => {
                   const product = PRODUCTS.find(p => p.id === item.productId);
                   return (
@@ -733,7 +727,7 @@ export default function BillingPage() {
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
                         <div className="flex-1 min-w-[200px] flex flex-col gap-1 relative">
                           <label className="font-label-md text-label-md text-on-surface-variant">Select Product</label>
-                          <select 
+                          <select
                             disabled={!!savedBillData}
                             value={item.productId}
                             onChange={(e) => handleProductSelect(index, e.target.value)}
@@ -745,19 +739,19 @@ export default function BillingPage() {
                             ))}
                           </select>
                         </div>
-                        
+
                         <div className="w-24 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Qty</label>
                           <input type="number" min="1" disabled={!!savedBillData} value={item.qty} onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" />
                         </div>
-                        
+
                         <div className="w-36 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Unit</label>
                           <div className="flex bg-white rounded-lg border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary overflow-hidden h-[38px]">
-                            <input 
-                              type="number" 
-                              disabled={!!savedBillData || !product} 
-                              value={parseFloat(item.size) || ""} 
+                            <input
+                              type="number"
+                              disabled={!!savedBillData || !product}
+                              value={parseFloat(item.size) || ""}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 const currentUnit = item.size.replace(/[^a-zA-Z]/g, '').toUpperCase() || 'L';
@@ -770,7 +764,7 @@ export default function BillingPage() {
                               placeholder="0"
                             />
                             <div className="w-px bg-outline-variant"></div>
-                            <select 
+                            <select
                               disabled={!!savedBillData || !product}
                               value={(item.size.replace(/[^a-zA-Z]/g, '').toUpperCase() === 'ML') ? 'ML' : 'L'}
                               onChange={(e) => {
@@ -787,12 +781,12 @@ export default function BillingPage() {
                             </select>
                           </div>
                         </div>
-                        
+
                         <div className="w-32 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Rate</label>
                           <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-[38px] border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
-                        
+
                         {!savedBillData && (
                           <button onClick={() => removeItem(item.id)} className="mt-7 text-error hover:bg-error-container p-2 rounded-full transition-colors shrink-0">
                             <Trash2 className="size-5" />
@@ -806,11 +800,11 @@ export default function BillingPage() {
                           {item.colorantCost !== undefined && (item.colorantCost > 0 || item.colorantCost === ("" as any)) ? (
                             <div className="flex items-center gap-4">
                               <div className="flex flex-col gap-1">
-                                <label className="text-[10px] text-outline">Colorant Name</label>
+                                <label className="text-[10px] text-outline">Color Code</label>
                                 <input type="text" placeholder="e.g. Off White" disabled={!!savedBillData} value={item.colorCode || ""} onChange={(e) => updateItem(item.id, { colorCode: e.target.value })} className="px-3 py-1.5 text-sm border border-outline-variant rounded-md w-40 outline-none focus:border-primary" />
                               </div>
                               <div className="flex flex-col gap-1">
-                                <label className="text-[10px] text-outline">Colorant Price (per Ltr)</label>
+                                <label className="text-[10px] text-outline">Colorant Price</label>
                                 <input type="number" disabled={!!savedBillData} value={item.colorantCost === "" as any ? "" : (item.colorantCost || "")} onChange={(e) => updateItem(item.id, { colorantCost: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="px-3 py-1.5 text-sm border border-outline-variant rounded-md w-32 outline-none focus:border-primary" />
                               </div>
                               {!savedBillData && (
@@ -854,7 +848,7 @@ export default function BillingPage() {
                       <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Custom %" />
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
                     <label className="font-label-md text-label-md text-on-surface-variant">GST Configuration</label>
                     <div className="flex gap-2 items-center flex-wrap">
@@ -888,7 +882,7 @@ export default function BillingPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Right: Totals */}
                 <div className="w-full md:w-64 flex flex-col gap-3 justify-end">
                   <div className="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
@@ -898,7 +892,7 @@ export default function BillingPage() {
                     <span>Discount ({globalDiscount}%)</span><span className="text-error">- {inr(calculations.discount)}</span>
                   </div>
                   <div className="flex justify-between items-center font-body-md text-body-md text-on-surface">
-                    <span>Taxable Amount</span><span>{inr(calculations.taxable)}</span>
+                    <span>Final Amount</span><span>{inr(calculations.taxable)}</span>
                   </div>
                   <div className="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
                     <span>CGST (9%)</span><span>{inr(cgst)}</span>
@@ -917,7 +911,7 @@ export default function BillingPage() {
             {/* Right Column (Live Preview / A4 Sheet) */}
             <div className="hidden lg:flex w-[40%] bg-surface-container-highest border-l border-outline-variant flex-col items-center justify-start overflow-y-auto pt-8 pb-20 print:hidden relative">
               <div className="sticky top-0 z-10 w-[210mm] text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
-              
+
               <div id="print-a4-container" ref={printRef} className="print-area flex flex-col items-center drop-shadow-md">
                 {(() => {
                   const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
@@ -969,34 +963,34 @@ export default function BillingPage() {
                           {chunk.map((item, localIndex) => {
                             const globalIndex = chunkIndex * 5 + localIndex;
                             let ltrQty = 1;
-                            if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
-                            if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
-                            
+                            if (item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
+                            if (item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
+
                             const baseGross = Number(item.mrp || 0) * item.qty;
-                            const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
-                            
+                            const colGross = (item.colorantCost || 0) * item.qty;
+
                             return (
                               <React.Fragment key={globalIndex}>
                                 <tr className="border-b border-gray-100">
-                                  <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                  <td className="py-3 px-2 text-gray-500">{globalIndex + 1}</td>
                                   <td className="py-3 px-2">
-                                    <strong>{item.name}</strong><br/>
+                                    <strong>{item.name}</strong><br />
                                     <span className="text-xs text-gray-500">Base: {item.size}</span>
                                   </td>
                                   <td className="py-3 px-2 text-center">{item.qty}</td>
                                   <td className="py-3 px-2 text-right">{Number(item.mrp || 0).toFixed(2)}</td>
                                   <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
                                 </tr>
-                                {item.colorantCost !== undefined && item.colorantCost > 0 && (
+                                {((item.colorantCost !== undefined && item.colorantCost > 0) || (item.colorCode && item.colorCode.trim() !== "")) && (
                                   <tr className="border-b border-gray-200 bg-blue-50/30">
                                     <td className="py-2 px-2 text-gray-400 text-xs"></td>
                                     <td className="py-2 px-2 text-xs text-gray-600">
-                                      └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br/>
-                                      <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}/L × {ltrQty}L</span>
+                                      └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br />
+                                      {item.colorantCost ? <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}</span> : null}
                                     </td>
                                     <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
-                                    <td className="py-2 px-2 text-right text-xs">{(Number(item.colorantCost || 0) * ltrQty).toFixed(2)}</td>
-                                    <td className="py-2 px-2 text-right font-bold text-xs">{colGross.toFixed(2)}</td>
+                                    <td className="py-2 px-2 text-right text-xs">{item.colorantCost ? Number(item.colorantCost).toFixed(2) : ""}</td>
+                                    <td className="py-2 px-2 text-right font-bold text-xs">{item.colorantCost ? colGross.toFixed(2) : ""}</td>
                                   </tr>
                                 )}
                               </React.Fragment>
@@ -1092,10 +1086,9 @@ export default function BillingPage() {
                             </td>
                             <td className="px-6 py-4 font-bold text-on-surface text-right">{inr(b.total_amount)}</td>
                             <td className="px-6 py-4 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                b.payment_status.toLowerCase() === "paid" ? "bg-emerald-100 text-emerald-700" :
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${b.payment_status.toLowerCase() === "paid" ? "bg-emerald-100 text-emerald-700" :
                                 b.payment_status.toLowerCase() === "unpaid" ? "bg-rose-100 text-rose-700" : "bg-orange-100 text-orange-700"
-                              }`}>
+                                }`}>
                                 {b.payment_status.toUpperCase()}
                               </span>
                             </td>
@@ -1131,9 +1124,9 @@ export default function BillingPage() {
         {selectedHistoryBill && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedHistoryBill(null)} />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-4xl max-h-[90vh] bg-surface rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-outline-variant"
             >
@@ -1212,34 +1205,34 @@ export default function BillingPage() {
                             {chunk.map((item: BillItem, localIndex: number) => {
                               const globalIndex = chunkIndex * 5 + localIndex;
                               let ltrQty = 1;
-                              if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
-                              if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
-                              
+                              if (item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
+                              if (item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
+
                               const baseGross = Number(item.mrp || 0) * item.qty;
-                              const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
-                              
+                              const colGross = (item.colorantCost || 0) * item.qty;
+
                               return (
                                 <React.Fragment key={globalIndex}>
                                   <tr className="border-b border-gray-100">
-                                    <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                    <td className="py-3 px-2 text-gray-500">{globalIndex + 1}</td>
                                     <td className="py-3 px-2">
-                                      <strong>{item.name}</strong><br/>
+                                      <strong>{item.name}</strong><br />
                                       <span className="text-xs text-gray-500">Base: {item.size}</span>
                                     </td>
                                     <td className="py-3 px-2 text-center">{item.qty}</td>
                                     <td className="py-3 px-2 text-right">{Number(item.mrp || 0).toFixed(2)}</td>
                                     <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
                                   </tr>
-                                  {item.colorantCost !== undefined && item.colorantCost > 0 && (
+                                  {((item.colorantCost !== undefined && item.colorantCost > 0) || (item.colorCode && item.colorCode.trim() !== "")) && (
                                     <tr className="border-b border-gray-200 bg-blue-50/30">
                                       <td className="py-2 px-2 text-gray-400 text-xs"></td>
                                       <td className="py-2 px-2 text-xs text-gray-600">
-                                        └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br/>
-                                        <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}/L × {ltrQty}L</span>
+                                        └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br />
+                                        {item.colorantCost ? <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}</span> : null}
                                       </td>
                                       <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
-                                      <td className="py-2 px-2 text-right text-xs">{(Number(item.colorantCost || 0) * ltrQty).toFixed(2)}</td>
-                                      <td className="py-2 px-2 text-right font-bold text-xs">{colGross.toFixed(2)}</td>
+                                      <td className="py-2 px-2 text-right text-xs">{item.colorantCost ? Number(item.colorantCost).toFixed(2) : ""}</td>
+                                      <td className="py-2 px-2 text-right font-bold text-xs">{item.colorantCost ? colGross.toFixed(2) : ""}</td>
                                     </tr>
                                   )}
                                 </React.Fragment>
@@ -1291,7 +1284,7 @@ export default function BillingPage() {
           </div>
         )}
       </AnimatePresence>
-      
+
       {/* Hidden A4 Print Container */}
       <div id="print-a4-container" className="hidden print:block absolute inset-0 bg-white z-[9999]">
         {/* A4 template logic remains unchanged in DOM, just visually hidden unless printing */}
