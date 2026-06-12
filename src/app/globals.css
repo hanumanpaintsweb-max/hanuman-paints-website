@@ -134,12 +134,12 @@
   }
   
   /* Sirf bill area show karo */
-  #bill-print-area,
-  #bill-print-area * {
+  .print-area,
+  .print-area * {
     visibility: visible;
   }
   
-  #bill-print-area {
+  .print-area {
     position: absolute;
     left: 0;
     top: 0;

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react"
 import { 
   Plus, Trash2, Printer, Download, MessageCircle, FileText, 
   CheckCircle2, User, Receipt, 
-  Search, FileSpreadsheet, Eye, ShoppingBag, X
+  Search, FileSpreadsheet, Eye, ShoppingBag, X, Edit
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/services/supabase"
@@ -75,6 +75,7 @@ export default function BillingPage() {
 
   // -- TAB 1: NEW BILL STATE --
   const [billNoStr, setBillNoStr] = useState<string>("")
+  const [editBillId, setEditBillId] = useState<string | null>(null)
   const [customerName, setCustomerName] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
@@ -206,6 +207,23 @@ export default function BillingPage() {
   const finalTotal = Math.round(calculations.total)
 
   // --- Actions ---
+  const loadBillForEdit = (bill: Bill) => {
+    setCustomerName(bill.customer_name || "")
+    setCustomerPhone(bill.customer_phone || "")
+    setCustomerAddress(bill.customer_address || "")
+    setItems(bill.items || [])
+    setPaymentStatus(bill.payment_status || "paid")
+    setPaymentMethod(bill.payment_method || "cash")
+    setBillNoStr(bill.bill_number)
+    setBillMode((bill.bill_type as "MRP" | "DPL") || "MRP")
+    const gross = bill.subtotal || 1
+    const discPercent = bill.discount_amount ? Math.round((bill.discount_amount / gross) * 100) : 5
+    setGlobalDiscount(discPercent)
+    setEditBillId(bill.id)
+    setSavedBillData(null)
+    setActiveTab("New Bill")
+  }
+
   const handleAddRow = () => {
     setItems([...items, {
       id: Math.random().toString(36).substr(2, 9),
@@ -258,15 +276,18 @@ export default function BillingPage() {
 
     setIsSaving(true)
     
-    // Fetch latest number right before saving to prevent duplicates
-    const { data: latestData } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
-    let maxNum = 0
-    if (latestData && latestData.length > 0) {
-      const match = latestData[0].bill_number.match(/-(\d+)$/)
-      if (match) maxNum = parseInt(match[1])
+    let finalBillNoStr = billNoStr;
+    if (!editBillId) {
+      // Fetch latest number right before saving to prevent duplicates
+      const { data: latestData } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+      let maxNum = 0
+      if (latestData && latestData.length > 0) {
+        const match = latestData[0].bill_number.match(/-(\d+)$/)
+        if (match) maxNum = parseInt(match[1])
+      }
+      finalBillNoStr = `HP-S-${(maxNum + 1).toString().padStart(3, '0')}`
+      setBillNoStr(finalBillNoStr)
     }
-    const finalBillNoStr = `HP-S-${(maxNum + 1).toString().padStart(3, '0')}`
-    setBillNoStr(finalBillNoStr)
 
     const billData = {
       bill_number: finalBillNoStr,
@@ -304,6 +325,21 @@ export default function BillingPage() {
 
     console.log('Saving bill:', billData)
     if (ledgerData) console.log('Saving ledger:', ledgerData)
+
+    if (editBillId) {
+      const { data, error } = await supabase.from('bills').update(billData).eq('id', editBillId).select()
+      setIsSaving(false)
+      if (error) {
+        toast.error(`Failed to update bill: ${error.message}`)
+        return
+      }
+      toast.success("Bill updated successfully!")
+      const updatedBill = data[0]
+      setSavedBillData(updatedBill)
+      setBills(bills.map(b => b.id === editBillId ? updatedBill : b))
+      setEditBillId(null)
+      return
+    }
 
     // Try atomic RPC first
     const { data: rpcData, error: rpcError } = await supabase.rpc('save_bill_with_ledger', {
@@ -464,6 +500,7 @@ export default function BillingPage() {
     setGlobalDiscount(5)
     setLinkedOrderId(null)
     setSavedBillData(null)
+    setEditBillId(null)
     await fetchAndSetNextBillNo()
   }
 
@@ -488,12 +525,21 @@ export default function BillingPage() {
     }
   }
 
-  const deleteBill = async (id: string) => {
+  const deleteBill = async (bill: Bill) => {
     if (!window.confirm("Are you sure you want to delete this bill?")) return
-    const { error } = await supabase.from('bills').update({ is_deleted: true }).eq('id', id)
+    const pwd = window.prompt("Enter password to confirm deletion:")
+    if (pwd !== "1234") {
+      toast.error("Incorrect password. Deletion cancelled.")
+      return
+    }
+    const { error } = await supabase.from('bills').update({ is_deleted: true }).eq('id', bill.id)
     if (!error) {
-      setBills(bills.filter(b => b.id !== id))
+      setBills(bills.filter(b => b.id !== bill.id))
       toast.success("Bill deleted")
+      const { error: ledgerError } = await supabase.from('ledger').delete().eq('bill_number', bill.bill_number)
+      if (ledgerError) console.error("Failed to delete ledger entry:", ledgerError)
+    } else {
+      toast.error("Failed to delete bill")
     }
   }
 
@@ -553,7 +599,7 @@ export default function BillingPage() {
               )}
 
               {/* Customer Info */}
-              <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm space-y-4">
+              <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm space-y-3">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-lg font-bold flex items-center gap-2"><User className="size-5 text-primary" /> Customer Info</h2>
                   <div className="flex gap-2">
@@ -566,7 +612,7 @@ export default function BillingPage() {
                     <div className="text-sm font-bold bg-muted px-3 py-1 rounded-lg">No: {billNoStr}</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">Customer Name *</label>
                     <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
@@ -575,14 +621,14 @@ export default function BillingPage() {
                     <label className="text-xs font-semibold text-muted-foreground">Phone Number *</label>
                     <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
-                  <div className="space-y-1 col-span-2">
+                  <div className="space-y-1 md:col-span-1">
                     <label className="text-xs font-semibold text-muted-foreground">Address</label>
                     <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm">
+              <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingBag className="size-5 text-primary" /> Products</h2>
                   {!savedBillData && <Button onClick={handleAddRow} size="sm" variant="secondary" className="rounded-lg h-8 gap-1"><Plus className="size-4" /> Add Item</Button>}
@@ -672,7 +718,7 @@ export default function BillingPage() {
               </div>
 
               {/* Payment Section */}
-              <div className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm grid grid-cols-2 gap-6">
+              <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h2 className="text-sm font-bold uppercase text-muted-foreground mb-3">Payment Info</h2>
                   <div className="space-y-4">
@@ -745,104 +791,115 @@ export default function BillingPage() {
               </div>
 
               {/* PDF Container Wrapper */}
-              <div className="border border-border/60 bg-white rounded-2xl overflow-hidden shadow-inner flex justify-center p-4 no-print">
-                <div id="bill-print-area" ref={printRef} className="bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] sm:scale-[0.5] md:scale-[0.6] xl:scale-[0.55] print:scale-100 print:shadow-none print:w-full print:p-0">
-                  {/* PDF Header */}
-                  <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
-                    <div>
-                      <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
-                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
-                      <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
-                      {/* // PHASE2_HIDDEN */}
-                      {/* <p className="text-xs text-gray-500 mt-1 font-semibold">GSTIN: {settings.shop_gstin}</p> */}
-                      <p className="text-xs text-gray-500">Ph: 8292889540</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
-                      <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
-                      <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
-                    </div>
-                  </div>
+              <div className="border border-border/60 bg-white rounded-2xl overflow-hidden shadow-inner flex justify-center p-4 print:border-none print:p-0 print:shadow-none">
+                <div id="bill-print-area" ref={printRef} className="print-area flex flex-col items-center">
+                  {(() => {
+                    const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
+                    if (items.length > 0) {
+                      for (let i = 0; i < items.length; i += 5) itemChunks.push(items.slice(i, i + 5));
+                    }
+                    return itemChunks.map((chunk, chunkIndex) => (
+                      <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] sm:scale-[0.5] md:scale-[0.6] xl:scale-[0.55] print:scale-100 print:shadow-none print:w-full print:p-0 ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                        {/* PDF Header */}
+                        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                          <div>
+                            <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
+                            <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
+                            <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                            <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
+                            <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
+                          </div>
+                        </div>
 
-                  {/* Customer Info */}
-                  <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="font-bold text-lg">{customerName || "Cash Customer"}</div>
-                        <div className="text-sm text-gray-600">{customerPhone}</div>
-                        {customerAddress && <div className="text-sm text-gray-600">{customerAddress}</div>}
+                        {/* Customer Info */}
+                        <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
+                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                          <div className="flex justify-between">
+                            <div>
+                              <div className="font-bold text-lg">{customerName || "Cash Customer"}</div>
+                              <div className="text-sm text-gray-600">{customerPhone}</div>
+                              {customerAddress && <div className="text-sm text-gray-600">{customerAddress}</div>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Items Table */}
+                        <table className="w-full mb-6 border-collapse">
+                          <thead>
+                            <tr className="bg-gray-800 text-white text-xs uppercase">
+                              <th className="py-2 px-2 text-left">S.No</th>
+                              <th className="py-2 px-2 text-left">Item Description</th>
+                              <th className="py-2 px-2 text-center">Qty</th>
+                              <th className="py-2 px-2 text-right">{billMode === "DPL" ? "DPL" : "MRP"}</th>
+                              <th className="py-2 px-2 text-right">Disc%</th>
+                              <th className="py-2 px-2 text-right">Taxable</th>
+                              <th className="py-2 px-2 text-right">GST%</th>
+                              <th className="py-2 px-2 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-sm border-b-2 border-gray-800">
+                            {chunk.map((item, localIndex) => {
+                              const globalIndex = chunkIndex * 5 + localIndex;
+                              const gross = (item.mrp + (item.colorantCost || 0)) * item.qty; const disc = gross * (globalDiscount/100);
+                              const taxable = gross - disc; const gst = taxable * (item.taxRate/100);
+                              return (
+                                <tr key={globalIndex} className="border-b border-gray-200">
+                                  <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                  <td className="py-3 px-2">
+                                    <strong>{item.name}</strong><br/>
+                                    <span className="text-xs text-gray-500">{item.size}</span>
+                                    {item.colorCode && (
+                                      <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
+                                        <div>└ Color Code: {item.colorCode}</div>
+                                        <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-2 text-center">{item.qty}</td>
+                                  <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{globalDiscount}%</td>
+                                  <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                                  <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+
+                        {chunkIndex === itemChunks.length - 1 && (
+                          <div className="flex justify-between items-end">
+                            <div className="text-xs text-gray-500 space-y-1">
+                              <p><strong>Terms & Conditions:</strong></p>
+                              <p>1. Goods once sold cannot be returned or exchanged.</p>
+                              <p>2. Subject to Madhubani jurisdiction only.</p>
+                              <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
+                              {billMode === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
+                            </div>
+                            <div className="w-64">
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{calculations.taxable.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST 9%</span><span>{cgst.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST 9%</span><span>{sgst.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
+                            </div>
+                          </div>
+                        )}
+
+                        {chunkIndex === itemChunks.length - 1 && (
+                          <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Items Table */}
-                  <table className="w-full mb-6 border-collapse">
-                    <thead>
-                      <tr className="bg-gray-800 text-white text-xs uppercase">
-                        <th className="py-2 px-2 text-left">S.No</th>
-                        <th className="py-2 px-2 text-left">Item Description</th>
-                        <th className="py-2 px-2 text-center">Qty</th>
-                        <th className="py-2 px-2 text-right">{billMode === "DPL" ? "DPL" : "MRP"}</th>
-                        <th className="py-2 px-2 text-right">Disc%</th>
-                        <th className="py-2 px-2 text-right">Taxable</th>
-                        <th className="py-2 px-2 text-right">GST%</th>
-                        <th className="py-2 px-2 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm border-b-2 border-gray-800">
-                      {items.map((item, i) => {
-                        const gross = item.mrp * item.qty; const disc = gross * (globalDiscount/100);
-                        const taxable = gross - disc; const gst = taxable * (item.taxRate/100);
-                        return (
-                          <tr key={i} className="border-b border-gray-200">
-                            <td className="py-3 px-2 text-gray-500">{i+1}</td>
-                            <td className="py-3 px-2">
-                              <strong>{item.name}</strong><br/>
-                              <span className="text-xs text-gray-500">{item.size}</span>
-                              {item.colorCode && (
-                                <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
-                                  <div>└ Color Code: {item.colorCode}</div>
-                                  <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-3 px-2 text-center">{item.qty}</td>
-                            <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                            <td className="py-3 px-2 text-right">{globalDiscount}%</td>
-                            <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
-                            <td className="py-3 px-2 text-right">{item.taxRate}%</td>
-                            <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-
-                  {/* Totals */}
-                  <div className="flex justify-between items-end">
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <p><strong>Terms & Conditions:</strong></p>
-                      <p>1. Goods once sold cannot be returned or exchanged.</p>
-                      <p>2. Subject to Madhubani jurisdiction only.</p>
-                      <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
-                      {billMode === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
-                    </div>
-                    <div className="w-64">
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{calculations.taxable.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST 9%</span><span>{cgst.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST 9%</span><span>{sgst.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
-                    </div>
-                  </div>
-
-                  <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
-                  </div>
+                    ))
+                  })()}
                 </div>
               </div>
-
             </div>
           </motion.div>
         )}
@@ -912,8 +969,9 @@ export default function BillingPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <Button size="icon" variant="outline" onClick={() => loadBillForEdit(bill)} className="size-8 rounded-lg text-blue-600"><Edit className="size-4" /></Button>
                           <Button size="icon" variant="outline" onClick={() => viewHistoricalBill(bill)} className="size-8 rounded-lg"><Eye className="size-4" /></Button>
-                          <Button size="icon" variant="destructive" onClick={() => deleteBill(bill.id)} className="size-8 rounded-lg"><Trash2 className="size-4" /></Button>
+                          <Button size="icon" variant="destructive" onClick={() => deleteBill(bill)} className="size-8 rounded-lg"><Trash2 className="size-4" /></Button>
                         </div>
                       </td>
                     </tr>
@@ -968,101 +1026,114 @@ export default function BillingPage() {
 
               {/* Body */}
               <div className="flex-1 overflow-y-auto p-6 bg-muted/10 flex justify-center">
-                <div id="history-bill-print-area" className="bg-white p-8 w-[210mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0">
-                  {/* PDF Header */}
-                  <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
-                    <div>
-                      <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
-                      <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
-                      <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
-                      <p className="text-xs text-gray-500">Ph: 8292889540</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
-                      <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
-                      <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
-                    </div>
-                  </div>
+                <div id="history-bill-print-area" className="print-area flex flex-col items-center">
+                  {(() => {
+                    const itemsArr = selectedHistoryBill.items || [];
+                    const itemChunks: BillItem[][] = itemsArr.length > 0 ? [] : [[]];
+                    if (itemsArr.length > 0) {
+                      for (let i = 0; i < itemsArr.length; i += 5) itemChunks.push(itemsArr.slice(i, i + 5));
+                    }
+                    return itemChunks.map((chunk, chunkIndex) => (
+                      <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-full print:p-0 ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                        {/* PDF Header */}
+                        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                          <div>
+                            <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
+                            <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address}</p>
+                            <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                            <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
+                            <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
+                          </div>
+                        </div>
 
-                  {/* Customer Info */}
-                  <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
-                        <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
-                        {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
-                      </div>
-                    </div>
-                  </div>
+                        {/* Customer Info */}
+                        <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
+                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                          <div className="flex justify-between">
+                            <div>
+                              <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
+                              <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
+                              {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
+                            </div>
+                          </div>
+                        </div>
 
-                  {/* Items Table */}
-                  <table className="w-full mb-6 border-collapse">
-                    <thead>
-                      <tr className="bg-gray-800 text-white text-xs uppercase">
-                        <th className="py-2 px-2 text-left">S.No</th>
-                        <th className="py-2 px-2 text-left">Item Description</th>
-                        <th className="py-2 px-2 text-center">Qty</th>
-                        <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
-                        <th className="py-2 px-2 text-right">Taxable</th>
-                        <th className="py-2 px-2 text-right">GST%</th>
-                        <th className="py-2 px-2 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm border-b-2 border-gray-800">
-                      {selectedHistoryBill.items?.map((item: BillItem, i: number) => {
-                        const taxable = (item.mrp + (item.colorantCost || 0)) * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
-                        const gst = taxable * (item.taxRate/100);
-                        return (
-                          <tr key={i} className="border-b border-gray-200">
-                            <td className="py-3 px-2 text-gray-500">{i+1}</td>
-                            <td className="py-3 px-2">
-                              <strong>{item.name}</strong><br/>
-                              <span className="text-xs text-gray-500">{item.size}</span>
-                              {item.colorCode && (
-                                <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
-                                  <div>└ Color Code: {item.colorCode}</div>
-                                  <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
-                                </div>
+                        {/* Items Table */}
+                        <table className="w-full mb-6 border-collapse">
+                          <thead>
+                            <tr className="bg-gray-800 text-white text-xs uppercase">
+                              <th className="py-2 px-2 text-left">S.No</th>
+                              <th className="py-2 px-2 text-left">Item Description</th>
+                              <th className="py-2 px-2 text-center">Qty</th>
+                              <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
+                              <th className="py-2 px-2 text-right">Taxable</th>
+                              <th className="py-2 px-2 text-right">GST%</th>
+                              <th className="py-2 px-2 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-sm border-b-2 border-gray-800">
+                            {chunk.map((item: BillItem, localIndex: number) => {
+                              const globalIndex = chunkIndex * 5 + localIndex;
+                              const taxable = (item.mrp + (item.colorantCost || 0)) * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
+                              const gst = taxable * (item.taxRate/100);
+                              return (
+                                <tr key={globalIndex} className="border-b border-gray-200">
+                                  <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                  <td className="py-3 px-2">
+                                    <strong>{item.name}</strong><br/>
+                                    <span className="text-xs text-gray-500">{item.size}</span>
+                                    {item.colorCode && (
+                                      <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
+                                        <div>└ Color Code: {item.colorCode}</div>
+                                        <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-2 text-center">{item.qty}</td>
+                                  <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                                  <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+
+                        {/* Totals */}
+                        {chunkIndex === itemChunks.length - 1 && (
+                          <div className="flex justify-between items-end">
+                            <div className="text-xs text-gray-500 space-y-1">
+                              <p><strong>Terms & Conditions:</strong></p>
+                              <p>1. Goods once sold cannot be returned or exchanged.</p>
+                              <p>2. Subject to Madhubani jurisdiction only.</p>
+                              <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
+                              {selectedHistoryBill.bill_type === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
+                            </div>
+                            <div className="w-64">
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
+                              {selectedHistoryBill.discount_amount > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
                               )}
-                            </td>
-                            <td className="py-3 px-2 text-center">{item.qty}</td>
-                            <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                            <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
-                            <td className="py-3 px-2 text-right">{item.taxRate}%</td>
-                            <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
+                            </div>
+                          </div>
+                        )}
 
-                  {/* Totals */}
-                  <div className="flex justify-between items-end">
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <p><strong>Terms & Conditions:</strong></p>
-                      <p>1. Goods once sold cannot be returned or exchanged.</p>
-                      <p>2. Subject to Madhubani jurisdiction only.</p>
-                      <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
-                      {selectedHistoryBill.bill_type === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
-                    </div>
-                    <div className="w-64">
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
-                      {selectedHistoryBill.discount_amount > 0 && (
-                        <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
-                      )}
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
-                      <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
-                    </div>
-                  </div>
-
-                  <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
-                    {/* // PHASE2_HIDDEN */}
-                    {/* <div>Customer Signature</div>
-                    <div>Authorized Signatory</div> */}
-                  </div>
+                        {chunkIndex === itemChunks.length - 1 && (
+                          <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  })()}
                 </div>
               </div>
             </motion.div>
