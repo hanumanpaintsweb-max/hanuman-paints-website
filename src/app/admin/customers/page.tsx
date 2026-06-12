@@ -124,95 +124,135 @@ export default function CustomersPage() {
     return c.name?.toLowerCase().includes(s) || c.phone?.includes(s)
   })
 
+  const newThisMonth = customers.filter(c => {
+    if (!c.last_order_date) return false;
+    const d = new Date(c.last_order_date);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const loyalCustomer = customers.length > 0 ? customers.reduce((prev, current) => (prev.total_value > current.total_value) ? prev : current, customers[0]) : null;
+
   return (
-    <div className="space-y-6 pb-20">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-          <Users className="size-8 text-primary" /> Customer Directory
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {/* PHASE2_HIDDEN: All customers who have placed online orders or offline bills — merged by phone number. */}
-          All customers from your offline bills — grouped by phone number.
-        </p>
+    <div className="mt-4 p-container-padding flex-1 max-w-7xl mx-auto w-full">
+      {/* Page Header */}
+      <div className="flex justify-between items-end mb-stack-margin">
+        <div>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-1">Customers</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant">Manage your customer database and view purchase history.</p>
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search by name or phone..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary"
-        />
+      {/* Bento Grid Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-element-gap mb-stack-margin">
+        {/* Stat Card 1 */}
+        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
+          </div>
+          <div>
+            <p className="font-label-md text-label-md text-outline mb-1">Total Customers</p>
+            <p className="font-headline-md text-headline-md text-on-surface">{customers.length}</p>
+          </div>
+        </div>
+
+        {/* Stat Card 2 */}
+        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person_add</span>
+          </div>
+          <div>
+            <p className="font-label-md text-label-md text-outline mb-1">Active This Month</p>
+            <p className="font-headline-md text-headline-md text-on-surface">{newThisMonth}</p>
+          </div>
+        </div>
+
+        {/* Stat Card 3 */}
+        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="material-symbols-outlined text-[16px] text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+            <p className="font-label-md text-label-md text-outline">Most Loyal Customer</p>
+          </div>
+          <p className="font-headline-sm text-headline-sm text-on-surface truncate">{loyalCustomer?.name || 'N/A'}</p>
+          <p className="font-body-md text-body-md text-primary font-medium mt-1">{loyalCustomer ? inr(loyalCustomer.total_value) : ''}</p>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+      {/* Search and Table Container */}
+      <div className="bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+        {/* Search Bar */}
+        <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-white">
+          <div className="relative w-full max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-outline">
+              <span className="material-symbols-outlined text-[20px]">search</span>
+            </div>
+            <input 
+              className="block w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg leading-5 bg-white placeholder-outline-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm font-body-md" 
+              placeholder="Search by name or phone number..." 
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Data Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-muted/50 text-muted-foreground border-b border-border">
+          <table className="min-w-full divide-y divide-outline-variant/30">
+            <thead className="bg-surface-container-low">
               <tr>
-                <th className="px-6 py-4 font-semibold">Customer</th>
-                {/* <th className="px-6 py-4 font-semibold text-center">Source</th> PHASE2_HIDDEN */}
-                <th className="px-6 py-4 font-semibold text-center">Total Orders</th>
-                <th className="px-6 py-4 font-semibold text-right">Total Value</th>
-                <th className="px-6 py-4 font-semibold text-center">Last Order</th>
-                <th className="px-6 py-4 font-semibold text-right">History</th>
+                <th className="px-6 py-4 text-left font-label-md text-label-md text-outline uppercase tracking-wider" scope="col">Customer Name</th>
+                <th className="px-6 py-4 text-left font-label-md text-label-md text-outline uppercase tracking-wider" scope="col">Phone Number</th>
+                <th className="px-6 py-4 text-left font-label-md text-label-md text-outline uppercase tracking-wider" scope="col">Total Bills</th>
+                <th className="px-6 py-4 text-left font-label-md text-label-md text-outline uppercase tracking-wider" scope="col">Total Purchase Value</th>
+                <th className="px-6 py-4 text-left font-label-md text-label-md text-outline uppercase tracking-wider" scope="col">Last Bill Date</th>
+                <th className="px-6 py-4 text-right font-label-md text-label-md text-outline uppercase tracking-wider" scope="col">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="bg-white divide-y divide-outline-variant/30">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <Loader2 className="size-6 animate-spin mx-auto text-primary" />
-                  </td>
+                  <td colSpan={6} className="px-6 py-12 text-center text-outline">Loading customers...</td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                    No customers found.
+                  <td colSpan={6} className="px-6 py-12 text-center text-outline">No customers found.</td>
+                </tr>
+              ) : filtered.map(c => (
+                <tr key={c.phone} className="hover:bg-surface-container-low/50 transition-colors group cursor-pointer" onClick={() => openHistory(c)}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-headline-sm text-body-md text-on-surface font-medium">{c.name || "—"}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-body-md text-body-md text-on-surface-variant">+91 {c.phone}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-body-md text-body-md text-on-surface">{c.total_orders}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-body-md text-body-md text-on-surface font-medium">{inr(c.total_value)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-body-md text-body-md text-on-surface-variant">
+                      {c.last_order_date ? new Date(c.last_order_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right font-label-md">
+                    <div className="flex items-center justify-end gap-3 opacity-80 group-hover:opacity-100 transition-opacity">
+                      <button className="text-primary hover:text-primary-container font-medium" onClick={(e) => { e.stopPropagation(); openHistory(c); }}>View History</button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                filtered.map((c) => (
-                  <tr key={c.phone} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-foreground">{c.name || "—"}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">+91 {c.phone}</div>
-                    </td>
-                    {/* PHASE2_HIDDEN:
-                    <td className="px-6 py-4 text-center">
-                      <span className={`text-xs font-bold uppercase px-2.5 py-1 rounded-full ${
-                        c.source === "both" ? "bg-purple-500/10 text-purple-600" :
-                        c.source === "online" ? "bg-blue-500/10 text-blue-600" :
-                        "bg-amber-500/10 text-amber-600"
-                      }`}>
-                        {c.source === "both" ? "Online + Bill" : c.source === "online" ? "Online" : "Offline Bill"}
-                      </span>
-                    </td>
-                    */}
-                    <td className="px-6 py-4 text-center font-bold text-foreground">{c.total_orders}</td>
-                    <td className="px-6 py-4 text-right font-bold text-primary">{inr(c.total_value)}</td>
-                    <td className="px-6 py-4 text-center text-muted-foreground text-xs">
-                      {c.last_order_date ? new Date(c.last_order_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button size="sm" variant="outline" onClick={() => openHistory(c)} className="rounded-xl gap-1.5 text-xs h-8">
-                        <Eye className="size-3.5" /> Orders
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
+        
         {!loading && (
-          <div className="border-t border-border px-6 py-3 text-xs text-muted-foreground">
-            Showing {filtered.length} of {customers.length} customers
+          <div className="bg-white px-6 py-4 border-t border-outline-variant/30 flex items-center justify-between sm:px-6">
+            <p className="font-body-md text-body-md text-outline">
+              Showing <span className="font-medium text-on-surface">{filtered.length}</span> of <span className="font-medium text-on-surface">{customers.length}</span> results
+            </p>
           </div>
         )}
       </div>
@@ -226,32 +266,32 @@ export default function CustomersPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl max-h-[85vh] bg-card rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
+              className="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-outline-variant"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/20">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">{selectedCustomer.name}</h2>
-                  <p className="text-sm text-muted-foreground font-mono">+91 {selectedCustomer.phone}</p>
+                  <h2 className="text-xl font-bold text-on-surface">{selectedCustomer.name}</h2>
+                  <p className="text-sm text-outline font-mono">+91 {selectedCustomer.phone}</p>
                 </div>
-                <button onClick={() => setSelectedCustomer(null)} className="rounded-full p-2 hover:bg-muted transition-colors">
+                <button onClick={() => setSelectedCustomer(null)} className="rounded-full p-2 hover:bg-surface-variant transition-colors">
                   <X className="size-5" />
                 </button>
               </div>
 
               {/* Summary */}
-              <div className="grid grid-cols-3 divide-x divide-border border-b border-border">
+              <div className="grid grid-cols-3 divide-x divide-outline-variant border-b border-outline-variant">
                 <div className="p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Total Orders</p>
-                  <p className="text-2xl font-black text-foreground mt-1">{selectedCustomer.total_orders}</p>
+                  <p className="text-xs text-outline">Total Orders</p>
+                  <p className="text-2xl font-black text-on-surface mt-1">{selectedCustomer.total_orders}</p>
                 </div>
                 <div className="p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Total Value</p>
+                  <p className="text-xs text-outline">Total Value</p>
                   <p className="text-2xl font-black text-primary mt-1">{inr(selectedCustomer.total_value)}</p>
                 </div>
                 <div className="p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Last Order</p>
-                  <p className="text-sm font-bold text-foreground mt-1">
+                  <p className="text-xs text-outline">Last Order</p>
+                  <p className="text-sm font-bold text-on-surface mt-1">
                     {selectedCustomer.last_order_date ? new Date(selectedCustomer.last_order_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
                   </p>
                 </div>
@@ -262,22 +302,22 @@ export default function CustomersPage() {
                 {historyLoading ? (
                   <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-primary" /></div>
                 ) : history.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No order history found.</p>
+                  <p className="text-center text-outline py-8">No order history found.</p>
                 ) : (
                   history.map((h) => (
-                    <div key={h.id} className="flex items-center justify-between rounded-xl border border-border bg-background p-3">
+                    <div key={h.id} className="flex items-center justify-between rounded-xl border border-outline-variant bg-surface p-3">
                       <div className="flex items-center gap-3">
                         <div className={`flex size-8 items-center justify-center rounded-full ${h.type === "online" ? "bg-blue-500/10 text-blue-600" : "bg-amber-500/10 text-amber-600"}`}>
                           {h.type === "online" ? <ShoppingBag className="size-4" /> : <Receipt className="size-4" />}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-foreground">{h.label}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                          <p className="text-sm font-semibold text-on-surface">{h.label}</p>
+                          <p className="text-xs text-outline">{new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-foreground">{inr(h.amount)}</p>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground">{h.status}</p>
+                        <p className="font-bold text-on-surface">{inr(h.amount)}</p>
+                        <p className="text-[10px] uppercase font-bold text-outline">{h.status}</p>
                       </div>
                     </div>
                   ))
