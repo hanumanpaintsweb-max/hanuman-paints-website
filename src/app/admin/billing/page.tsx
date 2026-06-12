@@ -474,6 +474,65 @@ export default function BillingPage() {
     }
   }
 
+  const handlePrint = (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
+    const printArea = document.getElementById(targetId)
+    if (!printArea) return
+
+    const bd = providedBillData || savedBillData
+    const billNumber = bd?.bill_number || billNoStr
+    const cName = bd?.customer_name ? `-${bd.customer_name.replace(/[^a-zA-Z0-9]/g, '')}` : (customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : '')
+    const fileName = `${billNumber}${cName}`
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      toast.error("Please allow popups to print")
+      return
+    }
+
+    // Remove tailwind scaling classes to ensure full-size print
+    const cleanHTML = printArea.innerHTML
+      .replace(/scale-\[[^\]]+\]/g, 'scale-100')
+      .replace(/sm:scale-\[[^\]]+\]/g, '')
+      .replace(/md:scale-\[[^\]]+\]/g, '')
+      .replace(/xl:scale-\[[^\]]+\]/g, '')
+      .replace(/lg:scale-100/g, '')
+      .replace(/print:scale-100/g, '');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${fileName}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            body { 
+              margin: 0;
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
+              background: white;
+            }
+            @media print {
+              @page { size: A4 portrait; margin: 5mm; }
+            }
+          </style>
+        </head>
+        <body class="bg-white">
+          <div style="width: 210mm; margin: 0 auto; padding: 20px;">
+            ${cleanHTML}
+          </div>
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print()
+                window.close()
+              }, 800)
+            }
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+  }
+
   const handlePDF = async (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
     const printArea = document.getElementById(targetId)
     if (!printArea) return
@@ -487,28 +546,34 @@ export default function BillingPage() {
       const html2canvas = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
       
-      const originalDisplay = printArea.style.display;
-      const originalPosition = printArea.style.position;
-      const originalLeft = printArea.style.left;
+      const clone = printArea.cloneNode(true) as HTMLElement;
       
-      if (window.getComputedStyle(printArea).display === 'none') {
-        printArea.style.display = 'block';
-      }
-      printArea.style.position = 'absolute';
-      printArea.style.left = '-9999px';
+      clone.style.width = '210mm';
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.transform = 'none';
+      clone.style.display = 'block';
 
-      const canvas = await html2canvas(printArea, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
+      const scaledElements = clone.querySelectorAll('[class*="scale-"]');
+      scaledElements.forEach(el => {
+         el.className = el.className.replace(/scale-\[[^\]]+\]/g, '').replace(/sm:scale-\[[^\]]+\]/g, '').replace(/md:scale-\[[^\]]+\]/g, '').replace(/xl:scale-\[[^\]]+\]/g, '').replace(/lg:scale-100/g, '');
+         el.classList.add('scale-100');
+         (el as HTMLElement).style.transform = 'none';
+      });
+
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      document.body.removeChild(clone);
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(fileName);
-      
-      printArea.style.display = originalDisplay;
-      printArea.style.position = originalPosition;
-      printArea.style.left = originalLeft;
       
       toast.success('PDF downloaded successfully');
     } catch (e) {
@@ -649,7 +714,7 @@ export default function BillingPage() {
                   <Share2 className="size-[18px]" />
                   <span className="font-label-md text-label-md">Share</span>
                 </button>
-                <button onClick={() => handlePDF('print-a4-container', savedBillData)} className="border border-outline-variant text-primary px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-surface-container transition-colors">
+                <button onClick={() => handlePrint('print-a4-container', savedBillData)} className="border border-outline-variant text-primary px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-surface-container transition-colors">
                   <Printer className="size-[18px]" />
                   <span className="font-label-md text-label-md">Print</span>
                 </button>
@@ -1099,7 +1164,7 @@ export default function BillingPage() {
                             <td className="px-6 py-4 text-right">
                               <div className="flex gap-2 justify-end">
                                 <button onClick={() => viewHistoricalBill(b)} className="p-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors" title="View"><Eye className="size-4" /></button>
-                                <button onClick={() => handlePDF('print-a4-container', b)} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
+                                <button onClick={() => handlePrint('print-a4-container', b)} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
                                 <button onClick={() => loadBillForEdit(b)} className="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors" title="Edit"><Edit className="size-4" /></button>
                                 <button onClick={() => deleteBill(b)} className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors" title="Delete"><Trash2 className="size-4" /></button>
                               </div>
@@ -1151,7 +1216,8 @@ export default function BillingPage() {
                     <option value="partial">Mark Partial</option>
                   </select>
                   <button onClick={() => shareWhatsApp()} className="px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Share2 className="size-4" /> Share</button>
-                  <button onClick={() => handlePDF('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 border border-outline-variant hover:bg-surface-container-high rounded-xl font-bold text-sm transition-colors flex items-center gap-2 bg-white text-on-surface"><Printer className="size-4" /> PDF / Print</button>
+                  <button onClick={() => handlePrint('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 border border-outline-variant hover:bg-surface-container-high rounded-xl font-bold text-sm transition-colors flex items-center gap-2 bg-white text-on-surface"><Printer className="size-4" /> Print</button>
+                  <button onClick={() => handlePDF('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Download className="size-4" /> PDF</button>
                   <button onClick={() => setSelectedHistoryBill(null)} className="p-2 bg-surface-variant hover:bg-outline-variant rounded-full transition-colors ml-2"><X className="size-5" /></button>
                 </div>
               </div>
