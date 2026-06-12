@@ -102,14 +102,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       {/* SideNavBar */}
-      <aside className={`fixed left-0 top-0 h-screen w-[280px] bg-[#1e293b] shadow-sm z-50 flex flex-col transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed left-0 top-0 h-screen w-[280px] bg-blue-600 shadow-sm z-50 flex flex-col transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full py-6">
           <div className="px-6 mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-white font-bold text-xl">H</div>
               <div>
-                <h1 className="font-headline-md text-headline-md text-white truncate max-w-[150px]">{shopName}</h1>
-                <p className="font-label-md text-label-md text-outline-variant">Admin Terminal</p>
+                <h1 className="text-xl font-bold text-white tracking-tight leading-tight">{shopName}</h1>
+                <p className="text-[10px] text-blue-200 font-medium tracking-wide mt-0.5">Authorized Dulux Blue Store</p>
               </div>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="md:hidden text-white/50 hover:text-white">
@@ -118,8 +118,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           
           <div className="px-4 mb-6">
-            <button onClick={() => { setSidebarOpen(false); router.push("/admin/billing"); }} className="w-full bg-secondary hover:bg-secondary-container text-white py-2 px-4 rounded-lg font-label-md text-label-md transition-colors flex items-center justify-center gap-2">
-              <Plus className="size-5" />
+            <button onClick={() => { setSidebarOpen(false); router.push("/admin/billing"); }} className="w-full bg-white hover:bg-slate-50 text-green-700 py-2.5 px-4 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm border border-transparent">
+              <Plus className="size-5 text-green-600" />
               New Invoice
             </button>
           </div>
@@ -134,8 +134,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 mx-2 transition-all duration-200 border-l-4 ${
                     active 
-                    ? "text-white border-secondary bg-white/5 rounded-r-lg opacity-90 scale-[0.99]" 
-                    : "text-outline-variant hover:text-white hover:bg-white/5 rounded-lg border-transparent"
+                    ? "text-white border-orange-500 bg-white/10 rounded-r-lg font-semibold shadow-sm" 
+                    : "text-white/80 hover:text-white hover:bg-white/5 rounded-lg border-transparent font-medium"
                   }`}
                 >
                   <item.icon className="size-5" />
@@ -185,82 +185,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all active:scale-95">
-                <Bell className="size-5" />
-                {totalNotifications > 0 && (
-                  <span className="absolute top-1 right-1 flex size-2.5 items-center justify-center rounded-full bg-red-500 ring-2 ring-white" />
-                )}
-              </button>
-              
-              <AnimatePresence>
-                {showNotifications && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-80 rounded-2xl border border-outline-variant bg-white shadow-2xl overflow-hidden z-50"
-                  >
-                    <div className="flex items-center justify-between p-4 border-b border-outline-variant bg-surface-container">
-                      <h3 className="font-bold text-on-surface">Notifications</h3>
-                      {totalNotifications > 0 && <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">{totalNotifications} new</span>}
-                    </div>
-                    
-                    <div className="max-h-80 overflow-y-auto">
-                      {totalNotifications === 0 ? (
-                        <div className="p-6 text-center text-sm text-outline">All caught up! No new notifications.</div>
-                      ) : (
-                        <div className="divide-y divide-outline-variant">
-                          {pendingOrdersCount > 0 && (
-                            <div className="p-4 hover:bg-surface-container transition-colors cursor-pointer" onClick={() => { setShowNotifications(false); router.push('/admin'); }}>
-                              <div className="flex gap-3">
-                                <div className="flex-shrink-0 size-8 bg-blue-500/10 rounded-full flex items-center justify-center"><ShoppingBag className="size-4 text-blue-600"/></div>
-                                <div>
-                                  <p className="text-sm font-medium text-on-surface">New Online Orders</p>
-                                  <p className="text-xs text-outline mt-0.5">You have {pendingOrdersCount} pending orders to process.</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {lowStockCount > 0 && (
-                            <div className="p-4 hover:bg-surface-container transition-colors cursor-pointer" onClick={() => { setShowNotifications(false); router.push('/admin/inventory'); }}>
-                              <div className="flex gap-3">
-                                <div className="flex-shrink-0 size-8 bg-orange-500/10 rounded-full flex items-center justify-center"><Package className="size-4 text-orange-600"/></div>
-                                <div>
-                                  <p className="text-sm font-medium text-on-surface">Low Stock Alert</p>
-                                  <p className="text-xs text-outline mt-0.5">{lowStockCount} items are running below minimum stock level.</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {unpaidBillsCount > 0 && (
-                            <div className="p-4 hover:bg-surface-container transition-colors cursor-pointer" onClick={() => { setShowNotifications(false); router.push('/admin/billing'); }}>
-                              <div className="flex gap-3">
-                                <div className="flex-shrink-0 size-8 bg-red-500/10 rounded-full flex items-center justify-center"><Receipt className="size-4 text-red-600"/></div>
-                                <div>
-                                  <p className="text-sm font-medium text-on-surface">Unpaid Bills Reminder</p>
-                                  <p className="text-xs text-outline mt-0.5">{unpaidBillsCount} offline bills are marked as unpaid or partial.</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {totalNotifications > 0 && (
-                      <div className="p-3 border-t border-outline-variant bg-surface-container text-center">
-                        <button onClick={() => { setPendingOrdersCount(0); setLowStockCount(0); setUnpaidBillsCount(0); }} className="text-xs font-semibold text-primary hover:underline">Mark all as read</button>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            <button className="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all active:scale-95">
-              <CircleUserRound className="size-5" />
-            </button>
+            {/* Notifications and Profile icons removed per CTO directive */}
           </div>
         </header>
 

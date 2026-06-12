@@ -149,9 +149,9 @@ export default function DayBookPage() {
 
   return (
     <div className="p-container-padding bg-background w-full h-full">
-      <div className="max-w-7xl mx-auto space-y-element-gap pb-20">
+      <div className="max-w-7xl mx-auto space-y-element-gap pb-20 print-area">
         {/* Page Header: Date & Actions */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm print:hidden">
           <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-xl p-1 shadow-sm relative group hover:border-primary/30 transition-colors">
             <button onClick={() => changeDate(-1)} className="p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all text-on-surface-variant hover:text-primary">
               <span className="material-symbols-outlined size-5 flex items-center justify-center">chevron_left</span>

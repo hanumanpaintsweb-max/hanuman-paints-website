@@ -89,6 +89,7 @@ export default function BillingPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
   const [globalDiscount, setGlobalDiscount] = useState<number>(5)
+  const [globalGst, setGlobalGst] = useState<number | "Item-wise">("Item-wise")
   const [customerRecord, setCustomerRecord] = useState<any>(null)
   const [billMode, setBillMode] = useState<"MRP" | "DPL">("MRP")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -572,17 +573,18 @@ export default function BillingPage() {
       {/* TopAppBar for Billing */}
       <header className="bg-surface border-b border-outline-variant w-full h-16 flex justify-between items-center px-container-padding z-20 shrink-0">
         <div className="flex items-center gap-6">
-          <h1 className="font-headline-sm text-headline-sm text-on-surface">Billing</h1>
-          <nav className="flex gap-4">
+          <Receipt className="size-6 text-primary" />
+          <nav className="flex p-1 bg-surface-container rounded-lg border border-outline-variant/50">
             <button 
               onClick={() => setActiveTab("New Bill")}
-              className={`px-1 pb-1 font-label-md text-label-md transition-all relative flex items-center justify-center ${activeTab === "New Bill" ? "text-primary border-b-2 border-secondary" : "text-on-surface-variant hover:text-primary"}`}
+              className={`px-4 py-1.5 font-bold text-sm rounded-md transition-all ${activeTab === "New Bill" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
             >
               New Bill
             </button>
+            <div className="w-px bg-outline-variant/50 mx-1 my-1"></div>
             <button 
               onClick={() => setActiveTab("Bill History")}
-              className={`px-1 pb-1 font-label-md text-label-md transition-all relative flex items-center justify-center ${activeTab === "Bill History" ? "text-primary border-b-2 border-secondary" : "text-on-surface-variant hover:text-primary"}`}
+              className={`px-4 py-1.5 font-bold text-sm rounded-md transition-all ${activeTab === "Bill History" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"}`}
             >
               Bill History
             </button>
@@ -767,14 +769,31 @@ export default function BillingPage() {
                     <label className="font-label-md text-label-md text-on-surface-variant">Apply Discount</label>
                     <div className="flex gap-2 items-center flex-wrap">
                       {[5, 10, 15].map(pct => (
-                        <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md ${globalDiscount === pct ? 'border border-primary bg-primary-container text-on-primary-container' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
+                        <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === pct ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
                           {pct}%
                         </button>
                       ))}
                       <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface" placeholder="Custom %" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-label-md text-label-md text-on-surface-variant">Global GST</label>
+                      <select disabled={!!savedBillData} value={globalGst} onChange={(e) => {
+                        const val = e.target.value === "Item-wise" ? "Item-wise" : parseFloat(e.target.value);
+                        setGlobalGst(val);
+                        if (typeof val === "number") {
+                          setItems(items.map(item => ({ ...item, taxRate: val })));
+                        }
+                      }} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
+                        <option value="Item-wise">Item-wise</option>
+                        <option value="0">0%</option>
+                        <option value="5">5%</option>
+                        <option value="12">12%</option>
+                        <option value="18">18%</option>
+                        <option value="28">28%</option>
+                      </select>
+                    </div>
                     <div className="flex flex-col gap-1">
                       <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
                       <select disabled={!!savedBillData} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
@@ -820,80 +839,116 @@ export default function BillingPage() {
               <div className="h-8"></div>
             </div>
 
-            {/* Right Column (Live Preview) */}
-            <div className="hidden lg:flex w-[40%] h-full bg-surface-variant/50 p-container-padding justify-center items-start overflow-y-auto border-l border-outline-variant print:hidden">
-              <div className="bg-white w-full max-w-md rounded-xl shadow-lg border border-outline-variant p-8 flex flex-col gap-6">
-                <div className="text-center border-b border-outline-variant pb-6">
-                  <h2 className="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wider">Hanuman Paints</h2>
-                  <p className="font-body-md text-body-md text-on-surface-variant mt-1">Authorized Dulux Dealer</p>
-                  <p className="font-body-md text-body-md text-on-surface-variant">GSTIN: 10DKGPK7361R1Z1</p>
-                  <h3 className="font-label-md text-label-md text-primary mt-4 border border-primary inline-block px-4 py-1 rounded-full">TAX INVOICE</h3>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <div className="flex flex-col gap-1 font-body-md text-body-md text-on-surface">
-                    <span className="font-label-md text-label-md text-on-surface-variant">Billed To:</span>
-                    <span>{customerName || "—"}</span>
-                    <span>{customerPhone || "—"}</span>
-                  </div>
-                  <div className="flex flex-col gap-1 font-body-md text-body-md text-on-surface text-right">
-                    <span className="font-label-md text-label-md text-on-surface-variant">Invoice Details:</span>
-                    <span>Inv #: {billNoStr}</span>
-                    <span>Date: {new Date().toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <table className="w-full text-left font-body-md text-body-md mt-4">
-                  <thead>
-                    <tr className="border-b border-outline-variant text-on-surface-variant font-label-md text-label-md">
-                      <th className="py-2">Item</th>
-                      <th className="py-2 text-center">Qty</th>
-                      <th className="py-2 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-on-surface">
-                    {items.filter(i => !!i.productId).map((item, idx) => {
-                      const product = PRODUCTS.find(p => p.id === item.productId);
-                      if(!product) return null;
-                      const price = item.mrp || 0;
-                      const cPrice = item.colorantCost || 0;
-                      let ltrQty = 1;
-                      if(item.size.includes('Ltr')) ltrQty = parseFloat(item.size);
-                      if(item.size.includes('ml')) ltrQty = parseFloat(item.size) / 1000;
-                      const colorantTotal = (cPrice * ltrQty);
-                      const itemTotal = (price + colorantTotal) * item.qty;
-                      return (
-                        <tr key={idx} className="border-b border-outline-variant/30">
-                          <td className="py-3">
-                            {product.name}
-                            <span className="block text-xs text-on-surface-variant">Base: {item.size}, Rate: {price} {colorantTotal > 0 && `(+ ${Math.round(colorantTotal)} Col)`}</span>
-                          </td>
-                          <td className="py-3 text-center">{item.qty}</td>
-                          <td className="py-3 text-right">{inr(itemTotal)}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-                <div className="flex flex-col gap-2 font-body-md text-body-md ml-auto w-64 pt-4">
-                  <div className="flex justify-between text-on-surface-variant">
-                    <span>Subtotal:</span>
-                    <span className="text-right w-24">{inr(calculations.subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-on-surface-variant">
-                    <span>Discount:</span>
-                    <span className="text-right w-24">-{inr(calculations.discount)}</span>
-                  </div>
-                  <div className="flex justify-between text-on-surface-variant">
-                    <span>GST (18%):</span>
-                    <span className="text-right w-24">{inr(calculations.gst)}</span>
-                  </div>
-                  <div className="flex justify-between font-headline-sm text-headline-sm text-on-surface border-t-2 border-outline-variant pt-3 mt-2">
-                    <span className="font-bold">Total:</span>
-                    <span className="text-right w-24 font-bold text-primary">{inr(finalTotal)}</span>
-                  </div>
-                </div>
-                <div className="text-center font-label-md text-label-md text-on-surface-variant mt-8 pt-4 border-t border-outline-variant">
-                  Thank you for your business!
-                </div>
+            {/* Right Column (Live Preview / A4 Sheet) */}
+            <div className="hidden lg:flex w-[40%] bg-surface-container-highest border-l border-outline-variant flex-col items-center justify-start overflow-y-auto pt-8 pb-20 print:hidden relative">
+              <div className="sticky top-0 z-10 w-[210mm] text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
+              
+              <div id="print-a4-container" ref={printRef} className="print-area flex flex-col items-center drop-shadow-md">
+                {(() => {
+                  const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
+                  if (items.length > 0) {
+                    for (let i = 0; i < items.length; i += 5) itemChunks.push(items.slice(i, i + 5));
+                  }
+                  return itemChunks.map((chunk, chunkIndex) => (
+                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.5] xl:scale-[0.6] print:scale-100 print:shadow-none print:w-full print:p-0 ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                      {/* PDF Header */}
+                      <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                        <div>
+                          <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
+                          <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
+                          <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
+                          <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                          <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
+                          <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
+                        </div>
+                      </div>
+
+                      {/* Customer Info */}
+                      <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                        <div className="flex justify-between">
+                          <div>
+                            <div className="font-bold text-lg">{customerName || "Cash Customer"}</div>
+                            <div className="text-sm text-gray-600">{customerPhone}</div>
+                            {customerAddress && <div className="text-sm text-gray-600">{customerAddress}</div>}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Items Table */}
+                      <table className="w-full mb-6 border-collapse">
+                        <thead>
+                          <tr className="bg-gray-800 text-white text-xs uppercase">
+                            <th className="py-2 px-2 text-left">S.No</th>
+                            <th className="py-2 px-2 text-left">Item Description</th>
+                            <th className="py-2 px-2 text-center">Qty</th>
+                            <th className="py-2 px-2 text-right">{billMode === "DPL" ? "DPL" : "MRP"}</th>
+                            <th className="py-2 px-2 text-right">Disc%</th>
+                            <th className="py-2 px-2 text-right">Taxable</th>
+                            <th className="py-2 px-2 text-right">GST%</th>
+                            <th className="py-2 px-2 text-right">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm border-b-2 border-gray-800">
+                          {chunk.map((item, localIndex) => {
+                            const globalIndex = chunkIndex * 5 + localIndex;
+                            const gross = (item.mrp + (item.colorantCost || 0)) * item.qty; const disc = gross * (globalDiscount/100);
+                            const taxable = gross - disc; const gst = taxable * (item.taxRate/100);
+                            return (
+                              <tr key={globalIndex} className="border-b border-gray-200">
+                                <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                <td className="py-3 px-2">
+                                  <strong>{item.name}</strong><br/>
+                                  <span className="text-xs text-gray-500">{item.size}</span>
+                                  {item.colorCode && (
+                                    <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
+                                      <div>└ Color Code: {item.colorCode}</div>
+                                      <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="py-3 px-2 text-center">{item.qty}</td>
+                                <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                <td className="py-3 px-2 text-right">{globalDiscount}%</td>
+                                <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
+                                <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                                <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+
+                      {chunkIndex === itemChunks.length - 1 && (
+                        <div className="flex justify-between items-end">
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <p><strong>Terms & Conditions:</strong></p>
+                            <p>1. Goods once sold cannot be returned or exchanged.</p>
+                            <p>2. Subject to Madhubani jurisdiction only.</p>
+                            <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
+                            {billMode === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
+                          </div>
+                          <div className="w-64">
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{calculations.taxable.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{sgst.toFixed(2)}</span></div>
+                            <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
+                          </div>
+                        </div>
+                      )}
+
+                      {chunkIndex === itemChunks.length - 1 && (
+                        <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                        </div>
+                      )}
+                    </div>
+                  ))
+                })()}
               </div>
             </div>
           </>
@@ -967,52 +1022,149 @@ export default function BillingPage() {
         )}
       </main>
 
-      {/* History Bill View Modal */}
+      {/* Bill History Modal */}
       <AnimatePresence>
         {selectedHistoryBill && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-border flex flex-col max-h-[90vh]">
-              <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
-                <h3 className="font-bold">Bill Details - {selectedHistoryBill.bill_number}</h3>
-                <button onClick={() => setSelectedHistoryBill(null)} className="p-1 hover:bg-muted rounded-full"><X className="size-5" /></button>
-              </div>
-              <div className="p-6 overflow-y-auto">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm bg-muted/20 p-4 rounded-xl border border-border/50">
-                    <div><p className="text-muted-foreground text-xs">Customer</p><p className="font-bold">{selectedHistoryBill.customer_name}</p></div>
-                    <div><p className="text-muted-foreground text-xs">Phone</p><p className="font-medium">{selectedHistoryBill.customer_phone}</p></div>
-                    <div><p className="text-muted-foreground text-xs">Date</p><p className="font-medium">{new Date(selectedHistoryBill.created_at).toLocaleString()}</p></div>
-                    <div><p className="text-muted-foreground text-xs">Type</p><p className="font-bold text-primary">{selectedHistoryBill.bill_type} BILL</p></div>
-                  </div>
-                  <div className="border border-border rounded-xl overflow-hidden">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-muted text-muted-foreground">
-                        <tr><th className="p-2">Item</th><th className="p-2 text-center">Qty</th><th className="p-2 text-right">Total</th></tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/60">
-                        {selectedHistoryBill.items.map((it: any, i: number) => (
-                          <tr key={i}><td className="p-2 font-medium">{it.name} <span className="text-muted-foreground text-[10px]">({it.size})</span></td><td className="p-2 text-center">{it.quantity}</td><td className="p-2 text-right">{inr(it.total)}</td></tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex justify-between items-center bg-primary/5 p-4 rounded-xl border border-primary/20">
-                    <span className="font-bold text-muted-foreground">Grand Total</span>
-                    <span className="text-xl font-black text-primary">{inr(selectedHistoryBill.total_amount)}</span>
-                  </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedHistoryBill(null)} />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-surface rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-outline-variant"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Receipt className="size-6 text-primary" /> Bill Preview
+                  </h2>
+                  <p className="text-sm text-on-surface-variant mt-1">
+                    #{selectedHistoryBill.bill_number} • {new Date(selectedHistoryBill.created_at).toLocaleString()}
+                  </p>
                 </div>
-              </div>
-              <div className="p-4 border-t border-border bg-muted/30 flex justify-between gap-2">
-                <div className="flex gap-2">
-                  <select value={selectedHistoryBill.payment_status} onChange={(e) => updateBillStatus(selectedHistoryBill.id, e.target.value)} className="bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none font-medium">
+                <div className="flex gap-2 items-center">
+                  <select value={selectedHistoryBill.payment_status} onChange={(e) => updateBillStatus(selectedHistoryBill.id, e.target.value)} className="bg-white border border-outline-variant rounded-lg px-3 py-2 text-sm outline-none font-medium mr-2">
                     <option value="paid">Mark Paid</option>
                     <option value="unpaid">Mark Unpaid</option>
                     <option value="partial">Mark Partial</option>
                   </select>
+                  <button onClick={() => shareWhatsApp()} className="px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Share2 className="size-4" /> Share</button>
+                  <button onClick={() => handlePDF('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 border border-outline-variant hover:bg-surface-container-high rounded-xl font-bold text-sm transition-colors flex items-center gap-2 bg-white text-on-surface"><Printer className="size-4" /> PDF / Print</button>
+                  <button onClick={() => setSelectedHistoryBill(null)} className="p-2 bg-surface-variant hover:bg-outline-variant rounded-full transition-colors ml-2"><X className="size-5" /></button>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => shareWhatsApp()} className="bg-[#25D366] hover:bg-[#20bd5a] text-white gap-2"><Share2 className="size-4" /> Share</Button>
-                  <Button onClick={() => handlePDF('print-a4-container', selectedHistoryBill)} variant="outline" className="gap-2"><Printer className="size-4" /> Print</Button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 bg-surface-variant/20 flex justify-center">
+                <div id="history-bill-print-area" className="print-area flex flex-col items-center">
+                  {(() => {
+                    const itemsArr = selectedHistoryBill.items || [];
+                    const itemChunks: BillItem[][] = itemsArr.length > 0 ? [] : [[]];
+                    if (itemsArr.length > 0) {
+                      for (let i = 0; i < itemsArr.length; i += 5) itemChunks.push(itemsArr.slice(i, i + 5));
+                    }
+                    return itemChunks.map((chunk, chunkIndex) => (
+                      <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-full print:p-0 ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                        {/* PDF Header */}
+                        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                          <div>
+                            <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
+                            <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
+                            <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                            <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
+                            <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
+                          </div>
+                        </div>
+
+                        {/* Customer Info */}
+                        <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
+                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                          <div className="flex justify-between">
+                            <div>
+                              <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
+                              <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
+                              {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Items Table */}
+                        <table className="w-full mb-6 border-collapse">
+                          <thead>
+                            <tr className="bg-gray-800 text-white text-xs uppercase">
+                              <th className="py-2 px-2 text-left">S.No</th>
+                              <th className="py-2 px-2 text-left">Item Description</th>
+                              <th className="py-2 px-2 text-center">Qty</th>
+                              <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
+                              <th className="py-2 px-2 text-right">Taxable</th>
+                              <th className="py-2 px-2 text-right">GST%</th>
+                              <th className="py-2 px-2 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-sm border-b-2 border-gray-800">
+                            {chunk.map((item: BillItem, localIndex: number) => {
+                              const globalIndex = chunkIndex * 5 + localIndex;
+                              const taxable = (item.mrp + (item.colorantCost || 0)) * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
+                              const gst = taxable * (item.taxRate/100);
+                              return (
+                                <tr key={globalIndex} className="border-b border-gray-200">
+                                  <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                  <td className="py-3 px-2">
+                                    <strong>{item.name}</strong><br/>
+                                    <span className="text-xs text-gray-500">{item.size}</span>
+                                    {item.colorCode && (
+                                      <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
+                                        <div>└ Color Code: {item.colorCode}</div>
+                                        <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-2 text-center">{item.qty}</td>
+                                  <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                                  <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+
+                        {/* Totals */}
+                        {chunkIndex === itemChunks.length - 1 && (
+                          <div className="flex justify-between items-end">
+                            <div className="text-xs text-gray-500 space-y-1">
+                              <p><strong>Terms & Conditions:</strong></p>
+                              <p>1. Goods once sold cannot be returned or exchanged.</p>
+                              <p>2. Subject to Madhubani jurisdiction only.</p>
+                              <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
+                              {selectedHistoryBill.bill_type === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
+                            </div>
+                            <div className="w-64">
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
+                              {selectedHistoryBill.discount_amount > 0 && (
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
+                              )}
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Taxable Value</span><span>{selectedHistoryBill.taxable_value?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-sm py-1 border-b border-gray-800"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
+                              <div className="flex justify-between text-xl font-black py-2"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
+                            </div>
+                          </div>
+                        )}
+
+                        {chunkIndex === itemChunks.length - 1 && (
+                          <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  })()}
                 </div>
               </div>
             </motion.div>
