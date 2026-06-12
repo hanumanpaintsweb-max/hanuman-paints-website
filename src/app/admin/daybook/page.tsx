@@ -148,125 +148,145 @@ export default function DayBookPage() {
   const totalPaidOut = entries.filter(e => e.type === 'Ledger Paid' && e.status === 'paid').reduce((a, b) => a + b.amount, 0)
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-            <CalendarRange className="size-8 text-primary" /> Day Book
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">Daily financial summary and transactions.</p>
+    <div className="p-container-padding bg-background w-full h-full">
+      <div className="max-w-7xl mx-auto space-y-element-gap pb-20">
+        {/* Page Header: Date & Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm">
+          <div className="flex items-center gap-4">
+            <button onClick={() => changeDate(-1)} className="p-2 rounded-lg border border-outline-variant hover:bg-surface-variant/50 transition-colors text-on-surface">
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            <div className="flex flex-col relative">
+              <span className="font-headline-md text-headline-md text-on-surface">
+                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+              <span className="font-body-md text-body-md text-on-surface-variant flex items-center gap-1 cursor-pointer hover:text-primary">
+                <span className="material-symbols-outlined text-[18px]">calendar_today</span> 
+                <input 
+                  type="date" 
+                  value={selectedDate} 
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-transparent outline-none border-none cursor-pointer absolute opacity-0 w-full h-full left-0 top-0"
+                />
+                Select Date
+              </span>
+            </div>
+            <button onClick={() => changeDate(1)} disabled={selectedDate === new Date().toISOString().split('T')[0]} className="p-2 rounded-lg border border-outline-variant hover:bg-surface-variant/50 transition-colors text-on-surface disabled:opacity-50">
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button onClick={handleExportCSV} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-variant/50 transition-colors bg-white">
+              <span className="material-symbols-outlined text-[18px]">download</span> Export CSV
+            </button>
+            <button onClick={handlePrint} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-secondary text-white rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">
+              <span className="material-symbols-outlined text-[18px]">print</span> Print Daily Report
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExportCSV} className="gap-2 bg-white"><FileSpreadsheet className="size-4" /> CSV</Button>
-          <Button variant="outline" onClick={handlePrint} className="gap-2 bg-white"><Printer className="size-4" /> Print</Button>
-        </div>
-      </div>
 
-      {/* Date Navigator */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
-        <Button variant="ghost" onClick={() => changeDate(-1)} className="gap-2">
-          <ChevronLeft className="size-4" /> Prev Day
-        </Button>
-        <div className="flex items-center gap-3">
-          <CalendarIcon className="size-5 text-primary" />
-          <input 
-            type="date" 
-            value={selectedDate} 
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="text-lg font-bold bg-transparent outline-none border-none cursor-pointer"
-          />
-        </div>
-        <Button variant="ghost" onClick={() => changeDate(1)} disabled={selectedDate === new Date().toISOString().split('T')[0]} className="gap-2">
-          Next Day <ChevronRight className="size-4" />
-        </Button>
-      </div>
+        {/* Summary Cards Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-primary/30 transition-colors">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Sales</h3>
+              <div className="p-2 bg-primary-fixed/30 rounded-lg text-primary">
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
+              </div>
+            </div>
+            <div className="font-headline-lg text-headline-lg text-on-surface">{inr(totalSales)}</div>
+          </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm">
-          <div className="flex items-center gap-2 text-slate-500 mb-2">
-            <Activity className="size-4" /> <span className="text-sm font-semibold">Total Sales</span>
+          <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-emerald-500/30 transition-colors">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Received</h3>
+              <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance_wallet</span>
+              </div>
+            </div>
+            <div className="font-headline-lg text-headline-lg text-emerald-700">{inr(totalReceived)}</div>
           </div>
-          <div className="text-2xl font-black text-slate-900">{inr(totalSales)}</div>
-        </div>
-        <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-xl shadow-sm">
-          <div className="flex items-center gap-2 text-emerald-600 mb-2">
-            <Wallet className="size-4" /> <span className="text-sm font-semibold">Received (Cash/Bank)</span>
-          </div>
-          <div className="text-2xl font-black text-emerald-700">{inr(totalReceived)}</div>
-        </div>
-        <div className="bg-amber-50 border border-amber-200 p-5 rounded-xl shadow-sm">
-          <div className="flex items-center gap-2 text-amber-600 mb-2">
-            <CreditCard className="size-4" /> <span className="text-sm font-semibold">Credit/Udhar Given</span>
-          </div>
-          <div className="text-2xl font-black text-amber-700">{inr(totalCredit)}</div>
-        </div>
-        <div className="bg-rose-50 border border-rose-200 p-5 rounded-xl shadow-sm">
-          <div className="flex items-center gap-2 text-rose-600 mb-2">
-            <ArrowUpRight className="size-4" /> <span className="text-sm font-semibold">Paid Out</span>
-          </div>
-          <div className="text-2xl font-black text-rose-700">{inr(totalPaidOut)}</div>
-        </div>
-      </div>
 
-      {/* Transactions Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between print:hidden">
-          <h2 className="font-bold text-slate-900">All Transactions</h2>
-          <div className="text-sm font-semibold text-slate-500">{entries.length} entries</div>
+          <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-amber-500/30 transition-colors">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Credit Given</h3>
+              <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card</span>
+              </div>
+            </div>
+            <div className="font-headline-lg text-headline-lg text-amber-700">{inr(totalCredit)}</div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between group hover:border-rose-500/30 transition-colors">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Paid Out</h3>
+              <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
+                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>north_east</span>
+              </div>
+            </div>
+            <div className="font-headline-lg text-headline-lg text-rose-700">{inr(totalPaidOut)}</div>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
-              <tr>
-                <th className="px-6 py-4 font-medium">Time</th>
-                <th className="px-6 py-4 font-medium">Type</th>
-                <th className="px-6 py-4 font-medium">Customer/Party</th>
-                <th className="px-6 py-4 font-medium text-right">Amount</th>
-                <th className="px-6 py-4 font-medium text-center">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Method</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan={6} className="text-center py-12 text-slate-500">Loading transactions...</td></tr>
-              ) : entries.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-slate-500">No transactions recorded on this date.</td></tr>
-              ) : entries.map(entry => (
-                <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 text-slate-500 font-medium">{entry.time}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      entry.type.includes('Order') ? 'bg-blue-100 text-blue-700' :
-                      entry.type.includes('Bill') ? 'bg-purple-100 text-purple-700' :
-                      entry.type === 'Ledger Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                    }`}>
-                      {entry.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-bold text-slate-900">{entry.name}</td>
-                  <td className="px-6 py-4 text-right font-black text-slate-900">{inr(entry.amount)}</td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`font-bold capitalize ${
-                      entry.status === 'paid' ? 'text-emerald-600' :
-                      entry.status === 'partial' ? 'text-amber-600' :
-                      entry.status === 'unpaid' ? 'text-rose-600' : 'text-slate-600'
-                    }`}>
-                      {entry.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider border border-slate-200 px-2 py-1 rounded-md bg-slate-50">
-                      {entry.method}
-                    </span>
-                  </td>
+
+        {/* Transaction Table Section */}
+        <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-outline-variant/30 flex justify-between items-center">
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">Day's Transactions</h3>
+            <div className="text-sm font-semibold text-outline">{entries.length} entries</div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-bright border-b border-outline-variant/30">
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Time</th>
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Type</th>
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Customer / Party</th>
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Status</th>
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">Method</th>
+                  <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold text-right">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/20 font-body-md text-body-md text-on-surface">
+                {loading ? (
+                  <tr><td colSpan={6} className="text-center py-12 text-outline">Loading transactions...</td></tr>
+                ) : entries.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center py-12 text-outline">No transactions recorded on this date.</td></tr>
+                ) : entries.map(entry => (
+                  <tr key={entry.id} className="hover:bg-surface-variant/5 transition-colors group">
+                    <td className="p-4 text-on-surface-variant">{entry.time}</td>
+                    <td className="p-4 font-medium text-primary">
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        entry.type.includes('Order') ? 'bg-blue-100 text-blue-700' :
+                        entry.type.includes('Bill') ? 'bg-purple-100 text-purple-700' :
+                        entry.type === 'Ledger Received' ? 'bg-[#d1fae5] text-[#065f46]' : 'bg-[#fee2e2] text-[#991b1b]'
+                      }`}>
+                        {entry.type}
+                      </span>
+                    </td>
+                    <td className="p-4 font-bold">{entry.name}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                        entry.status === 'paid' ? 'bg-[#d1fae5] text-[#065f46] border-[#a7f3d0]' :
+                        entry.status === 'partial' ? 'bg-[#ffedd5] text-[#9a3412] border-[#fed7aa]' :
+                        entry.status === 'unpaid' ? 'bg-[#fee2e2] text-[#991b1b] border-[#fecaca]' : 'bg-surface-variant text-on-surface-variant border-outline-variant'
+                      }`}>
+                        {entry.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-xs font-semibold text-outline uppercase tracking-wider border border-outline-variant/50 px-2 py-1 rounded-md bg-surface-bright">
+                        {entry.method}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right font-bold text-on-surface">{inr(entry.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-      
     </div>
   )
 }
