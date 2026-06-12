@@ -33,7 +33,7 @@ BEGIN
         order_id,
         bill_type
     ) VALUES (
-        gen_random_uuid(),
+        COALESCE((p_bill->>'id')::uuid, gen_random_uuid()),
         p_bill->>'bill_number',
         p_bill->>'customer_name',
         p_bill->>'customer_phone',
@@ -55,6 +55,7 @@ BEGIN
     -- 2. Insert into ledger if p_ledger is provided
     IF p_ledger IS NOT NULL THEN
         INSERT INTO ledger (
+            id,
             customer_name,
             customer_phone,
             type,
@@ -65,6 +66,7 @@ BEGIN
             bill_number,
             status
         ) VALUES (
+            COALESCE((p_ledger->>'id')::uuid, gen_random_uuid()),
             p_ledger->>'customer_name',
             p_ledger->>'customer_phone',
             p_ledger->>'type',
