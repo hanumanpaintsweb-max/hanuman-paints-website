@@ -223,35 +223,6 @@ export default function SettingsPage() {
              </button>
           </div>
         </div>
-      </section>
-
-
-
-      {/* Section 4: System & Security */}
-      <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden mb-12">
-        <div className="border-b border-outline-variant/30 p-6 flex items-center gap-3 bg-surface/50">
-          <span className="material-symbols-outlined text-primary-container">shield</span>
-          <h3 className="font-headline-sm text-headline-sm">System & Security</h3>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="p-5 border border-outline-variant rounded-lg bg-surface-container-low flex items-start gap-4">
-              <div className="size-12 shrink-0 bg-surface rounded-full shadow-sm text-on-surface-variant flex items-center justify-center">
-                <span className="material-symbols-outlined">database</span>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-label-md text-label-md text-on-surface mb-1">Backup Data</h4>
-                <p className="text-sm text-on-surface-variant mb-4">Download a complete backup of your current database including bills, customers, and ledger.</p>
-                <button onClick={handleBackup} disabled={saving} className="px-4 py-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors shadow-sm flex items-center gap-2">
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : <span className="material-symbols-outlined text-[18px]">download</span>}
-                  Generate Backup
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </div>
+      </section>    </div>
   )
 }
