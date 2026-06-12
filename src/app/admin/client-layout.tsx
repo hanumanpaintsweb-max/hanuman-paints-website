@@ -102,7 +102,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       {/* SideNavBar */}
-      <aside className={`fixed left-0 top-0 h-screen w-[280px] bg-blue-600 shadow-sm z-50 flex flex-col transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed left-0 top-0 h-screen w-[280px] bg-slate-800 shadow-sm z-50 flex flex-col transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full py-6">
           <div className="px-6 mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -178,10 +178,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           
           <div className="flex-1 max-w-md mx-8 hidden sm:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-outline" />
-              <input className="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-full text-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none" placeholder="Search..." type="text" />
-            </div>
+            {/* Search removed per CTO directive */}
           </div>
           
           <div className="flex items-center gap-2">

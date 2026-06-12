@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef, Fragment } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { 
   Plus, Trash2, Printer, Download, MessageCircle, FileText, 
@@ -90,6 +90,13 @@ export default function BillingPage() {
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
   const [globalDiscount, setGlobalDiscount] = useState<number>(5)
   const [globalGst, setGlobalGst] = useState<number | "Item-wise">("Item-wise")
+
+  const handleGlobalGstChange = (val: number | "Item-wise") => {
+    setGlobalGst(val)
+    if (typeof val === "number") {
+      setItems(prevItems => prevItems.map(item => ({ ...item, taxRate: val })))
+    }
+  }
   const [customerRecord, setCustomerRecord] = useState<any>(null)
   const [billMode, setBillMode] = useState<"MRP" | "DPL">("MRP")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
@@ -189,19 +196,41 @@ export default function BillingPage() {
 
   // --- Calculations ---
   const calculations = useMemo(() => {
-    return items.reduce((acc, item) => {
-      const gross = (item.mrp + (item.colorantCost || 0)) * item.qty
-      const discountVal = gross * (globalDiscount / 100)
-      const taxable = gross - discountVal
-      const gstVal = taxable * (item.taxRate / 100)
-      return {
-        subtotal: acc.subtotal + gross,
-        discount: acc.discount + discountVal,
-        taxable: acc.taxable + taxable,
-        gst: acc.gst + gstVal,
-        total: acc.total + taxable + gstVal,
+    let subtotal = 0
+    let discount = 0
+    let taxable = 0
+    let gst = 0
+    
+    items.forEach(item => {
+      if(!item.productId) return
+      
+      const price = item.mrp || 0
+      const cPrice = item.colorantCost || 0
+      let ltrQty = 1
+      if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1
+      if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000
+      
+      const itemGross = (price + (cPrice * ltrQty)) * item.qty
+      const itemDisc = itemGross * (globalDiscount / 100)
+      let itemTaxable = itemGross - itemDisc
+      
+      let itemGst = 0
+      if (item.taxRate > 0) {
+        itemGst = itemTaxable * (item.taxRate / 100)
+      } else if (item.taxRate < 0) {
+        const rate = Math.abs(item.taxRate) / 100
+        const originalTotal = itemTaxable
+        itemTaxable = originalTotal / (1 + rate)
+        itemGst = originalTotal - itemTaxable
       }
-    }, { subtotal: 0, discount: 0, taxable: 0, gst: 0, total: 0 })
+      
+      subtotal += itemGross
+      discount += itemDisc
+      taxable += itemTaxable
+      gst += itemGst
+    })
+    
+    return { subtotal, discount, taxable, gst, total: taxable + gst }
   }, [items, globalDiscount])
 
   const cgst = calculations.gst / 2
@@ -663,10 +692,10 @@ export default function BillingPage() {
                     </div>
                   </div>
                   <div className="col-span-2 flex flex-col gap-2">
-                    <label className="font-label-md text-label-md text-on-surface-variant">Address</label>
+                    <label className="font-label-md text-label-md text-on-surface-variant">Address (Optional)</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-2.5 text-outline size-5" />
-                      <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Address" />
+                      <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Address (Optional)" />
                     </div>
                   </div>
                 </div>
@@ -703,16 +732,46 @@ export default function BillingPage() {
                           <input type="number" min="1" disabled={!!savedBillData} value={item.qty} onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" />
                         </div>
                         
-                        <div className="w-24 flex flex-col gap-1">
+                        <div className="w-36 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Unit</label>
-                          <select disabled={!!savedBillData || !product} value={item.size} onChange={(e) => updateItem(item.id, { size: e.target.value, mrp: product?.sizes?.find(s => s.size === e.target.value)?.mrp || 0 })} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface bg-white">
-                            {product ? product.sizes.map(s => <option key={s.size} value={s.size}>{s.size}</option>) : <option>--</option>}
-                          </select>
+                          <div className="flex bg-white rounded-lg border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary overflow-hidden h-[38px]">
+                            <input 
+                              type="number" 
+                              disabled={!!savedBillData || !product} 
+                              value={parseFloat(item.size) || ""} 
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const currentUnit = item.size.replace(/[^a-zA-Z]/g, '').toUpperCase() || 'L';
+                                const unit = currentUnit === 'ML' ? 'ML' : 'L';
+                                const newSize = `${val} ${unit}`;
+                                const foundSize = product?.sizes?.find(s => s.size.toLowerCase() === newSize.toLowerCase() || s.size.toLowerCase() === `${val} ltr`);
+                                updateItem(item.id, { size: newSize, mrp: foundSize ? foundSize.mrp : item.mrp });
+                              }}
+                              className="w-full px-2 outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder="0"
+                            />
+                            <div className="w-px bg-outline-variant"></div>
+                            <select 
+                              disabled={!!savedBillData || !product}
+                              value={(item.size.replace(/[^a-zA-Z]/g, '').toUpperCase() === 'ML') ? 'ML' : 'L'}
+                              onChange={(e) => {
+                                const unit = e.target.value;
+                                const val = parseFloat(item.size) || "";
+                                const newSize = `${val} ${unit}`;
+                                const foundSize = product?.sizes?.find(s => s.size.toLowerCase() === newSize.toLowerCase() || s.size.toLowerCase() === `${val} ltr`);
+                                updateItem(item.id, { size: newSize, mrp: foundSize ? foundSize.mrp : item.mrp });
+                              }}
+                              className="w-16 bg-surface-container-low px-1 outline-none text-sm cursor-pointer"
+                            >
+                              <option value="ML">ML</option>
+                              <option value="L">L</option>
+                            </select>
+                          </div>
                         </div>
                         
                         <div className="w-32 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Rate</label>
-                          <input type="number" disabled={!!savedBillData} value={item.mrp || 0} onChange={(e) => updateItem(item.id, { mrp: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant" />
+                          <input type="number" disabled={!!savedBillData} value={item.mrp || 0} onChange={(e) => updateItem(item.id, { mrp: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 h-[38px] border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
                         
                         {!savedBillData && (
@@ -768,47 +827,43 @@ export default function BillingPage() {
                   <div className="flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Apply Discount</label>
                     <div className="flex gap-2 items-center flex-wrap">
-                      {[5, 10, 15].map(pct => (
+                      {[0, 5, 10, 15].map(pct => (
                         <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === pct ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
                           {pct}%
                         </button>
                       ))}
-                      <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface" placeholder="Custom %" />
+                      <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Custom %" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-                    <div className="flex flex-col gap-1">
-                      <label className="font-label-md text-label-md text-on-surface-variant">Global GST</label>
-                      <select disabled={!!savedBillData} value={globalGst} onChange={(e) => {
-                        const val = e.target.value === "Item-wise" ? "Item-wise" : parseFloat(e.target.value);
-                        setGlobalGst(val);
-                        if (typeof val === "number") {
-                          setItems(items.map(item => ({ ...item, taxRate: val })));
+                  
+                  <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
+                    <label className="font-label-md text-label-md text-on-surface-variant">GST Configuration</label>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      <button onClick={() => handleGlobalGstChange(18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>+18%</button>
+                      <button onClick={() => handleGlobalGstChange(-18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === -18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>-18%</button>
+                      <input type="number" disabled={!!savedBillData} value={typeof globalGst === "number" ? globalGst : ""} onChange={(e) => handleGlobalGstChange(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Manual %" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30 mt-2">
+                    <div className="flex flex-col gap-1 w-full sm:w-[200px]">
+                      <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
+                      <select disabled={!!savedBillData} value={paymentStatus === 'unpaid' ? 'unpaid' : paymentMethod === 'UPI' ? 'upi' : 'paid'} onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'unpaid') {
+                          setPaymentStatus('unpaid');
+                          setPaymentMethod('CREDIT');
+                        } else if (val === 'upi') {
+                          setPaymentStatus('paid');
+                          setPaymentMethod('UPI');
+                        } else {
+                          setPaymentStatus('paid');
+                          setPaymentMethod('CASH');
                         }
                       }} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
-                        <option value="Item-wise">Item-wise</option>
-                        <option value="0">0%</option>
-                        <option value="5">5%</option>
-                        <option value="12">12%</option>
-                        <option value="18">18%</option>
-                        <option value="28">28%</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
-                      <select disabled={!!savedBillData} value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
-                        <option value="paid">Paid</option>
+                        <option value="paid">Cash</option>
+                        <option value="upi">UPI</option>
                         <option value="unpaid">Unpaid</option>
-                        <option value="partial">Partial</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="font-label-md text-label-md text-on-surface-variant">Payment Mode</label>
-                      <select disabled={!!savedBillData} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
-                        <option value="CASH">CASH</option>
-                        <option value="UPI">UPI</option>
-                        <option value="CARD">CARD</option>
-                        <option value="CREDIT">CREDIT</option>
                       </select>
                     </div>
                   </div>
@@ -895,28 +950,60 @@ export default function BillingPage() {
                         <tbody className="text-sm border-b-2 border-gray-800">
                           {chunk.map((item, localIndex) => {
                             const globalIndex = chunkIndex * 5 + localIndex;
-                            const gross = (item.mrp + (item.colorantCost || 0)) * item.qty; const disc = gross * (globalDiscount/100);
-                            const taxable = gross - disc; const gst = taxable * (item.taxRate/100);
+                            let ltrQty = 1;
+                            if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
+                            if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
+                            
+                            const baseGross = item.mrp * item.qty;
+                            const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
+                            
+                            const baseDisc = baseGross * (globalDiscount/100);
+                            const colDisc = colGross * (globalDiscount/100);
+                            
+                            let baseTaxable = baseGross - baseDisc;
+                            let colTaxable = colGross - colDisc;
+                            let baseGst = 0; let colGst = 0;
+                            
+                            if (item.taxRate > 0) {
+                              baseGst = baseTaxable * (item.taxRate/100);
+                              colGst = colTaxable * (item.taxRate/100);
+                            } else if (item.taxRate < 0) {
+                              const rate = Math.abs(item.taxRate) / 100;
+                              const origBase = baseTaxable; baseTaxable = origBase / (1 + rate); baseGst = origBase - baseTaxable;
+                              const origCol = colTaxable; colTaxable = origCol / (1 + rate); colGst = origCol - colTaxable;
+                            }
+                            
                             return (
-                              <tr key={globalIndex} className="border-b border-gray-200">
-                                <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
-                                <td className="py-3 px-2">
-                                  <strong>{item.name}</strong><br/>
-                                  <span className="text-xs text-gray-500">{item.size}</span>
-                                  {item.colorCode && (
-                                    <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
-                                      <div>└ Color Code: {item.colorCode}</div>
-                                      <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="py-3 px-2 text-center">{item.qty}</td>
-                                <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                                <td className="py-3 px-2 text-right">{globalDiscount}%</td>
-                                <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
-                                <td className="py-3 px-2 text-right">{item.taxRate}%</td>
-                                <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
-                              </tr>
+                              <React.Fragment key={globalIndex}>
+                                <tr className="border-b border-gray-100">
+                                  <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                  <td className="py-3 px-2">
+                                    <strong>{item.name}</strong><br/>
+                                    <span className="text-xs text-gray-500">Base: {item.size}</span>
+                                  </td>
+                                  <td className="py-3 px-2 text-center">{item.qty}</td>
+                                  <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{globalDiscount}%</td>
+                                  <td className="py-3 px-2 text-right">{baseTaxable.toFixed(2)}</td>
+                                  <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                                  <td className="py-3 px-2 text-right font-bold">{(baseTaxable + baseGst).toFixed(2)}</td>
+                                </tr>
+                                {item.colorantCost !== undefined && item.colorantCost > 0 && (
+                                  <tr className="border-b border-gray-200 bg-blue-50/30">
+                                    <td className="py-2 px-2 text-gray-400 text-xs"></td>
+                                    <td className="py-2 px-2 text-xs text-gray-600">
+                                      └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br/>
+                                      <span className="text-[10px] text-gray-400">Rate: ₹{item.colorantCost.toFixed(2)}/L × {ltrQty}L</span>
+                                    </td>
+                                    <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
+                                    <td className="py-2 px-2 text-right text-xs">{(item.colorantCost * ltrQty).toFixed(2)}</td>
+                                    <td className="py-2 px-2 text-right text-xs">{globalDiscount}%</td>
+                                    <td className="py-2 px-2 text-right text-xs">{colTaxable.toFixed(2)}</td>
+                                    <td className="py-2 px-2 text-right text-xs">{item.taxRate}%</td>
+                                    <td className="py-2 px-2 text-right font-bold text-xs">{(colTaxable + colGst).toFixed(2)}</td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
                             )
                           })}
                         </tbody>
@@ -1109,27 +1196,56 @@ export default function BillingPage() {
                           <tbody className="text-sm border-b-2 border-gray-800">
                             {chunk.map((item: BillItem, localIndex: number) => {
                               const globalIndex = chunkIndex * 5 + localIndex;
-                              const taxable = (item.mrp + (item.colorantCost || 0)) * item.qty * (1 - (selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1)));
-                              const gst = taxable * (item.taxRate/100);
+                              let ltrQty = 1;
+                              if(item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
+                              if(item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
+                              
+                              const baseGross = item.mrp * item.qty;
+                              const colGross = (item.colorantCost || 0) * ltrQty * item.qty;
+                              const globalDiscountRatio = selectedHistoryBill.discount_amount / (selectedHistoryBill.subtotal || 1);
+                              
+                              let baseTaxable = baseGross * (1 - globalDiscountRatio);
+                              let colTaxable = colGross * (1 - globalDiscountRatio);
+                              let baseGst = 0; let colGst = 0;
+                              
+                              if (item.taxRate > 0) {
+                                baseGst = baseTaxable * (item.taxRate/100);
+                                colGst = colTaxable * (item.taxRate/100);
+                              } else if (item.taxRate < 0) {
+                                const rate = Math.abs(item.taxRate) / 100;
+                                const origBase = baseTaxable; baseTaxable = origBase / (1 + rate); baseGst = origBase - baseTaxable;
+                                const origCol = colTaxable; colTaxable = origCol / (1 + rate); colGst = origCol - colTaxable;
+                              }
+                              
                               return (
-                                <tr key={globalIndex} className="border-b border-gray-200">
-                                  <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
-                                  <td className="py-3 px-2">
-                                    <strong>{item.name}</strong><br/>
-                                    <span className="text-xs text-gray-500">{item.size}</span>
-                                    {item.colorCode && (
-                                      <div className="pl-4 mt-1 text-xs text-gray-600 font-medium">
-                                        <div>└ Color Code: {item.colorCode}</div>
-                                        <div>└ Colorant: ₹{(item.colorantCost || 0).toFixed(2)}</div>
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="py-3 px-2 text-center">{item.qty}</td>
-                                  <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
-                                  <td className="py-3 px-2 text-right">{taxable.toFixed(2)}</td>
-                                  <td className="py-3 px-2 text-right">{item.taxRate}%</td>
-                                  <td className="py-3 px-2 text-right font-bold">{(taxable + gst).toFixed(2)}</td>
-                                </tr>
+                                <React.Fragment key={globalIndex}>
+                                  <tr className="border-b border-gray-100">
+                                    <td className="py-3 px-2 text-gray-500">{globalIndex+1}</td>
+                                    <td className="py-3 px-2">
+                                      <strong>{item.name}</strong><br/>
+                                      <span className="text-xs text-gray-500">Base: {item.size}</span>
+                                    </td>
+                                    <td className="py-3 px-2 text-center">{item.qty}</td>
+                                    <td className="py-3 px-2 text-right">{item.mrp.toFixed(2)}</td>
+                                    <td className="py-3 px-2 text-right">{baseTaxable.toFixed(2)}</td>
+                                    <td className="py-3 px-2 text-right">{item.taxRate}%</td>
+                                    <td className="py-3 px-2 text-right font-bold">{(baseTaxable + baseGst).toFixed(2)}</td>
+                                  </tr>
+                                  {item.colorantCost !== undefined && item.colorantCost > 0 && (
+                                    <tr className="border-b border-gray-200 bg-blue-50/30">
+                                      <td className="py-2 px-2 text-gray-400 text-xs"></td>
+                                      <td className="py-2 px-2 text-xs text-gray-600">
+                                        └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br/>
+                                        <span className="text-[10px] text-gray-400">Rate: ₹{item.colorantCost.toFixed(2)}/L × {ltrQty}L</span>
+                                      </td>
+                                      <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
+                                      <td className="py-2 px-2 text-right text-xs">{(item.colorantCost * ltrQty).toFixed(2)}</td>
+                                      <td className="py-2 px-2 text-right text-xs">{colTaxable.toFixed(2)}</td>
+                                      <td className="py-2 px-2 text-right text-xs">{item.taxRate}%</td>
+                                      <td className="py-2 px-2 text-right font-bold text-xs">{(colTaxable + colGst).toFixed(2)}</td>
+                                    </tr>
+                                  )}
+                                </React.Fragment>
                               )
                             })}
                           </tbody>
