@@ -10,7 +10,6 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/services/supabase"
-import { PRODUCTS } from "@/data/products"
 import { inr } from "@/lib/format"
 import { toast } from "sonner"
 import { getSettings } from "@/lib/settings"
@@ -107,6 +106,7 @@ export default function BillingPage() {
   const [historySearch, setHistorySearch] = useState("")
   const [historyFilter, setHistoryFilter] = useState("All")
   const [historyDate, setHistoryDate] = useState("")
+  const [dbProducts, setDbProducts] = useState<any[]>([])
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
   const fetchAndSetNextBillNo = async () => {
@@ -133,6 +133,19 @@ export default function BillingPage() {
     // 3. Orders (for Tab 2)
     const { data: oData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
     if (oData) setOrders(oData)
+
+    // 4. Products
+    const { data: pData } = await supabase.from('products').select('*').order('name', { ascending: true })
+    if (pData) {
+      const sorted = pData.sort((a, b) => {
+        const aStock = a.current_stock || 0
+        const bStock = b.current_stock || 0
+        if (aStock > 0 && bStock <= 0) return -1
+        if (aStock <= 0 && bStock > 0) return 1
+        return 0
+      })
+      setDbProducts(sorted)
+    }
   }
 
   useEffect(() => {
@@ -269,14 +282,23 @@ export default function BillingPage() {
       id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0
     }])
   }
-
   const handleProductSelect = (index: number, productId: string) => {
-    const product = PRODUCTS.find((p) => p.id === productId)
-    if (!product) return
+    const product = dbProducts.find((p) => p.id === productId)
+    if (!product) {
+      const newItems = [...items]
+      newItems[index] = { ...newItems[index], productId: "", name: "", mrp: 0 }
+      setItems(newItems)
+      return
+    }
     const newItems = [...items]
-    const taxRate = TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
-    const defaultSize = product.sizes?.[0]
-    newItems[index] = { ...newItems[index], productId: product.id, name: product.name, size: defaultSize?.size || "", mrp: defaultSize?.mrp || 0, taxRate }
+    newItems[index] = {
+      ...newItems[index],
+      productId: product.id,
+      name: product.name,
+      size: product.unit || product.size || "1 Ltr",
+      mrp: product.base_mrp || product.mrp || 0,
+      taxRate: TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
+    }
     setItems(newItems)
   }
 
@@ -287,7 +309,7 @@ export default function BillingPage() {
     setLinkedOrderId(order.order_id)
 
     const mappedItems: BillItem[] = order.items?.map((item) => {
-      const product = PRODUCTS.find(p => p.id === item.id)
+      const product = dbProducts.find(p => p.id === item.id)
       return {
         id: Math.random().toString(36).substr(2, 9),
         productId: item.id || "",
@@ -827,7 +849,7 @@ export default function BillingPage() {
                 </div>
 
                 {items.map((item, index) => {
-                  const product = PRODUCTS.find(p => p.id === item.productId);
+                  const product = dbProducts.find(p => p.id === item.productId);
                   return (
                     <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
@@ -840,9 +862,18 @@ export default function BillingPage() {
                             className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface bg-white"
                           >
                             <option value="">-- Select --</option>
-                            {PRODUCTS.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
+                            {dbProducts.map(p => {
+                              const stock = p.current_stock || 0
+                              return (
+                                <option 
+                                  key={p.id} 
+                                  value={p.id} 
+                                  className={stock <= 0 ? "text-gray-400 bg-gray-50" : ""}
+                                >
+                                  {p.name} - Stock: {stock} {p.unit || p.size || 'L'}
+                                </option>
+                              )
+                            })}
                           </select>
                         </div>
 
@@ -863,8 +894,7 @@ export default function BillingPage() {
                                 const currentUnit = item.size.replace(/[^a-zA-Z]/g, '').toUpperCase() || 'L';
                                 const unit = currentUnit === 'ML' ? 'ML' : 'L';
                                 const newSize = `${val} ${unit}`;
-                                const foundSize = product?.sizes?.find(s => s.size.toLowerCase() === newSize.toLowerCase() || s.size.toLowerCase() === `${val} ltr`);
-                                updateItem(item.id, { size: newSize, mrp: foundSize ? foundSize.mrp : item.mrp });
+                                updateItem(item.id, { size: newSize });
                               }}
                               className="w-full px-2 outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="0"
@@ -877,8 +907,7 @@ export default function BillingPage() {
                                 const unit = e.target.value;
                                 const val = parseFloat(item.size) || "";
                                 const newSize = `${val} ${unit}`;
-                                const foundSize = product?.sizes?.find(s => s.size.toLowerCase() === newSize.toLowerCase() || s.size.toLowerCase() === `${val} ltr`);
-                                updateItem(item.id, { size: newSize, mrp: foundSize ? foundSize.mrp : item.mrp });
+                                updateItem(item.id, { size: newSize });
                               }}
                               className="w-16 bg-surface-container-low px-1 outline-none text-sm cursor-pointer"
                             >
