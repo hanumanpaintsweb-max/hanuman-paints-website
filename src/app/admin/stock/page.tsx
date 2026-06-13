@@ -11,6 +11,8 @@ export default function AdminStockPage() {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [editedStock, setEditedStock] = useState<Record<string, number>>({})
+  const [isSaving, setIsSaving] = useState(false)
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -37,41 +39,46 @@ export default function AdminStockPage() {
     fetchProducts()
   }, [])
 
-  const adjustStock = async (id: string, currentVal: number, adjustment: number) => {
-    // If the adjust_stock RPC exists (from setup_inventory_schema.sql), we can try to use it.
-    // For robustness, we'll directly update the current_stock value.
-    const newStock = Math.max(0, (currentVal || 0) + adjustment)
-    
-    // Optimistic UI update
-    setProducts(products.map(p => p.id === id ? { ...p, current_stock: newStock } : p))
-    
-    const { error } = await supabase
-      .from('products')
-      .update({ current_stock: newStock })
-      .eq('id', id)
-
-    if (error) {
-      toast.error(`Failed to update stock: ${error.message}`)
-      // Revert on failure
-      setProducts(products.map(p => p.id === id ? { ...p, current_stock: currentVal } : p))
-    }
+  const handleStockChange = (id: string, valStr: string) => {
+    const val = parseInt(valStr)
+    if (isNaN(val) || val < 0) return
+    setEditedStock(prev => ({ ...prev, [id]: val }))
   }
 
-  const setExactStock = async (id: string, currentVal: number, exactValStr: string) => {
-    const newStock = parseInt(exactValStr)
-    if (isNaN(newStock) || newStock < 0) return
-
-    setProducts(products.map(p => p.id === id ? { ...p, current_stock: newStock } : p))
-    
-    const { error } = await supabase
-      .from('products')
-      .update({ current_stock: newStock })
-      .eq('id', id)
-
-    if (error) {
-      toast.error(`Failed to update stock: ${error.message}`)
-      setProducts(products.map(p => p.id === id ? { ...p, current_stock: currentVal } : p))
+  const handleSaveAll = async () => {
+    const updates = Object.entries(editedStock)
+    if (updates.length === 0) {
+      toast.info("No changes to save")
+      return
     }
+
+    setIsSaving(true)
+    let hasError = false
+
+    // We can update one by one or send a batch. Since it's quick, Promise.all is fine
+    await Promise.all(
+      updates.map(async ([id, newStock]) => {
+        const { error } = await supabase
+          .from('products')
+          .update({ current_stock: newStock })
+          .eq('id', id)
+        
+        if (error) {
+          hasError = true
+          console.error(`Failed to update ${id}:`, error)
+        }
+      })
+    )
+
+    if (hasError) {
+      toast.error("Failed to save some items. Please check the logs.")
+    } else {
+      toast.success("Stock updated successfully!")
+      setEditedStock({})
+      fetchProducts()
+    }
+    
+    setIsSaving(false)
   }
 
   const filteredProducts = products.filter(p => 
@@ -98,15 +105,29 @@ export default function AdminStockPage() {
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 border border-border/60 rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
-        />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-border/60 rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+          />
+        </div>
+        
+        <Button 
+          onClick={handleSaveAll} 
+          disabled={isSaving || Object.keys(editedStock).length === 0}
+          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition-all"
+        >
+          {isSaving ? (
+            <><Loader2 className="size-4 animate-spin mr-2" /> Saving...</>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
       </div>
 
       <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
@@ -128,14 +149,17 @@ export default function AdminStockPage() {
               </thead>
               <tbody className="divide-y divide-border/60">
                 {filteredProducts.map(product => {
-                  const stock = product.current_stock || 0;
-                  const isOutOfStock = stock <= 0;
-                  const isLowStock = stock > 0 && stock <= 5;
+                  const dbStock = product.current_stock || 0;
+                  const displayStock = editedStock[product.id] !== undefined ? editedStock[product.id] : dbStock;
+                  const isOutOfStock = displayStock <= 0;
+                  const isLowStock = displayStock > 0 && displayStock <= 5;
+                  const isEdited = editedStock[product.id] !== undefined && editedStock[product.id] !== dbStock;
                   
                   return (
-                    <tr key={product.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={product.id} className={`transition-colors ${isEdited ? 'bg-amber-50/50' : 'hover:bg-muted/30'}`}>
                       <td className="px-6 py-4 font-medium text-foreground">
                         {product.name}
+                        {isEdited && <span className="ml-2 text-[10px] font-bold text-amber-600 uppercase tracking-wider">Edited</span>}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
                         {product.category || '-'}
@@ -149,37 +173,20 @@ export default function AdminStockPage() {
                           isLowStock ? 'bg-amber-100 text-amber-700 border border-amber-200' :
                           'bg-emerald-100 text-emerald-700 border border-emerald-200'
                         }`}>
-                          {stock}
+                          {dbStock}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-8 w-8 rounded-lg shrink-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
-                            onClick={() => adjustStock(product.id, stock, -1)}
-                            disabled={stock <= 0}
-                          >
-                            <Minus className="size-4" />
-                          </Button>
-                          
                           <input 
                             type="number" 
                             min="0"
-                            value={stock}
-                            onChange={(e) => setExactStock(product.id, stock, e.target.value)}
-                            className="w-16 h-8 text-center border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                            value={displayStock}
+                            onChange={(e) => handleStockChange(product.id, e.target.value)}
+                            className={`w-20 h-9 text-center border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none transition-colors ${
+                              isEdited ? 'border-amber-400 bg-amber-50 text-amber-900 font-bold' : 'border-border'
+                            }`}
                           />
-
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-8 w-8 rounded-lg shrink-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
-                            onClick={() => adjustStock(product.id, stock, 1)}
-                          >
-                            <Plus className="size-4" />
-                          </Button>
                         </div>
                       </td>
                     </tr>
