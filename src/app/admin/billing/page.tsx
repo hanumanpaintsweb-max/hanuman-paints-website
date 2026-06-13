@@ -163,6 +163,7 @@ export default function BillingPage() {
       Notification.requestPermission()
     }
 
+    /* Temporarily disabled realtime to avoid console spam
     const channel = supabase
       .channel('bills-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bills' }, (payload) => {
@@ -176,6 +177,7 @@ export default function BillingPage() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
+    */
   }, [])
 
   useEffect(() => {
@@ -198,9 +200,18 @@ export default function BillingPage() {
   }, [])
 
   useEffect(() => {
+    const handleReset = () => {
+      resetForm();
+      setActiveTab("New Bill");
+    };
+    window.addEventListener('reset-invoice', handleReset);
+    return () => window.removeEventListener('reset-invoice', handleReset);
+  }, []);
+
+  useEffect(() => {
     const phone = customerPhone.replace(/\D/g, '')
     if (phone.length === 10) {
-      supabase.from('customers').select('*').eq('phone', phone).single().then(({ data }) => {
+      supabase.from('customers').select('*').eq('phone', phone).maybeSingle().then(({ data }) => {
         setCustomerRecord(data || null)
         if (data && !customerName) {
           setCustomerName(data.name)

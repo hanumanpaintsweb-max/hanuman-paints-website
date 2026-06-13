@@ -110,6 +110,7 @@ export default function AdminOrdersPage() {
       Notification.requestPermission()
     }
 
+    /* Temporarily disabled realtime to avoid console spam
     const channel = supabase
       .channel('orders')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
@@ -123,6 +124,7 @@ export default function AdminOrdersPage() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
+    */
   }, [])
 
   const updateStatus = async (id: string, newStatus: string, reason?: string) => {

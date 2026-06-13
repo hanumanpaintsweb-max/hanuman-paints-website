@@ -121,7 +121,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           
           <div className="px-4 mb-6">
-            <button onClick={() => { setSidebarOpen(false); router.push("/admin/billing"); }} className="w-full bg-white hover:bg-slate-50 text-green-700 py-2.5 px-4 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm border border-transparent">
+            <button onClick={() => { 
+              setSidebarOpen(false); 
+              if (pathname === "/admin/billing") {
+                window.dispatchEvent(new CustomEvent('reset-invoice'));
+              } else {
+                router.push("/admin/billing"); 
+              }
+            }} className="w-full bg-white hover:bg-slate-50 text-green-700 py-2.5 px-4 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm border border-transparent">
               <Plus className="size-5 text-green-600" />
               New Invoice
             </button>

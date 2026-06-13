@@ -94,10 +94,7 @@ export default function AdminProductsPage() {
       name: form.name,
       category: form.category,
       base_mrp: form.base_mrp,
-      mrp: form.base_mrp, // Sync with old column just in case
       unit: form.unit,
-      size: form.unit, // Sync with old column just in case
-      price: form.base_mrp // Sync price to mrp default
     }
 
     if (editingId) {
