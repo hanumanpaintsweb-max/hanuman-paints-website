@@ -136,6 +136,7 @@ export default function AdminStaffPage() {
       .from('bills')
       .select('*')
       .eq('staff_name', staff.name)
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false })
       
     if (error) {

@@ -301,20 +301,22 @@ export default function CustomersPage() {
                 ) : history.length === 0 ? (
                   <p className="text-center text-outline py-8">No order history found.</p>
                 ) : (
-                  history.map((h) => (
-                    <div key={h.id} className="flex items-center justify-between rounded-xl border border-outline-variant bg-surface p-3">
+                  history.map((h) => {
+                  const isCancelled = h.status?.toLowerCase() === 'cancelled';
+                  return (
+                    <div key={h.id} className={`flex items-center justify-between rounded-xl border border-outline-variant p-3 ${isCancelled ? 'opacity-50 bg-rose-50/50' : 'bg-surface'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`flex size-8 items-center justify-center rounded-full ${h.type === "online" ? "bg-blue-500/10 text-blue-600" : "bg-amber-500/10 text-amber-600"}`}>
                           {h.type === "online" ? <ShoppingBag className="size-4" /> : <Receipt className="size-4" />}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-on-surface">{h.label}</p>
+                          <p className={`text-sm font-semibold ${isCancelled ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>{h.label}</p>
                           <p className="text-xs text-outline">{new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                         </div>
                       </div>
                       <div className="text-right mr-4">
-                        <p className="font-bold text-on-surface">{inr(h.amount)}</p>
-                        <p className="text-[10px] uppercase font-bold text-outline">{h.status}</p>
+                        <p className={`font-bold ${isCancelled ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>{inr(h.amount)}</p>
+                        <p className={`text-[10px] uppercase font-bold ${isCancelled ? 'text-rose-600' : 'text-outline'}`}>{h.status}</p>
                       </div>
                       <div className="flex items-center gap-1 border-l border-outline-variant pl-4">
                         <button onClick={() => handleBillingAction('view', h.id)} className="p-2 text-outline hover:text-primary transition-colors bg-surface-variant/50 hover:bg-primary/10 rounded-lg" title="View Bill">
@@ -323,14 +325,15 @@ export default function CustomersPage() {
                         <button onClick={() => handleBillingAction('print', h.id)} className="p-2 text-outline hover:text-primary transition-colors bg-surface-variant/50 hover:bg-primary/10 rounded-lg" title="Print Bill">
                           <Printer className="size-4" />
                         </button>
-                        {h.type === "offline" && (
+                        {h.type === "offline" && !isCancelled && (
                           <button onClick={() => handleBillingAction('edit', h.id)} className="p-2 text-outline hover:text-primary transition-colors bg-surface-variant/50 hover:bg-primary/10 rounded-lg" title="Edit Bill">
                             <Edit className="size-4" />
                           </button>
                         )}
                       </div>
                     </div>
-                  ))
+                  )
+                })
                 )}
               </div>
             </motion.div>

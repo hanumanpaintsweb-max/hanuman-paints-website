@@ -759,20 +759,53 @@ export default function BillingPage() {
   }
 
   const deleteBill = async (bill: Bill) => {
-    if (!window.confirm("Are you sure you want to delete this bill?")) return
-    const pwd = window.prompt("Enter password to confirm deletion:")
+    if (!window.confirm("Are you sure you want to cancel this bill? This will reverse stock and ledger balances.")) return
+    const pwd = window.prompt("Enter password to confirm cancellation:")
     if (pwd !== "1234") {
-      toast.error("Incorrect password. Deletion cancelled.")
+      toast.error("Incorrect password. Cancellation aborted.")
       return
     }
-    const { error } = await supabase.from('bills').update({ is_deleted: true }).eq('id', bill.id)
+    
+    // Soft delete the bill
+    const { error } = await supabase.from('bills').update({ is_deleted: true, payment_status: 'Cancelled', total_amount: 0 }).eq('id', bill.id)
     if (!error) {
-      setBills(bills.filter(b => b.id !== bill.id))
-      toast.success("Bill deleted")
+      // Stock Reversal
+      for (const item of bill.items) {
+        if (item.productId) {
+          const { data: pData } = await supabase.from('products').select('current_stock').eq('id', item.productId).single()
+          if (pData) {
+            await supabase.from('products').update({ current_stock: (pData.current_stock || 0) + item.qty }).eq('id', item.productId)
+          }
+        }
+      }
+
+      // Outstanding Reversal
+      if (bill.payment_status === 'Unpaid' || bill.payment_status === 'Partial') {
+        const { data: ledgers } = await supabase.from('ledger').select('type, amount').eq('bill_number', bill.bill_number)
+        if (ledgers && bill.customer_phone) {
+          let netOwedFromThisBill = 0
+          ledgers.forEach(l => {
+            if (l.type === 'receivable') netOwedFromThisBill += l.amount
+            if (l.type === 'received') netOwedFromThisBill -= l.amount
+          })
+          if (netOwedFromThisBill > 0) {
+            const { data: cust } = await supabase.from('customers').select('current_outstanding, id').eq('phone', bill.customer_phone).single()
+            if (cust) {
+               const newOut = Math.max(0, (cust.current_outstanding || 0) - netOwedFromThisBill)
+               await supabase.from('customers').update({ current_outstanding: newOut }).eq('id', cust.id)
+            }
+          }
+        }
+      }
+
+      // Ledger Cleanup
       const { error: ledgerError } = await supabase.from('ledger').delete().eq('bill_number', bill.bill_number)
       if (ledgerError) console.error("Failed to delete ledger entry:", ledgerError)
+
+      setBills(bills.map(b => b.id === bill.id ? { ...b, is_deleted: true, payment_status: 'Cancelled', total_amount: 0 } as any : b))
+      toast.success("Bill cancelled and reversed successfully")
     } else {
-      toast.error("Failed to delete bill")
+      toast.error("Failed to cancel bill")
     }
   }
 
@@ -942,8 +975,8 @@ export default function BillingPage() {
                   const product = dbProducts.find(p => p.id === item.productId);
                   return (
                     <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
-                      <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
-                        <div className="flex-1 min-w-[250px] lg:min-w-[300px] flex flex-col gap-1">
+                      <div className="flex flex-row items-end gap-3 w-full mb-4 flex-wrap xl:flex-nowrap">
+                        <div className="flex-1 min-w-[250px] flex flex-col gap-1">
                           <div className="relative w-full" ref={searchRef}>
                             <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
                             <div className="relative">
@@ -1011,14 +1044,14 @@ export default function BillingPage() {
                           </div>
                         </div>
 
-                        <div className="w-24 flex flex-col gap-1">
+                        <div className="w-20 min-w-[80px] flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Qty</label>
-                          <input type="number" min="1" disabled={!!savedBillData} value={item.qty} onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" />
+                          <input type="number" min="1" disabled={!!savedBillData} value={item.qty} onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" />
                         </div>
 
-                        <div className="w-36 flex flex-col gap-1">
+                        <div className="w-28 min-w-[100px] flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Unit</label>
-                          <div className="flex bg-white rounded-lg border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary overflow-hidden h-[38px]">
+                          <div className="flex bg-white rounded-lg border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary overflow-hidden h-10">
                             <input
                               type="number"
                               disabled={!!savedBillData || !product}
@@ -1051,15 +1084,17 @@ export default function BillingPage() {
                           </div>
                         </div>
 
-                        <div className="w-32 flex flex-col gap-1">
+                        <div className="w-24 min-w-[96px] flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Rate</label>
-                          <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-[38px] border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                          <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
 
                         {!savedBillData && (
-                          <button onClick={() => removeItem(item.id)} className="mt-7 text-error hover:bg-error-container p-2 rounded-full transition-colors shrink-0">
-                            <Trash2 className="size-5" />
-                          </button>
+                          <div className="flex pb-1">
+                            <button onClick={() => removeItem(item.id)} className="text-error hover:bg-error-container p-2 rounded-full transition-colors shrink-0">
+                              <Trash2 className="size-5" />
+                            </button>
+                          </div>
                         )}
                       </div>
 
@@ -1354,32 +1389,44 @@ export default function BillingPage() {
                           </td>
                         </tr>
                         {/* Bills for this Date */}
-                        {groupedBills[dateStr].map((b) => (
-                          <tr key={b.id} className="border-b border-outline-variant/50 hover:bg-surface-bright transition-colors">
+                        {groupedBills[dateStr].map((b) => {
+                          const isCancelled = b.is_deleted || b.payment_status.toLowerCase() === 'cancelled';
+                          return (
+                          <tr key={b.id} className={`border-b border-outline-variant/50 transition-colors ${isCancelled ? 'opacity-50 bg-rose-50/50' : 'hover:bg-surface-bright'}`}>
                             <td className="px-6 py-4 font-medium text-xs text-on-surface-variant">{new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                            <td className="px-6 py-4 text-primary font-semibold">{b.bill_number}</td>
+                            <td className={`px-6 py-4 font-semibold ${isCancelled ? 'line-through text-on-surface-variant' : 'text-primary'}`}>
+                              {b.bill_number}
+                              {isCancelled && <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-white text-[9px] font-black rounded uppercase">Cancelled</span>}
+                            </td>
                             <td className="px-6 py-4">
                               <div className="font-medium text-on-surface">{b.customer_name}</div>
                               <div className="text-xs text-on-surface-variant">{b.customer_phone}</div>
                             </td>
-                            <td className="px-6 py-4 font-bold text-on-surface text-right">{inr(b.total_amount)}</td>
+                            <td className={`px-6 py-4 font-bold text-right ${isCancelled ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>{inr(b.total_amount)}</td>
                             <td className="px-6 py-4 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${b.payment_status.toLowerCase() === "paid" ? "bg-emerald-100 text-emerald-700" :
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                isCancelled ? "bg-rose-100 text-rose-700" :
+                                b.payment_status.toLowerCase() === "paid" ? "bg-emerald-100 text-emerald-700" :
                                 b.payment_status.toLowerCase() === "unpaid" ? "bg-rose-100 text-rose-700" : "bg-orange-100 text-orange-700"
                                 }`}>
-                                {b.payment_status.toUpperCase()}
+                                {isCancelled ? 'CANCELLED' : b.payment_status.toUpperCase()}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex gap-2 justify-end">
                                 <button onClick={() => viewHistoricalBill(b)} className="p-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors" title="View"><Eye className="size-4" /></button>
                                 <button onClick={() => { setSelectedHistoryBill(b); setTimeout(() => handlePrint('history-bill-print-area', b), 100); }} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
-                                <button onClick={() => loadBillForEdit(b)} className="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors" title="Edit"><Edit className="size-4" /></button>
-                                <button onClick={() => deleteBill(b)} className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors" title="Delete"><Trash2 className="size-4" /></button>
+                                {!isCancelled && (
+                                  <>
+                                    <button onClick={() => loadBillForEdit(b)} className="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors" title="Edit"><Edit className="size-4" /></button>
+                                    <button onClick={() => deleteBill(b)} className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors" title="Delete"><Trash2 className="size-4" /></button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
-                        ))}
+                          )
+                        })}
                       </React.Fragment>
                     ))}
                     {sortedDates.length === 0 && (
