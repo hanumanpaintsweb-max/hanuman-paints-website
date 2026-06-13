@@ -1158,7 +1158,7 @@ export default function BillingPage() {
 
                 <div className="flex-1 flex flex-col gap-2 bg-surface-container-low rounded-xl p-6 border border-outline-variant min-w-[280px]">
                   <div className="flex justify-between font-body-md text-on-surface-variant">
-                    <span>Subtotal</span><span>{inr(calculations.baseSubtotal)}</span>
+                    <span>Subtotal</span><span>{inr(calculations.subtotal)}</span>
                   </div>
                   {calculations.discount > 0 && (
                     <div className="flex justify-between font-body-md text-error">
