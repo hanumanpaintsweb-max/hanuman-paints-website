@@ -103,6 +103,27 @@ export default function BillingPage() {
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const [productSearchTerm, setProductSearchTerm] = useState<string>("")
 
+  // Premium Combobox exact states from user
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+        setOpenDropdownId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredProducts = dbProducts.filter(p =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
   const [historyFilter, setHistoryFilter] = useState("All")
@@ -922,74 +943,68 @@ export default function BillingPage() {
                     <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
                         <div className="flex-1 min-w-[200px] flex flex-col gap-1">
-                          <label className="font-label-md text-label-md text-on-surface-variant">Select Product</label>
-                          <div className="relative">
-                            {openDropdownId === item.id ? (
-                              <div className="relative">
-                                <Search className="absolute left-3 top-2.5 size-4 text-on-surface-variant" />
-                                <input
-                                  type="text"
-                                  autoFocus
-                                  value={productSearchTerm}
-                                  onChange={(e) => setProductSearchTerm(e.target.value)}
-                                  onBlur={() => {
-                                    // slight delay to allow click on dropdown items
-                                    setTimeout(() => {
-                                      if (openDropdownId === item.id) setOpenDropdownId(null)
-                                    }, 200)
-                                  }}
-                                  placeholder="Search products..."
-                                  className="w-full pl-9 pr-3 py-2 border border-primary rounded-lg focus:outline-none focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface bg-white"
-                                />
-                                <div className="absolute z-50 w-[300px] mt-1 bg-white border border-outline-variant rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                  {dbProducts
-                                    .filter(p => {
-                                      const term = productSearchTerm.toLowerCase();
-                                      return (p.name?.toLowerCase().includes(term) || p.category?.toLowerCase().includes(term))
-                                    })
-                                    .map(p => {
-                                      const stock = p.current_stock || 0
-                                      return (
-                                        <div
-                                          key={p.id}
-                                          onMouseDown={(e) => {
-                                            e.preventDefault() // prevent blur
-                                            handleProductSelect(index, p.id)
-                                            setOpenDropdownId(null)
-                                            setProductSearchTerm("")
-                                          }}
-                                          className={`px-4 py-3 border-b border-outline-variant last:border-b-0 cursor-pointer hover:bg-surface-container-low transition-colors ${stock <= 0 ? "opacity-60 bg-gray-50" : ""}`}
-                                        >
-                                          <div className="flex justify-between items-start gap-2">
-                                            <div className="font-medium text-sm text-on-surface">
-                                              {p.type === 'base' && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold mr-1.5 align-middle">[BASE]</span>}
-                                              {p.name}
-                                            </div>
-                                            <div className="text-xs font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
-                                              Stock: {stock} {p.unit || p.size || 'L'}
-                                            </div>
-                                          </div>
-                                          <div className="text-xs text-on-surface-variant mt-1">{p.category || 'Uncategorized'}</div>
-                                        </div>
-                                      )
-                                    })}
-                                  {dbProducts.filter(p => (p.name?.toLowerCase().includes(productSearchTerm.toLowerCase()) || p.category?.toLowerCase().includes(productSearchTerm.toLowerCase()))).length === 0 && (
-                                    <div className="px-4 py-3 text-sm text-on-surface-variant text-center">No products found</div>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div
-                                onClick={() => {
+                          <div className="relative w-full" ref={searchRef}>
+                            <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-on-surface-variant" />
+                              <input
+                                type="text"
+                                disabled={!!savedBillData}
+                                placeholder={savedBillData ? (product?.name || "") : "Type to search 600+ products..."}
+                                value={openDropdownId === item.id ? searchQuery : (product?.name || "")}
+                                onChange={(e) => {
+                                  setSearchQuery(e.target.value);
+                                  setIsDropdownOpen(true);
+                                  setOpenDropdownId(item.id);
+                                }}
+                                onFocus={() => {
                                   if (!savedBillData) {
-                                    setOpenDropdownId(item.id)
-                                    setProductSearchTerm("")
+                                    setIsDropdownOpen(true);
+                                    setOpenDropdownId(item.id);
+                                    setSearchQuery("");
                                   }
                                 }}
-                                className={`w-full px-3 py-2 border border-outline-variant rounded-lg font-body-md text-body-md flex justify-between items-center ${savedBillData ? "bg-gray-50 text-gray-500 cursor-not-allowed" : "bg-white text-on-surface cursor-text"}`}
-                              >
-                                <span className="truncate">{product ? product.name : "-- Select --"}</span>
-                                <Search className="size-4 text-on-surface-variant shrink-0" />
+                                className="w-full pl-10 pr-4 py-3 border border-outline-variant rounded-xl bg-surface text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                              />
+                            </div>
+
+                            {/* DROPDOWN MENU */}
+                            {isDropdownOpen && openDropdownId === item.id && (
+                              <div className="absolute z-50 w-full mt-2 bg-surface border border-outline-variant rounded-xl shadow-2xl max-h-72 overflow-y-auto overflow-x-hidden">
+                                {filteredProducts.length > 0 ? (
+                                  filteredProducts.map(p => (
+                                    <div
+                                      key={p.id}
+                                      onClick={() => {
+                                        handleProductSelect(index, p.id);
+                                        setSearchQuery("");
+                                        setIsDropdownOpen(false);
+                                        setOpenDropdownId(null);
+                                      }}
+                                      className="p-3 border-b border-outline-variant hover:bg-primary/10 cursor-pointer flex justify-between items-center transition-colors"
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-on-surface flex items-center gap-2">
+                                          {p.name} 
+                                          {p.type === 'base' && (
+                                            <span className="text-[10px] font-black bg-primary text-white px-1.5 py-0.5 rounded uppercase tracking-wider">BASE</span>
+                                          )}
+                                        </span>
+                                        <span className="text-xs text-on-surface-variant mt-0.5">
+                                          {p.category || 'General'} • Size: {p.size || p.unit || '1 Ltr'} • MRP: ₹{p.base_mrp || 0}
+                                        </span>
+                                      </div>
+                                      <div className={`text-sm font-black whitespace-nowrap ml-4 ${(p.current_stock || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {(p.current_stock || 0) > 0 ? `Stock: ${p.current_stock}` : 'OUT OF STOCK'}
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="p-6 text-center text-on-surface-variant flex flex-col items-center">
+                                    <Search className="size-8 opacity-20 mb-2" />
+                                    <p>No products found matching "{searchQuery}"</p>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
