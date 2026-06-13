@@ -944,14 +944,14 @@ export default function BillingPage() {
                     <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
                         <div className="flex-1 min-w-[200px] flex flex-col gap-1">
-                          <div className="relative w-full" ref={searchRef}>
+                          <div className="relative w-full min-w-[250px]" ref={searchRef}>
                             <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
                             <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-on-surface-variant" />
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
                               <input
                                 type="text"
                                 disabled={!!savedBillData}
-                                placeholder={savedBillData ? (product?.name || "") : "Type to search 600+ products..."}
+                                placeholder={savedBillData ? (product?.name || "") : "Type to search..."}
                                 value={openDropdownId === item.id ? searchQuery : (product?.name || "")}
                                 onChange={(e) => {
                                   setSearchQuery(e.target.value);
@@ -965,13 +965,13 @@ export default function BillingPage() {
                                     setSearchQuery("");
                                   }
                                 }}
-                                className="w-full pl-10 pr-4 py-3 border border-outline-variant rounded-xl bg-surface text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                                className="w-full pl-9 pr-4 py-2 border border-outline-variant rounded-lg bg-surface text-sm text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                               />
                             </div>
 
-                            {/* DROPDOWN MENU */}
+                            {/* DROPDOWN MENU - FIXED WIDTH */}
                             {isDropdownOpen && openDropdownId === item.id && (
-                              <div className="absolute z-50 w-full mt-2 bg-surface border border-outline-variant rounded-xl shadow-2xl max-h-72 overflow-y-auto overflow-x-hidden">
+                              <div className="absolute left-0 z-50 w-[450px] mt-1 bg-surface border border-outline-variant rounded-xl shadow-2xl max-h-72 overflow-y-auto overflow-x-hidden">
                                 {filteredProducts.length > 0 ? (
                                   filteredProducts.map(p => (
                                     <div
@@ -982,28 +982,28 @@ export default function BillingPage() {
                                         setIsDropdownOpen(false);
                                         setOpenDropdownId(null);
                                       }}
-                                      className="p-3 border-b border-outline-variant hover:bg-primary/10 cursor-pointer flex justify-between items-center transition-colors"
+                                      className="p-3 border-b border-outline-variant hover:bg-primary/5 cursor-pointer flex justify-between items-center transition-colors group"
                                     >
-                                      <div className="flex flex-col">
-                                        <span className="font-bold text-on-surface flex items-center gap-2">
+                                      <div className="flex flex-col overflow-hidden mr-4">
+                                        <span className="font-bold text-on-surface flex items-center gap-2 truncate text-sm">
                                           {p.name} 
                                           {p.type === 'base' && (
-                                            <span className="text-[10px] font-black bg-primary text-white px-1.5 py-0.5 rounded uppercase tracking-wider">BASE</span>
+                                            <span className="text-[9px] font-black bg-primary text-white px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">BASE</span>
                                           )}
                                         </span>
-                                        <span className="text-xs text-on-surface-variant mt-0.5">
+                                        <span className="text-xs text-on-surface-variant mt-0.5 truncate">
                                           {p.category || 'General'} • Size: {p.size || p.unit || '1 Ltr'} • MRP: ₹{p.base_mrp || 0}
                                         </span>
                                       </div>
-                                      <div className={`text-sm font-black whitespace-nowrap ml-4 ${(p.current_stock || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                      <div className={`text-sm font-black whitespace-nowrap shrink-0 ${(p.current_stock || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                         {(p.current_stock || 0) > 0 ? `Stock: ${p.current_stock}` : 'OUT OF STOCK'}
                                       </div>
                                     </div>
                                   ))
                                 ) : (
                                   <div className="p-6 text-center text-on-surface-variant flex flex-col items-center">
-                                    <Search className="size-8 opacity-20 mb-2" />
-                                    <p>No products found matching "{searchQuery}"</p>
+                                    <Search className="size-6 opacity-20 mb-2" />
+                                    <p className="text-sm">No products found matching "{searchQuery}"</p>
                                   </div>
                                 )}
                               </div>
