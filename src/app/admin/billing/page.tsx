@@ -966,7 +966,7 @@ export default function BillingPage() {
               </div>
 
               {/* Products */}
-              <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex flex-col gap-4">
+              <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex flex-col gap-4 overflow-x-auto">
                 <div className="flex justify-between items-center pb-2 border-b border-outline-variant">
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">Products</h3>
                 </div>
@@ -975,7 +975,7 @@ export default function BillingPage() {
                   const product = dbProducts.find(p => p.id === item.productId);
                   return (
                     <div key={item.id} className="border border-outline-variant rounded-xl p-4 mb-4 bg-surface relative">
-                      <div className="flex flex-row items-end gap-3 w-full pr-12 flex-wrap xl:flex-nowrap">
+                      <div className="flex flex-row items-end gap-3 w-full flex-wrap xl:flex-nowrap">
                         <div className="flex-1 min-w-[250px] flex flex-col gap-1">
                           <div className="relative w-full" ref={searchRef}>
                             <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
@@ -1088,13 +1088,15 @@ export default function BillingPage() {
                           <label className="font-label-md text-label-md text-on-surface-variant">Rate</label>
                           <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
-                      </div>
 
-                      {!savedBillData && (
-                        <button onClick={() => removeItem(item.id)} className="absolute right-3 top-6 p-2 text-rose-500 hover:bg-rose-50 rounded-md transition-colors">
-                          <Trash2 className="size-5" />
-                        </button>
-                      )}
+                        {!savedBillData && (
+                          <div className="flex pb-1">
+                            <button onClick={() => removeItem(item.id)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-md transition-colors shrink-0">
+                              <Trash2 className="size-5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Colorant Expandable logic */}
                       {true && (
