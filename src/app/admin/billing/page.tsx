@@ -862,22 +862,33 @@ export default function BillingPage() {
                             className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface bg-white"
                           >
                             <option value="">-- Select --</option>
-                            {Array.from(new Set(dbProducts.map(p => p.category || 'Uncategorized'))).map(cat => (
-                              <optgroup key={cat} label={cat}>
-                                {dbProducts.filter(p => (p.category || 'Uncategorized') === cat).map(p => {
-                                  const stock = p.current_stock || 0
-                                  return (
-                                    <option 
-                                      key={p.id} 
-                                      value={p.id} 
-                                      className={stock <= 0 ? "text-gray-400 bg-gray-50" : ""}
-                                    >
-                                      {p.type === 'base' ? '(BASE) ' : ''}{p.name} - Stock: {stock} {p.unit || p.size || 'L'}
-                                    </option>
-                                  )
-                                })}
-                              </optgroup>
-                            ))}
+                            {Array.from(new Set(dbProducts.map(p => p.category || 'Uncategorized')))
+                              .sort((a, b) => a.localeCompare(b))
+                              .map(cat => (
+                                <optgroup key={cat} label={cat}>
+                                  {dbProducts
+                                    .filter(p => (p.category || 'Uncategorized') === cat)
+                                    .sort((a, b) => {
+                                      const stockA = a.current_stock || 0;
+                                      const stockB = b.current_stock || 0;
+                                      if (stockA > 0 && stockB <= 0) return -1;
+                                      if (stockA <= 0 && stockB > 0) return 1;
+                                      return a.name.localeCompare(b.name);
+                                    })
+                                    .map(p => {
+                                      const stock = p.current_stock || 0
+                                      return (
+                                        <option 
+                                          key={p.id} 
+                                          value={p.id} 
+                                          className={stock <= 0 ? "text-gray-400 bg-gray-50" : ""}
+                                        >
+                                          {p.type === 'base' ? '(BASE) ' : ''}{p.name} - Stock: {stock} {p.unit || p.size || 'L'}
+                                        </option>
+                                      )
+                                    })}
+                                </optgroup>
+                              ))}
                           </select>
                           {product?.type === 'base' && (
                             <div className="mt-1 flex gap-2 items-center bg-blue-50/50 p-1.5 rounded border border-blue-100">

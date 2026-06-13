@@ -48,6 +48,12 @@ export default function AdminProductsPage() {
   const removeProduct = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to completely remove ${name}?`)) return
     
+    const pass = window.prompt("Enter admin password to delete this product:")
+    if (pass !== "1234") {
+      toast.error("Incorrect password")
+      return
+    }
+    
     const { error } = await supabase.from("products").delete().eq("id", id)
     if (error) {
       toast.error("Failed to remove product")

@@ -16,13 +16,19 @@ export default function AdminStockPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, category, unit, size, current_stock")
+      .select("id, name, category, unit, size, current_stock, base_mrp")
       .order("name", { ascending: true })
       
     if (error) {
-      toast.error("Failed to load inventory")
+      console.error("Supabase error fetching stock:", error)
+      toast.error("Failed to load inventory: " + error.message)
     } else {
-      setProducts(data || [])
+      const formattedData = (data || []).map(p => ({
+        ...p,
+        current_stock: p.current_stock || 0,
+        base_mrp: p.base_mrp || 0
+      }))
+      setProducts(formattedData)
     }
     setLoading(false)
   }

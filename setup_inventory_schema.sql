@@ -68,3 +68,6 @@ $$;
 -- 5. Add type and category columns
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'direct';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+
+-- 6. Enable SELECT read access on products table for all users
+CREATE POLICY "Allow read access" ON public.products FOR SELECT USING (true);
