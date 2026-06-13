@@ -209,6 +209,31 @@ export default function BillingPage() {
   }, []);
 
   useEffect(() => {
+    if (bills.length > 0) {
+      const action = localStorage.getItem("billing_intent_action")
+      const targetBillNo = localStorage.getItem("billing_intent_bill")
+      if (action && targetBillNo) {
+        const targetBill = bills.find(b => b.bill_number === targetBillNo)
+        if (targetBill) {
+          if (action === "edit") {
+            loadBillForEditing(targetBill)
+            setActiveTab("New Bill")
+          } else if (action === "view") {
+            setSelectedHistoryBill(targetBill)
+            setActiveTab("Bill History")
+          } else if (action === "print") {
+            setSelectedHistoryBill(targetBill)
+            setActiveTab("Bill History")
+            setTimeout(() => handlePrint('history-bill-print-area', targetBill), 500)
+          }
+          localStorage.removeItem("billing_intent_action")
+          localStorage.removeItem("billing_intent_bill")
+        }
+      }
+    }
+  }, [bills])
+
+  useEffect(() => {
     const phone = customerPhone.replace(/\D/g, '')
     if (phone.length === 10) {
       supabase.from('customers').select('*').eq('phone', phone).maybeSingle().then(({ data }) => {

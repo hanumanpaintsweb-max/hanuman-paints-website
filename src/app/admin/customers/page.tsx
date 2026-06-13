@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "motion/react"
 import { supabase } from "@/services/supabase"
 import { inr } from "@/lib/format"
-import { Users, Search, Eye, Loader2, X, Receipt, ShoppingBag } from "lucide-react"
+import { Users, Search, Eye, Loader2, X, Receipt, ShoppingBag, Printer, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 type CustomerRow = {
@@ -32,6 +33,13 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  const router = useRouter() // Need to import useRouter if not imported
+
+  const handleBillingAction = (action: "view" | "print" | "edit", billNo: string) => {
+    localStorage.setItem("billing_intent_action", action)
+    localStorage.setItem("billing_intent_bill", billNo)
+    window.location.href = "/admin/billing" // Using window.location to force full unmount/mount for fresh state, or router.push
+  }
 
   useEffect(() => {
     fetchCustomers()
@@ -304,9 +312,22 @@ export default function CustomersPage() {
                           <p className="text-xs text-outline">{new Date(h.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right mr-4">
                         <p className="font-bold text-on-surface">{inr(h.amount)}</p>
                         <p className="text-[10px] uppercase font-bold text-outline">{h.status}</p>
+                      </div>
+                      <div className="flex items-center gap-1 border-l border-outline-variant pl-4">
+                        <button onClick={() => handleBillingAction('view', h.id)} className="p-2 text-outline hover:text-primary transition-colors bg-surface-variant/50 hover:bg-primary/10 rounded-lg" title="View Bill">
+                          <Eye className="size-4" />
+                        </button>
+                        <button onClick={() => handleBillingAction('print', h.id)} className="p-2 text-outline hover:text-primary transition-colors bg-surface-variant/50 hover:bg-primary/10 rounded-lg" title="Print Bill">
+                          <Printer className="size-4" />
+                        </button>
+                        {h.type === "offline" && (
+                          <button onClick={() => handleBillingAction('edit', h.id)} className="p-2 text-outline hover:text-primary transition-colors bg-surface-variant/50 hover:bg-primary/10 rounded-lg" title="Edit Bill">
+                            <Edit className="size-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))

@@ -92,6 +92,7 @@ export default function DashboardPage() {
   const [reminders, setReminders] = useState<{count: number, amount: number}>({count: 0, amount: 0})
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     fetchDashboardData()
   }, [])
 

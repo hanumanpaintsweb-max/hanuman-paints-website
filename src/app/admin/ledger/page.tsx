@@ -26,6 +26,9 @@ export default function UnpaidBillsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "partial" | "paid">("all")
+  
+  const [partialModal, setPartialModal] = useState<{isOpen: boolean, entry: LedgerEntry | null, amount: string}>({isOpen: false, entry: null, amount: ""})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const fetchLedger = useCallback(async () => {
     setLoading(true)
@@ -44,14 +47,86 @@ export default function UnpaidBillsPage() {
     fetchLedger()
   }, [fetchLedger])
 
-  const updateStatus = async (id: string, newStatus: "partial" | "paid") => {
-    const { error } = await supabase.from("ledger").update({ status: newStatus }).eq("id", id)
-    if (!error) {
-      setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, status: newStatus } : e)))
-      toast.success(newStatus === "paid" ? "✅ Marked as Paid!" : "Marked as Partial")
-    } else {
-      toast.error("Update failed")
+  const updateStatus = async (id: string, newStatus: "paid") => {
+    const entry = entries.find(e => e.id === id)
+    if (!entry) return
+    
+    // For full paid, we can just do the same logic but for full amount
+    const paidAmount = entry.amount
+    
+    await supabase.from("ledger").update({ status: "paid", amount: 0 }).eq("id", id)
+    await supabase.from("ledger").insert({
+      customer_name: entry.customer_name,
+      customer_phone: entry.customer_phone,
+      bill_number: entry.bill_number,
+      type: "received",
+      amount: paidAmount,
+      description: `Full payment for bill #${entry.bill_number || 'N/A'}`,
+      date: new Date().toISOString(),
+      status: "paid"
+    })
+    
+    if (entry.bill_number) {
+      await supabase.from("bills").update({ payment_status: "paid" }).eq("bill_number", entry.bill_number)
     }
+    
+    if (entry.customer_phone) {
+      const { data: custData } = await supabase.from("customers").select("current_outstanding, id").eq("phone", entry.customer_phone).single()
+      if (custData) {
+        const newOut = Math.max(0, (custData.current_outstanding || 0) - paidAmount)
+        await supabase.from("customers").update({ current_outstanding: newOut }).eq("id", custData.id)
+      }
+    }
+    
+    toast.success("✅ Marked as Paid!")
+    fetchLedger()
+  }
+
+  const submitPartialPayment = async () => {
+    const entry = partialModal.entry
+    const paidAmount = Number(partialModal.amount)
+    if (!entry || isNaN(paidAmount) || paidAmount <= 0 || paidAmount > entry.amount) return
+
+    setIsSubmitting(true)
+    const remaining = entry.amount - paidAmount
+
+    // 1. Insert new received record
+    await supabase.from("ledger").insert({
+      customer_name: entry.customer_name,
+      customer_phone: entry.customer_phone,
+      bill_number: entry.bill_number,
+      type: "received",
+      amount: paidAmount,
+      description: `Partial payment for bill #${entry.bill_number || 'N/A'}`,
+      date: new Date().toISOString(),
+      status: "paid"
+    })
+
+    // 2. Update original ledger entry to partial or paid, and adjust its amount to remaining
+    if (remaining === 0) {
+      await supabase.from("ledger").update({ status: "paid", amount: 0 }).eq("id", entry.id)
+    } else {
+      await supabase.from("ledger").update({ status: "partial", amount: remaining }).eq("id", entry.id)
+    }
+
+    // 3. Update bills table (status)
+    if (entry.bill_number) {
+      await supabase.from("bills").update({ payment_status: remaining === 0 ? "paid" : "partial" }).eq("bill_number", entry.bill_number)
+    }
+
+    // 4. Deduct from customer's global current_outstanding
+    if (entry.customer_phone) {
+      const { data: custData } = await supabase.from("customers").select("current_outstanding, id").eq("phone", entry.customer_phone).single()
+      if (custData) {
+        const newOutstanding = Math.max(0, (custData.current_outstanding || 0) - paidAmount)
+        await supabase.from("customers").update({ current_outstanding: newOutstanding }).eq("id", custData.id)
+      }
+    }
+
+    toast.success("Partial payment recorded!")
+    setPartialModal({ isOpen: false, entry: null, amount: "" })
+    setIsSubmitting(false)
+    fetchLedger()
   }
 
   const filtered = entries.filter((e) => {
@@ -187,9 +262,9 @@ export default function UnpaidBillsPage() {
                     <td className="py-4 px-6 text-right">
                       {e.status !== "paid" ? (
                         <div className="flex justify-end gap-2">
-                          {e.status === "pending" && (
+                          {(e.status === "pending" || e.status === "partial") && (
                             <button
-                              onClick={() => updateStatus(e.id, "partial")}
+                              onClick={() => setPartialModal({ isOpen: true, entry: e, amount: "" })}
                               className="bg-transparent border border-outline-variant hover:border-primary-container hover:text-primary-container text-on-surface-variant font-label-md text-label-md py-2 px-4 rounded-lg transition-colors whitespace-nowrap"
                             >
                               Part Paid
@@ -219,6 +294,52 @@ export default function UnpaidBillsPage() {
           </div>
         )}
       </div>
+
+      {/* Partial Payment Modal */}
+      <AnimatePresence>
+        {partialModal.isOpen && partialModal.entry && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div initial={{opacity:0, scale:0.95}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.95}} className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+              <div className="flex justify-between items-center p-6 border-b border-outline-variant/30">
+                <h3 className="font-headline-sm text-headline-sm text-on-surface">Partial Payment</h3>
+                <button onClick={() => setPartialModal({ isOpen: false, entry: null, amount: "" })} className="text-outline hover:text-on-surface"><X className="size-5"/></button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30">
+                  <p className="text-sm text-on-surface-variant">Current Unpaid Amount</p>
+                  <p className="font-headline-md text-headline-md text-on-surface mt-1">{inr(partialModal.entry.amount)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-on-surface mb-2 block">Amount Paid <span className="text-error">*</span></label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-medium">₹</span>
+                    <input 
+                      type="number" 
+                      value={partialModal.amount}
+                      onChange={e => setPartialModal({...partialModal, amount: e.target.value})}
+                      className="w-full pl-8 pr-4 py-3 bg-surface border border-outline-variant/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-container font-body-lg text-on-surface"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                {Number(partialModal.amount) > 0 && (
+                  <div className="flex justify-between items-center p-4 bg-error-container/10 rounded-xl">
+                    <span className="text-sm font-medium text-on-surface-variant">Remaining Balance</span>
+                    <span className="font-bold text-error">{inr(partialModal.entry.amount - Number(partialModal.amount))}</span>
+                  </div>
+                )}
+                <Button 
+                  onClick={submitPartialPayment} 
+                  disabled={isSubmitting || !partialModal.amount || Number(partialModal.amount) <= 0 || Number(partialModal.amount) > partialModal.entry.amount}
+                  className="w-full h-12 rounded-xl mt-4 bg-primary text-white hover:bg-primary/90"
+                >
+                  {isSubmitting ? <Loader2 className="size-5 animate-spin"/> : "Save Payment"}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
