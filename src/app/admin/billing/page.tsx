@@ -1249,9 +1249,10 @@ export default function BillingPage() {
                   __html: `
                     @media print {
                       @page {
-                        size: ${items.length <= 7 ? '210mm 148.5mm' : '210mm 297mm'};
+                        size: ${items.length <= 7 ? 'A4 landscape' : 'A4 portrait'};
                         margin: 0;
                       }
+                      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                     }
                   `
                 }} />
@@ -1261,31 +1262,32 @@ export default function BillingPage() {
                   if (items.length > 0) {
                     for (let i = 0; i < items.length; i += 5) itemChunks.push(items.slice(i, i + 5));
                   }
-                  return itemChunks.map((chunk, chunkIndex) => (
-                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] xl:scale-[0.55] 2xl:scale-[0.7] print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 ${isHalfPage ? 'print:h-[148.5mm]' : 'print:h-auto'} ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : 'mb-[-400px]'}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+
+                  const ReceiptTemplate = ({ title, chunk, chunkIndex }: { title: string, chunk: BillItem[], chunkIndex: number }) => (
+                    <div className="flex flex-col h-full w-full">
                       {/* PDF Header */}
                       <div className={`flex justify-between items-start border-b-2 border-gray-800 ${isHalfPage ? 'pb-2 mb-2' : 'pb-4 mb-4'}`}>
                         <div>
-                          <h1 className={`${isHalfPage ? 'text-2xl' : 'text-3xl'} font-extrabold text-orange-600 uppercase`}>{settings.shop_name || "Hanuman Paints"}</h1>
-                          <p className={`${isHalfPage ? 'text-[10px]' : 'text-sm'} font-bold text-gray-600 mt-1`}>Authorized Dulux Blue Store</p>
-                          <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
-                          <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                          <h1 className={`${isHalfPage ? 'text-xl' : 'text-3xl'} font-extrabold text-orange-600 uppercase`}>{settings.shop_name || "Hanuman Paints"}</h1>
+                          <p className={`${isHalfPage ? 'text-[8px]' : 'text-sm'} font-bold text-gray-600 mt-1`}>Authorized Dulux Blue Store</p>
+                          <p className={`${isHalfPage ? 'text-[8px]' : 'text-xs'} text-gray-500 mt-1 max-w-xs`}>{settings.shop_address || "Madhubani"}</p>
+                          <p className={`${isHalfPage ? 'text-[8px]' : 'text-xs'} text-gray-500`}>Ph: 8292889540</p>
                         </div>
                         <div className="text-right">
-                          <div className={`${isHalfPage ? 'text-xl' : 'text-2xl'} font-black text-gray-200 uppercase tracking-widest`}>TAX INVOICE</div>
-                          <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
-                          <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
+                          <div className={`${isHalfPage ? 'text-sm' : 'text-2xl'} font-black text-gray-200 uppercase tracking-widest`}>{title}</div>
+                          <div className={`${isHalfPage ? 'text-[8px] mt-1' : 'text-sm mt-2'}`}><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
+                          <div className={`${isHalfPage ? 'text-[8px]' : 'text-sm'}`}><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
                         </div>
                       </div>
 
                       {/* Customer Info */}
-                      <div className={`border border-gray-300 rounded ${isHalfPage ? 'p-2 mb-2' : 'p-4 mb-6'} bg-gray-50`}>
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Billed To</h3>
+                      <div className={`border border-gray-300 rounded ${isHalfPage ? 'p-1.5 mb-2' : 'p-4 mb-6'} bg-gray-50`}>
+                        <h3 className={`${isHalfPage ? 'text-[7px] mb-0.5' : 'text-xs mb-1'} font-bold text-gray-400 uppercase tracking-wider`}>Billed To</h3>
                         <div className="flex justify-between">
                           <div>
-                            <div className="font-bold text-lg">{customerName || "Cash Customer"}</div>
-                            <div className="text-sm text-gray-600">{customerPhone}</div>
-                            {customerAddress && <div className="text-sm text-gray-600">{customerAddress}</div>}
+                            <div className={`${isHalfPage ? 'text-sm' : 'text-lg'} font-bold`}>{customerName || "Cash Customer"}</div>
+                            <div className={`${isHalfPage ? 'text-[8px]' : 'text-sm'} text-gray-600`}>{customerPhone}</div>
+                            {customerAddress && <div className={`${isHalfPage ? 'text-[8px]' : 'text-sm'} text-gray-600`}>{customerAddress}</div>}
                           </div>
                         </div>
                       </div>
@@ -1293,7 +1295,7 @@ export default function BillingPage() {
                       {/* Items Table */}
                       <table className={`w-full ${isHalfPage ? 'mb-2' : 'mb-6'} border-collapse`}>
                         <thead>
-                          <tr className="bg-gray-800 text-white text-xs uppercase">
+                          <tr className={`bg-gray-800 text-white ${isHalfPage ? 'text-[7px]' : 'text-xs'} uppercase`}>
                             <th className="py-2 px-2 text-left">S.No</th>
                             <th className="py-2 px-2 text-left">Item Description</th>
                             <th className="py-2 px-2 text-center">Qty</th>
@@ -1301,7 +1303,7 @@ export default function BillingPage() {
                             <th className="py-2 px-2 text-right">Total</th>
                           </tr>
                         </thead>
-                        <tbody className="text-sm border-b-2 border-gray-800">
+                        <tbody className={`${isHalfPage ? 'text-[9px]' : 'text-sm'} border-b-2 border-gray-800`}>
                           {chunk.map((item, localIndex) => {
                             const globalIndex = chunkIndex * 5 + localIndex;
                             let ltrQty = 1;
@@ -1314,28 +1316,28 @@ export default function BillingPage() {
                             return (
                               <React.Fragment key={globalIndex}>
                                 <tr className="border-b border-gray-100">
-                                  <td className="py-3 px-2 text-gray-500">{globalIndex + 1}</td>
-                                  <td className="py-3 px-2">
+                                  <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-gray-500`}>{globalIndex + 1}</td>
+                                  <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2`}>
                                     <strong>
                                       {item.name}
                                       {item.colorCode && (dbProducts.find(p => p.id === item.productId)?.type === 'base' || !dbProducts.find(p => p.id === item.productId)) ? ` - ${item.colorCode}` : ''}
                                     </strong><br />
-                                    <span className="text-xs text-gray-500">Base: {item.size}</span>
+                                    <span className={`${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-500`}>Base: {item.size}</span>
                                   </td>
-                                  <td className="py-3 px-2 text-center">{item.qty}</td>
-                                  <td className="py-3 px-2 text-right">{Number(item.mrp || 0).toFixed(2)}</td>
-                                  <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
+                                  <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-center`}>{item.qty}</td>
+                                  <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-right`}>{Number(item.mrp || 0).toFixed(2)}</td>
+                                  <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-right font-bold`}>{baseGross.toFixed(2)}</td>
                                 </tr>
                                 {((item.colorantCost !== undefined && item.colorantCost > 0) || (item.colorCode && item.colorCode.trim() !== "")) && (
                                   <tr className="border-b border-gray-200 bg-blue-50/30">
-                                    <td className="py-2 px-2 text-gray-400 text-xs"></td>
-                                    <td className="py-2 px-2 text-xs text-gray-600">
+                                    <td className="py-1 px-2 text-gray-400 text-[7px]"></td>
+                                    <td className={`py-1 px-2 ${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-600`}>
                                       └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br />
-                                      {item.colorantCost ? <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}</span> : null}
+                                      {item.colorantCost ? <span className={`${isHalfPage ? 'text-[6px]' : 'text-[10px]'} text-gray-400`}>Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}</span> : null}
                                     </td>
-                                    <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
-                                    <td className="py-2 px-2 text-right text-xs">{item.colorantCost ? Number(item.colorantCost).toFixed(2) : ""}</td>
-                                    <td className="py-2 px-2 text-right font-bold text-xs">{item.colorantCost ? colGross.toFixed(2) : ""}</td>
+                                    <td className={`py-1 px-2 text-center ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>{item.qty}</td>
+                                    <td className={`py-1 px-2 text-right ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>{item.colorantCost ? Number(item.colorantCost).toFixed(2) : ""}</td>
+                                    <td className={`py-1 px-2 text-right font-bold ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>{item.colorantCost ? colGross.toFixed(2) : ""}</td>
                                   </tr>
                                 )}
                               </React.Fragment>
@@ -1345,38 +1347,55 @@ export default function BillingPage() {
                       </table>
 
                       {chunkIndex === itemChunks.length - 1 && (
-                        <div className="flex justify-between items-end">
-                          <div className="text-xs text-gray-500 space-y-1">
+                        <div className="flex justify-between items-end mt-auto">
+                          <div className={`${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-500 space-y-0.5`}>
                             <p><strong>Terms & Conditions:</strong></p>
                             <p>1. Goods once sold cannot be returned or exchanged.</p>
                             <p>2. Subject to Madhubani jurisdiction only.</p>
-                            <p className="mt-4 italic">Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
-                            {billMode === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
+                            <p className={`${isHalfPage ? 'mt-2' : 'mt-4'} italic`}>Payment Status: <strong className="uppercase">{paymentStatus}</strong> via {paymentMethod}</p>
+                            {billMode === "DPL" && <p className="mt-0.5 italic text-[7px]">* Prices as per Dealer Price List</p>}
                           </div>
-                          <div className="w-64">
-                            <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Base Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
-                            {calculations.discount > 0 && <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>}
+                          <div className={`${isHalfPage ? 'w-40' : 'w-64'}`}>
+                            <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100`}><span>Base Sub Total</span><span>{calculations.subtotal.toFixed(2)}</span></div>
+                            {calculations.discount > 0 && <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100 text-green-700`}><span>Discount</span><span>-{calculations.discount.toFixed(2)}</span></div>}
 
                             {calculations.gst !== 0 && (
                               <>
-                                <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
-                                <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>SGST</span><span>{cgst.toFixed(2)}</span></div>
+                                <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100`}><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
+                                <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100`}><span>SGST</span><span>{cgst.toFixed(2)}</span></div>
                               </>
                             )}
-                            {calculations.colorantTotal > 0 && <div className="flex justify-between text-sm py-1 border-b border-gray-800 text-blue-800 font-semibold"><span>Colorant Total</span><span>{calculations.colorantTotal.toFixed(2)}</span></div>}
-                            <div className="flex justify-between text-xl font-black py-2 border-t border-gray-800 mt-1"><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
+                            {calculations.colorantTotal > 0 && <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-800 text-blue-800 font-semibold`}><span>Colorant Total</span><span>{calculations.colorantTotal.toFixed(2)}</span></div>}
+                            <div className={`flex justify-between ${isHalfPage ? 'text-sm' : 'text-xl'} font-black ${isHalfPage ? 'py-1' : 'py-2'} border-t border-gray-800 mt-1`}><span>Grand Total</span><span>₹{finalTotal.toFixed(2)}</span></div>
                           </div>
                         </div>
                       )}
 
                       {chunkIndex === itemChunks.length - 1 && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className={`${isHalfPage ? 'mt-2 pt-2' : 'mt-4 pt-4'} border-t border-gray-200`}>
                           {(savedBillData?.staff_name || staffName) && (
-                            <div className="text-xs text-gray-500 font-medium">
+                            <div className={`${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-500 font-medium`}>
                               Sold By / Attended By: {savedBillData ? savedBillData.staff_name : staffName}
                             </div>
                           )}
                         </div>
+                      )}
+                    </div>
+                  );
+
+                  return itemChunks.map((chunk, chunkIndex) => (
+                    <div key={chunkIndex} className={`bg-white text-black shadow-lg origin-top scale-[0.45] xl:scale-[0.55] 2xl:scale-[0.7] print:scale-100 print:shadow-none print:m-0 print:overflow-hidden ${isHalfPage ? 'p-4 w-[297mm] h-[210mm] print:w-[297mm] print:h-[210mm] flex flex-row' : 'p-8 w-[210mm] min-h-[297mm] print:w-[210mm] print:p-0 print:min-h-0 print:h-auto'} ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : 'mb-[-400px]'}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                      {isHalfPage ? (
+                        <>
+                          <div className="w-1/2 h-full pr-4 border-r border-dashed border-gray-400">
+                            <ReceiptTemplate title="ORIGINAL COPY" chunk={chunk} chunkIndex={chunkIndex} />
+                          </div>
+                          <div className="w-1/2 h-full pl-4">
+                            <ReceiptTemplate title="DUPLICATE COPY" chunk={chunk} chunkIndex={chunkIndex} />
+                          </div>
+                        </>
+                      ) : (
+                        <ReceiptTemplate title="TAX INVOICE" chunk={chunk} chunkIndex={chunkIndex} />
                       )}
                     </div>
                   ))
@@ -1524,9 +1543,10 @@ export default function BillingPage() {
                           __html: `
                             @media print {
                               @page {
-                                size: ${isHalfPage ? '210mm 148.5mm' : '210mm 297mm'};
+                                size: ${isHalfPage ? 'A4 landscape' : 'A4 portrait'};
                                 margin: 0;
                               }
+                              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                             }
                           `
                         }} />
@@ -1535,31 +1555,32 @@ export default function BillingPage() {
                           if (itemsArr.length > 0) {
                             for (let i = 0; i < itemsArr.length; i += 5) itemChunks.push(itemsArr.slice(i, i + 5));
                           }
-                          return itemChunks.map((chunk, chunkIndex) => (
-                            <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 ${isHalfPage ? 'print:h-[148.5mm]' : 'print:h-auto'} ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+
+                          const ReceiptTemplate = ({ title, chunk, chunkIndex }: { title: string, chunk: BillItem[], chunkIndex: number }) => (
+                            <div className="flex flex-col h-full w-full">
                               {/* PDF Header */}
                               <div className={`flex justify-between items-start border-b-2 border-gray-800 ${isHalfPage ? 'pb-2 mb-2' : 'pb-4 mb-4'}`}>
                                 <div>
-                                  <h1 className={`${isHalfPage ? 'text-2xl' : 'text-3xl'} font-extrabold text-orange-600 uppercase`}>{settings.shop_name || "Hanuman Paints"}</h1>
-                                  <p className={`${isHalfPage ? 'text-[10px]' : 'text-sm'} font-bold text-gray-600 mt-1`}>Authorized Dulux Blue Store</p>
-                                  <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
-                                  <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                                  <h1 className={`${isHalfPage ? 'text-xl' : 'text-3xl'} font-extrabold text-orange-600 uppercase`}>{settings.shop_name || "Hanuman Paints"}</h1>
+                                  <p className={`${isHalfPage ? 'text-[8px]' : 'text-sm'} font-bold text-gray-600 mt-1`}>Authorized Dulux Blue Store</p>
+                                  <p className={`${isHalfPage ? 'text-[8px]' : 'text-xs'} text-gray-500 mt-1 max-w-xs`}>{settings.shop_address || "Madhubani"}</p>
+                                  <p className={`${isHalfPage ? 'text-[8px]' : 'text-xs'} text-gray-500`}>Ph: 8292889540</p>
                                 </div>
                                 <div className="text-right">
-                                  <div className={`${isHalfPage ? 'text-xl' : 'text-2xl'} font-black text-gray-200 uppercase tracking-widest`}>TAX INVOICE</div>
-                                  <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
-                                  <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
+                                  <div className={`${isHalfPage ? 'text-sm' : 'text-2xl'} font-black text-gray-200 uppercase tracking-widest`}>{title}</div>
+                                  <div className={`${isHalfPage ? 'text-[8px] mt-1' : 'text-sm mt-2'}`}><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
+                                  <div className={`${isHalfPage ? 'text-[8px]' : 'text-sm'}`}><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
                                 </div>
                               </div>
 
                               {/* Customer Info */}
-                              <div className={`border border-gray-300 rounded ${isHalfPage ? 'p-2 mb-2' : 'p-4 mb-6'} bg-gray-50`}>
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Billed To</h3>
+                              <div className={`border border-gray-300 rounded ${isHalfPage ? 'p-1.5 mb-2' : 'p-4 mb-6'} bg-gray-50`}>
+                                <h3 className={`${isHalfPage ? 'text-[7px] mb-0.5' : 'text-xs mb-1'} font-bold text-gray-400 uppercase tracking-wider`}>Billed To</h3>
                                 <div className="flex justify-between">
                                   <div>
-                                    <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
-                                    <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
-                                    {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
+                                    <div className={`${isHalfPage ? 'text-sm' : 'text-lg'} font-bold`}>{selectedHistoryBill.customer_name || "Cash Customer"}</div>
+                                    <div className={`${isHalfPage ? 'text-[8px]' : 'text-sm'} text-gray-600`}>{selectedHistoryBill.customer_phone}</div>
+                                    {selectedHistoryBill.customer_address && <div className={`${isHalfPage ? 'text-[8px]' : 'text-sm'} text-gray-600`}>{selectedHistoryBill.customer_address}</div>}
                                   </div>
                                 </div>
                               </div>
@@ -1567,94 +1588,115 @@ export default function BillingPage() {
                               {/* Items Table */}
                               <table className={`w-full ${isHalfPage ? 'mb-2' : 'mb-6'} border-collapse`}>
                                 <thead>
-                            <tr className="bg-gray-800 text-white text-xs uppercase">
-                              <th className="py-2 px-2 text-left">S.No</th>
-                              <th className="py-2 px-2 text-left">Item Description</th>
-                              <th className="py-2 px-2 text-center">Qty</th>
-                              <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
-                              <th className="py-2 px-2 text-right">Total</th>
-                            </tr>
-                          </thead>
-                          <tbody className="text-sm border-b-2 border-gray-800">
-                            {chunk.map((item: BillItem, localIndex: number) => {
-                              const globalIndex = chunkIndex * 5 + localIndex;
-                              let ltrQty = 1;
-                              if (item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
-                              if (item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
-
-                              const baseGross = Number(item.mrp || 0) * item.qty;
-                              const colGross = (item.colorantCost || 0) * item.qty;
-
-                              return (
-                                <React.Fragment key={globalIndex}>
-                                  <tr className="border-b border-gray-100">
-                                    <td className="py-3 px-2 text-gray-500">{globalIndex + 1}</td>
-                                    <td className="py-3 px-2">
-                                      <strong>
-                                        {item.name}
-                                        {item.colorCode && (dbProducts.find(p => p.id === item.productId)?.type === 'base' || !dbProducts.find(p => p.id === item.productId)) ? ` - ${item.colorCode}` : ''}
-                                      </strong><br />
-                                      <span className="text-xs text-gray-500">Base: {item.size}</span>
-                                    </td>
-                                    <td className="py-3 px-2 text-center">{item.qty}</td>
-                                    <td className="py-3 px-2 text-right">{Number(item.mrp || 0).toFixed(2)}</td>
-                                    <td className="py-3 px-2 text-right font-bold">{baseGross.toFixed(2)}</td>
+                                  <tr className={`bg-gray-800 text-white ${isHalfPage ? 'text-[7px]' : 'text-xs'} uppercase`}>
+                                    <th className="py-2 px-2 text-left">S.No</th>
+                                    <th className="py-2 px-2 text-left">Item Description</th>
+                                    <th className="py-2 px-2 text-center">Qty</th>
+                                    <th className="py-2 px-2 text-right">{selectedHistoryBill.bill_type === "DPL" ? "DPL" : "MRP"}</th>
+                                    <th className="py-2 px-2 text-right">Total</th>
                                   </tr>
-                                  {((item.colorantCost !== undefined && item.colorantCost > 0) || (item.colorCode && item.colorCode.trim() !== "")) && (
-                                    <tr className="border-b border-gray-200 bg-blue-50/30">
-                                      <td className="py-2 px-2 text-gray-400 text-xs"></td>
-                                      <td className="py-2 px-2 text-xs text-gray-600">
-                                        └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br />
-                                        {item.colorantCost ? <span className="text-[10px] text-gray-400">Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}</span> : null}
-                                      </td>
-                                      <td className="py-2 px-2 text-center text-xs">{item.qty}</td>
-                                      <td className="py-2 px-2 text-right text-xs">{item.colorantCost ? Number(item.colorantCost).toFixed(2) : ""}</td>
-                                      <td className="py-2 px-2 text-right font-bold text-xs">{item.colorantCost ? colGross.toFixed(2) : ""}</td>
-                                    </tr>
+                                </thead>
+                                <tbody className={`${isHalfPage ? 'text-[9px]' : 'text-sm'} border-b-2 border-gray-800`}>
+                                  {chunk.map((item: BillItem, localIndex: number) => {
+                                    const globalIndex = chunkIndex * 5 + localIndex;
+                                    let ltrQty = 1;
+                                    if (item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1;
+                                    if (item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000;
+
+                                    const baseGross = Number(item.mrp || 0) * item.qty;
+                                    const colGross = (item.colorantCost || 0) * item.qty;
+
+                                    return (
+                                      <React.Fragment key={globalIndex}>
+                                        <tr className="border-b border-gray-100">
+                                          <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-gray-500`}>{globalIndex + 1}</td>
+                                          <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2`}>
+                                            <strong>
+                                              {item.name}
+                                              {item.colorCode && (dbProducts.find(p => p.id === item.productId)?.type === 'base' || !dbProducts.find(p => p.id === item.productId)) ? ` - ${item.colorCode}` : ''}
+                                            </strong><br />
+                                            <span className={`${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-500`}>Base: {item.size}</span>
+                                          </td>
+                                          <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-center`}>{item.qty}</td>
+                                          <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-right`}>{Number(item.mrp || 0).toFixed(2)}</td>
+                                          <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-right font-bold`}>{baseGross.toFixed(2)}</td>
+                                        </tr>
+                                        {((item.colorantCost !== undefined && item.colorantCost > 0) || (item.colorCode && item.colorCode.trim() !== "")) && (
+                                          <tr className="border-b border-gray-200 bg-blue-50/30">
+                                            <td className="py-1 px-2 text-gray-400 text-[7px]"></td>
+                                            <td className={`py-1 px-2 ${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-600`}>
+                                              └ Colorant <em>({item.colorCode || "Custom Mix"})</em><br />
+                                              {item.colorantCost ? <span className={`${isHalfPage ? 'text-[6px]' : 'text-[10px]'} text-gray-400`}>Rate: ₹{Number(item.colorantCost || 0).toFixed(2)}</span> : null}
+                                            </td>
+                                            <td className={`py-1 px-2 text-center ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>{item.qty}</td>
+                                            <td className={`py-1 px-2 text-right ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>{item.colorantCost ? Number(item.colorantCost).toFixed(2) : ""}</td>
+                                            <td className={`py-1 px-2 text-right font-bold ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>{item.colorantCost ? colGross.toFixed(2) : ""}</td>
+                                          </tr>
+                                        )}
+                                      </React.Fragment>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+
+                              {chunkIndex === itemChunks.length - 1 && (
+                                <div className="flex justify-between items-end mt-auto">
+                                  <div className={`${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-500 space-y-0.5`}>
+                                    <p><strong>Terms & Conditions:</strong></p>
+                                    <p>1. Goods once sold cannot be returned or exchanged.</p>
+                                    <p>2. Subject to Madhubani jurisdiction only.</p>
+                                    <p className={`${isHalfPage ? 'mt-2' : 'mt-4'} italic`}>Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
+                                    {selectedHistoryBill.bill_type === "DPL" && <p className="mt-0.5 italic text-[7px]">* Prices as per Dealer Price List</p>}
+                                  </div>
+                                  <div className={`${isHalfPage ? 'w-40' : 'w-64'}`}>
+                                    <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100`}><span>Base Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
+                                    {selectedHistoryBill.discount_amount > 0 && (
+                                      <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100 text-green-700`}><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
+                                    )}
+
+                                    {(selectedHistoryBill.cgst_amount || 0) !== 0 && (
+                                      <>
+                                        <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100`}><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
+                                        <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-100`}><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
+                                      </>
+                                    )}
+                                    {selectedHistoryBill.total_amount - (selectedHistoryBill.taxable_value + selectedHistoryBill.cgst_amount + selectedHistoryBill.sgst_amount) > 0 && (
+                                      <div className={`flex justify-between ${isHalfPage ? 'text-[9px] py-0.5' : 'text-sm py-1'} border-b border-gray-800 text-blue-800 font-semibold`}><span>Colorant Total</span><span>{(selectedHistoryBill.total_amount - (selectedHistoryBill.taxable_value + selectedHistoryBill.cgst_amount + selectedHistoryBill.sgst_amount)).toFixed(2)}</span></div>
+                                    )}
+                                    <div className={`flex justify-between ${isHalfPage ? 'text-sm' : 'text-xl'} font-black ${isHalfPage ? 'py-1' : 'py-2'} border-t border-gray-800 mt-1`}><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {chunkIndex === itemChunks.length - 1 && (
+                                <div className={`${isHalfPage ? 'mt-2 pt-2' : 'mt-4 pt-4'} border-t border-gray-200`}>
+                                  {selectedHistoryBill.staff_name && (
+                                    <div className={`${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-500 font-medium`}>
+                                      Sold By / Attended By: {selectedHistoryBill.staff_name}
+                                    </div>
                                   )}
-                                </React.Fragment>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-
-                        {/* Totals */}
-                        {chunkIndex === itemChunks.length - 1 && (
-                          <div className="flex justify-between items-end">
-                            <div className="text-xs text-gray-500 space-y-1">
-                              <p><strong>Terms & Conditions:</strong></p>
-                              <p>1. Goods once sold cannot be returned or exchanged.</p>
-                              <p>2. Subject to Madhubani jurisdiction only.</p>
-                              <p className="mt-4 italic">Payment Status: <strong className="uppercase">{selectedHistoryBill.payment_status}</strong> via {selectedHistoryBill.payment_method}</p>
-                              {selectedHistoryBill.bill_type === "DPL" && <p className="mt-1 italic text-xs">* Prices as per Dealer Price List</p>}
-                            </div>
-                            <div className="w-64">
-                              <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>Base Sub Total</span><span>{selectedHistoryBill.subtotal?.toFixed(2)}</span></div>
-                              {selectedHistoryBill.discount_amount > 0 && (
-                                <div className="flex justify-between text-sm py-1 border-b border-gray-100 text-green-700"><span>Discount</span><span>-{selectedHistoryBill.discount_amount?.toFixed(2)}</span></div>
+                                </div>
                               )}
+                            </div>
+                          );
 
-                              {(selectedHistoryBill.cgst_amount || 0) !== 0 && (
+                          return itemChunks.map((chunk, chunkIndex) => (
+                            <div key={chunkIndex} className={`bg-white text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:m-0 print:overflow-hidden ${isHalfPage ? 'p-4 w-[297mm] h-[210mm] print:w-[297mm] print:h-[210mm] flex flex-row' : 'p-8 w-[210mm] min-h-[297mm] print:w-[210mm] print:p-0 print:min-h-0 print:h-auto'} ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                              {isHalfPage ? (
                                 <>
-                                  <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{selectedHistoryBill.cgst_amount?.toFixed(2)}</span></div>
-                                  <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>SGST</span><span>{selectedHistoryBill.sgst_amount?.toFixed(2)}</span></div>
+                                  <div className="w-1/2 h-full pr-4 border-r border-dashed border-gray-400">
+                                    <ReceiptTemplate title="ORIGINAL COPY" chunk={chunk} chunkIndex={chunkIndex} />
+                                  </div>
+                                  <div className="w-1/2 h-full pl-4">
+                                    <ReceiptTemplate title="DUPLICATE COPY" chunk={chunk} chunkIndex={chunkIndex} />
+                                  </div>
                                 </>
+                              ) : (
+                                <ReceiptTemplate title="TAX INVOICE" chunk={chunk} chunkIndex={chunkIndex} />
                               )}
-                              {selectedHistoryBill.total_amount - (selectedHistoryBill.taxable_value + selectedHistoryBill.cgst_amount + selectedHistoryBill.sgst_amount) > 0 && (
-                                <div className="flex justify-between text-sm py-1 border-b border-gray-800 text-blue-800 font-semibold"><span>Colorant Total</span><span>{(selectedHistoryBill.total_amount - (selectedHistoryBill.taxable_value + selectedHistoryBill.cgst_amount + selectedHistoryBill.sgst_amount)).toFixed(2)}</span></div>
-                              )}
-                              <div className="flex justify-between text-xl font-black py-2 border-t border-gray-800 mt-1"><span>Grand Total</span><span>₹{selectedHistoryBill.total_amount?.toFixed(2)}</span></div>
                             </div>
-                          </div>
-                        )}
-
-                        {chunkIndex === itemChunks.length - 1 && (
-                          <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
-                          </div>
-                        )}
-                      </div>
-                    ))
-                    })()}
+                          ))
+                        })()}
                   </>
                 );
               })()}
