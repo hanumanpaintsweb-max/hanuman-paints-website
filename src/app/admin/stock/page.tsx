@@ -16,7 +16,7 @@ export default function AdminStockPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, category, unit, size, current_stock, base_mrp")
+      .select("id, name, category, unit, current_stock, base_mrp")
       .order("name", { ascending: true })
       
     if (error) {
