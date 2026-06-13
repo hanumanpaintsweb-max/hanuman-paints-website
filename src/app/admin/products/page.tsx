@@ -104,6 +104,7 @@ export default function AdminProductsPage() {
     const payload = {
       name: form.name,
       category: form.category,
+      categoryId: form.category.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       base_mrp: form.base_mrp,
       unit: form.unit,
     }
