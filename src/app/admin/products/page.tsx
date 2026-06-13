@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "motion/react"
 
 export default function AdminProductsPage() {
+  const generateUUID = () => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("All")
@@ -115,7 +125,7 @@ export default function AdminProductsPage() {
     } else {
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...payload, id: crypto.randomUUID(), current_stock: 0 }]) // Ensure new products start at 0 stock
+        .insert([{ ...payload, id: generateUUID(), current_stock: 0 }]) // Ensure new products start at 0 stock
         .select()
         
       if (error) {
