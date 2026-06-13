@@ -50,6 +50,7 @@ type Bill = {
   created_at: string
   is_deleted: boolean
   bill_type?: string
+  staff_name?: string
 }
 
 type Order = {
@@ -81,6 +82,7 @@ export default function BillingPage() {
   const [customerName, setCustomerName] = useState("")
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
+  const [staffName, setStaffName] = useState("")
 
   const [items, setItems] = useState<BillItem[]>([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0 }])
   const [paymentStatus, setPaymentStatus] = useState("Paid")
@@ -107,6 +109,7 @@ export default function BillingPage() {
   const [historyFilter, setHistoryFilter] = useState("All")
   const [historyDate, setHistoryDate] = useState("")
   const [dbProducts, setDbProducts] = useState<any[]>([])
+  const [dbStaff, setDbStaff] = useState<any[]>([])
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
   const fetchAndSetNextBillNo = async () => {
@@ -146,6 +149,10 @@ export default function BillingPage() {
       })
       setDbProducts(sorted)
     }
+
+    // 5. Staff
+    const { data: staffData } = await supabase.from('staff').select('*').eq('is_active', true).order('name', { ascending: true })
+    if (staffData) setDbStaff(staffData)
   }
 
   useEffect(() => {
@@ -262,8 +269,10 @@ export default function BillingPage() {
   // --- Actions ---
   const loadBillForEdit = (bill: Bill) => {
     setCustomerName(bill.customer_name || "")
-    setCustomerPhone(bill.customer_phone || "")
+    setCustomerPhone(bill.customer_phone)
     setCustomerAddress(bill.customer_address || "")
+    setStaffName(bill.staff_name || "")
+
     setItems(bill.items || [])
     setPaymentStatus(bill.payment_status || "Paid")
     setPaymentMethod(bill.payment_method || "Cash")
@@ -372,10 +381,11 @@ export default function BillingPage() {
       taxable_value: parseFloat(calculations.taxable.toFixed(2)),
       cgst_amount: parseFloat(cgst.toFixed(2)),
       sgst_amount: parseFloat(sgst.toFixed(2)),
-      total_amount: parseFloat(finalTotal.toFixed(2)),
-      payment_status: paymentStatus,
-      payment_method: paymentMethod,
+      total_amount: finalTotal,
+      payment_status: paymentStatus.toLowerCase(),
+      payment_method: paymentMethod.toLowerCase(),
       order_id: linkedOrderId || null,
+      staff_name: staffName || null,
       bill_type: billMode
     }
 
@@ -647,12 +657,14 @@ export default function BillingPage() {
   const resetForm = async () => {
     setCustomerName("")
     setCustomerPhone("")
+    setCustomerAddress("")
+    setStaffName("")
     setGlobalDiscount(0)
     setGlobalGst(0)
     setDueDate("")
     setPaymentStatus("Paid")
     setPaymentMethod("Cash")
-    setItems([])
+    setItems([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0 }])
     setLinkedOrderId(null)
     setSavedBillData(null)
     setEditBillId(null)
@@ -832,11 +844,23 @@ export default function BillingPage() {
                       <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled={!!savedBillData} maxLength={10} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Mobile..." />
                     </div>
                   </div>
-                  <div className="col-span-2 flex flex-col gap-2">
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Address (Optional)</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-2.5 text-outline size-5" />
                       <input type="text" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} disabled={!!savedBillData} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" placeholder="Enter Address (Optional)" />
+                    </div>
+                  </div>
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2">
+                    <label className="font-label-md text-label-md text-on-surface-variant">Sales Staff / Attended By</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 text-outline size-5" />
+                      <select value={staffName} onChange={e => setStaffName(e.target.value)} disabled={!!savedBillData} className="w-full pl-10 pr-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface bg-white">
+                        <option value="">-- None --</option>
+                        {dbStaff.map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -1181,7 +1205,7 @@ export default function BillingPage() {
                             {calculations.gst !== 0 && (
                               <>
                                 <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>CGST</span><span>{cgst.toFixed(2)}</span></div>
-                                <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>SGST</span><span>{sgst.toFixed(2)}</span></div>
+                                <div className="flex justify-between text-sm py-1 border-b border-gray-100"><span>SGST</span><span>{cgst.toFixed(2)}</span></div>
                               </>
                             )}
                             {calculations.colorantTotal > 0 && <div className="flex justify-between text-sm py-1 border-b border-gray-800 text-blue-800 font-semibold"><span>Colorant Total</span><span>{calculations.colorantTotal.toFixed(2)}</span></div>}
@@ -1191,7 +1215,12 @@ export default function BillingPage() {
                       )}
 
                       {chunkIndex === itemChunks.length - 1 && (
-                        <div className="mt-16 flex justify-between border-t border-gray-300 pt-4 text-sm font-bold text-gray-600">
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          {(savedBillData?.staff_name || staffName) && (
+                            <div className="text-xs text-gray-500 font-medium">
+                              Sold By / Attended By: {savedBillData ? savedBillData.staff_name : staffName}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

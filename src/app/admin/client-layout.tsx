@@ -18,6 +18,7 @@ const NAV_ITEMS: { label: string; href: string; icon: any; badgeKey?: string }[]
   { label: "Unpaid Bills", href: "/admin/ledger", icon: BookOpen },
   { label: "Products", href: "/admin/products", icon: ShoppingBag },
   { label: "Stock", href: "/admin/stock", icon: Package },
+  { label: "Staff", href: "/admin/staff", icon: CircleUserRound },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
