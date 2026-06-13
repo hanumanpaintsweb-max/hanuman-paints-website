@@ -99,30 +99,29 @@ export default function UnpaidBillsPage() {
         <div className="p-6 border-b border-outline-variant/30 flex flex-col md:flex-row gap-4 justify-between items-center bg-surface-bright">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-outline-variant" />
-            <input 
-              className="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-transparent font-body-md text-body-md text-on-surface placeholder-outline-variant transition-all" 
-              placeholder="Search customer, phone or bill no..." 
+            <input
+              className="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-transparent font-body-md text-body-md text-on-surface placeholder-outline-variant transition-all"
+              placeholder="Search customer, phone or bill no..."
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
           <div className="flex gap-4 w-full md:w-auto">
-             <div className="flex gap-2 bg-surface p-1 rounded-lg border border-outline-variant/50 overflow-x-auto max-w-full">
-               {(["all", "pending", "partial", "paid"] as const).map((s) => (
-                 <button
-                   key={s}
-                   onClick={() => setFilterStatus(s)}
-                   className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all capitalize whitespace-nowrap ${
-                     filterStatus === s
-                       ? "bg-primary-container text-on-primary"
-                       : "text-on-surface-variant hover:bg-surface-variant/50"
-                   }`}
-                 >
-                   {s === "all" ? "All" : s}
-                 </button>
-               ))}
-             </div>
+            <div className="flex gap-2 bg-surface p-1 rounded-lg border border-outline-variant/50 overflow-x-auto max-w-full">
+              {(["all", "pending", "partial", "paid"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all capitalize whitespace-nowrap ${filterStatus === s
+                      ? "bg-primary-container text-on-primary"
+                      : "text-on-surface-variant hover:bg-surface-variant/50"
+                    }`}
+                >
+                  {s === "all" ? "All" : s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -146,9 +145,9 @@ export default function UnpaidBillsPage() {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={7} className="py-12 text-center text-outline">No entries found.</td></tr>
               ) : filtered.map(e => {
-                const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() || 'NA';
+                const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'NA';
                 const isOverdue = e.status !== "paid" && e.due_date && new Date(e.due_date) < new Date();
-                
+
                 return (
                   <tr key={e.id} className="hover:bg-surface-container-low/50 transition-colors group">
                     <td className="py-4 px-6">
@@ -168,13 +167,13 @@ export default function UnpaidBillsPage() {
                     <td className="py-4 px-6 font-body-md text-body-md font-semibold text-on-surface text-right">{inr(e.amount)}</td>
                     <td className="py-4 px-6 text-center">
                       {e.status === "paid" ? (
-                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-tertiary-container text-on-tertiary">
-                           Paid
-                         </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-tertiary-container text-on-tertiary">
+                          Paid
+                        </span>
                       ) : e.status === "partial" ? (
-                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
-                           Partial
-                         </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+                          Partial
+                        </span>
                       ) : isOverdue ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error-container text-on-error-container border border-error/20">
                           Overdue
@@ -187,24 +186,24 @@ export default function UnpaidBillsPage() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       {e.status !== "paid" ? (
-                         <div className="flex justify-end gap-2">
-                           {e.status === "pending" && (
-                              <button 
-                                onClick={() => updateStatus(e.id, "partial")}
-                                className="bg-transparent border border-outline-variant hover:border-primary-container hover:text-primary-container text-on-surface-variant font-label-md text-label-md py-2 px-4 rounded-lg transition-colors whitespace-nowrap"
-                              >
-                                Part Paid
-                              </button>
-                           )}
-                           <button 
-                             onClick={() => updateStatus(e.id, "paid")}
-                             className="bg-secondary-container hover:bg-secondary text-on-secondary font-label-md text-label-md py-2 px-4 rounded-lg transition-colors shadow-sm whitespace-nowrap"
-                           >
-                             Mark as Paid
-                           </button>
-                         </div>
+                        <div className="flex justify-end gap-2">
+                          {e.status === "pending" && (
+                            <button
+                              onClick={() => updateStatus(e.id, "partial")}
+                              className="bg-transparent border border-outline-variant hover:border-primary-container hover:text-primary-container text-on-surface-variant font-label-md text-label-md py-2 px-4 rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              Part Paid
+                            </button>
+                          )}
+                          <button
+                            onClick={() => updateStatus(e.id, "paid")}
+                            className="bg-secondary-container hover:bg-secondary text-on-secondary font-label-md text-label-md py-2 px-4 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+                          >
+                            Mark as Paid
+                          </button>
+                        </div>
                       ) : (
-                         <span className="text-on-surface-variant text-sm font-bold">✓</span>
+                        <span className="text-on-surface-variant text-sm font-bold">✓</span>
                       )}
                     </td>
                   </tr>
@@ -213,7 +212,7 @@ export default function UnpaidBillsPage() {
             </tbody>
           </table>
         </div>
-        
+
         {!loading && (
           <div className="p-4 border-t border-outline-variant/30 flex items-center justify-between bg-surface-container-lowest">
             <span className="font-body-md text-body-md text-on-surface-variant">Showing {filtered.length} entries</span>
