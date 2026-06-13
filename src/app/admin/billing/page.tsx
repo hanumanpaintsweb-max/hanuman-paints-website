@@ -14,6 +14,8 @@ import { PRODUCTS } from "@/data/products"
 import { inr } from "@/lib/format"
 import { toast } from "sonner"
 import { getSettings } from "@/lib/settings"
+import html2canvas from "html2canvas"
+import { jsPDF } from "jspdf"
 
 type BillItem = {
   id: string
@@ -187,7 +189,7 @@ export default function BillingPage() {
           setGlobalDiscount(10)
           toast.success("Wholesale customer detected. Wholesale discount applied.")
         } else {
-          setGlobalDiscount(5)
+          setGlobalDiscount(0)
         }
       })
     } else {
@@ -255,7 +257,7 @@ export default function BillingPage() {
     setBillNoStr(bill.bill_number)
     setBillMode((bill.bill_type as "MRP" | "DPL") || "MRP")
     const gross = bill.subtotal || 1
-    const discPercent = bill.discount_amount ? Math.round((bill.discount_amount / gross) * 100) : 5
+    const discPercent = bill.discount_amount ? Math.round((bill.discount_amount / gross) * 100) : 0
     setGlobalDiscount(discPercent)
     setEditBillId(bill.id)
     setSavedBillData(null)
@@ -542,9 +544,6 @@ export default function BillingPage() {
     const fileName = `bill_${billNumber}.pdf`
 
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
-      
       const clone = printArea.cloneNode(true) as HTMLElement;
       
       clone.style.width = '210mm';
@@ -1395,7 +1394,7 @@ export default function BillingPage() {
       </AnimatePresence>
 
       {/* Hidden A4 Print Container */}
-      <div id="print-a4-container" className="hidden print:block absolute inset-0 bg-white z-[9999]">
+      <div id="print-a4-container-hidden" className="hidden print:block absolute inset-0 bg-white z-[9999]">
         {/* A4 template logic remains unchanged in DOM, just visually hidden unless printing */}
       </div>
     </div>
