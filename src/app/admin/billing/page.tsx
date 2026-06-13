@@ -943,8 +943,8 @@ export default function BillingPage() {
                   return (
                     <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
-                        <div className="flex-1 min-w-[200px] flex flex-col gap-1">
-                          <div className="relative w-full min-w-[250px]" ref={searchRef}>
+                        <div className="flex-1 min-w-[250px] lg:min-w-[300px] flex flex-col gap-1">
+                          <div className="relative w-full" ref={searchRef}>
                             <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
                             <div className="relative">
                               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
