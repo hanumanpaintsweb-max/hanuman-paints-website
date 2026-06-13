@@ -479,16 +479,27 @@ export default function BillingPage() {
     }
 
     // Stock deduction
-    let stockUpdateFailed = false
+    let stockUpdateFailed = false;
     for (const item of items) {
-      if (!item.productId) continue
+      console.log('Processing stock deduction for item:', item);
+      if (!item.productId) {
+        console.warn('SKIPPED DEDUCTION: No productId found for', item.name);
+        continue;
+      }
+
       const { error: stockError } = await supabase.rpc('deduct_stock', {
         p_product_id: item.productId,
         p_quantity: item.qty
-      })
-      if (stockError) stockUpdateFailed = true
+      });
+
+      if (stockError) {
+        console.error('SUPABASE RPC STOCK ERROR for', item.name, ':', stockError);
+        stockUpdateFailed = true;
+      } else {
+        console.log('Successfully deducted', item.qty, 'from product', item.productId);
+      }
     }
-    if (stockUpdateFailed) toast.error("Bill saved, but stock update failed")
+    if (stockUpdateFailed) toast.error("Bill saved, but some stock updates failed. Check console.");
 
     // Ledger insertion
     if (ledgerData) {
