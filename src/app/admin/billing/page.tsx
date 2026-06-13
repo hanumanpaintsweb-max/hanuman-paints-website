@@ -23,7 +23,6 @@ type BillItem = {
   size: string
   qty: number
   mrp: number
-  taxRate: number
   colorCode?: string
   colorantCost?: number
 }
@@ -84,7 +83,7 @@ export default function BillingPage() {
   const [customerAddress, setCustomerAddress] = useState("")
   const [staffName, setStaffName] = useState("")
 
-  const [items, setItems] = useState<BillItem[]>([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0 }])
+  const [items, setItems] = useState<BillItem[]>([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number }])
   const [paymentStatus, setPaymentStatus] = useState("Paid")
   const [dueDate, setDueDate] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("Cash")
@@ -92,17 +91,17 @@ export default function BillingPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
   const [globalDiscount, setGlobalDiscount] = useState<number | "">("")
-  const [globalGst, setGlobalGst] = useState<number | "Item-wise" | "">("")
+  const [globalGst, setGlobalGst] = useState<number | "">("")
 
-  const handleGlobalGstChange = (val: number | "Item-wise" | "") => {
+  const handleGlobalGstChange = (val: number | "") => {
     setGlobalGst(val)
-    if (typeof val === "number") {
-      setItems(prevItems => prevItems.map(item => ({ ...item, taxRate: val })))
-    }
   }
   const [customerRecord, setCustomerRecord] = useState<any>(null)
   const [billMode, setBillMode] = useState<"MRP" | "DPL">("MRP")
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+  const [productSearchTerm, setProductSearchTerm] = useState<string>("")
 
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
@@ -325,7 +324,7 @@ export default function BillingPage() {
 
   const handleAddRow = () => {
     setItems([...items, {
-      id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0
+      id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number
     }])
   }
   const handleProductSelect = (index: number, productId: string) => {
@@ -343,7 +342,7 @@ export default function BillingPage() {
       name: product.name,
       size: product.unit || product.size || "1 Ltr",
       mrp: product.base_mrp || product.mrp || 0,
-      taxRate: TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
+      qty: 1
     }
     setItems(newItems)
   }
@@ -355,15 +354,13 @@ export default function BillingPage() {
     setLinkedOrderId(order.order_id)
 
     const mappedItems: BillItem[] = order.items?.map((item) => {
-      const product = dbProducts.find(p => p.id === item.id)
       return {
         id: Math.random().toString(36).substr(2, 9),
         productId: item.id || "",
         name: item.name,
         size: item.size,
         qty: item.quantity || 1,
-        mrp: item.price || item.mrp || 0,
-        taxRate: product && TIN_WOOD_CATEGORIES.includes(product.category) ? 12 : 18
+        mrp: item.price || item.mrp || 0
       }
     }) || []
     setItems(mappedItems)
@@ -707,11 +704,11 @@ export default function BillingPage() {
     setCustomerAddress("")
     setStaffName("")
     setGlobalDiscount(0)
-    setGlobalGst(0)
+    setGlobalGst("")
     setDueDate("")
     setPaymentStatus("Paid")
     setPaymentMethod("Cash")
-    setItems([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0 }])
+    setItems([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number }])
     setLinkedOrderId(null)
     setSavedBillData(null)
     setEditBillId(null)
@@ -926,41 +923,76 @@ export default function BillingPage() {
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
                         <div className="flex-1 min-w-[200px] flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Select Product</label>
-                          <select
-                            disabled={!!savedBillData}
-                            value={item.productId}
-                            onChange={(e) => handleProductSelect(index, e.target.value)}
-                            className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface bg-white"
-                          >
-                            <option value="">-- Select --</option>
-                            {Array.from(new Set(dbProducts.map(p => p.category || 'Uncategorized')))
-                              .sort((a, b) => a.localeCompare(b))
-                              .map(cat => (
-                                <optgroup key={cat} label={cat}>
+                          <div className="relative">
+                            {openDropdownId === item.id ? (
+                              <div className="relative">
+                                <Search className="absolute left-3 top-2.5 size-4 text-on-surface-variant" />
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={productSearchTerm}
+                                  onChange={(e) => setProductSearchTerm(e.target.value)}
+                                  onBlur={() => {
+                                    // slight delay to allow click on dropdown items
+                                    setTimeout(() => {
+                                      if (openDropdownId === item.id) setOpenDropdownId(null)
+                                    }, 200)
+                                  }}
+                                  placeholder="Search products..."
+                                  className="w-full pl-9 pr-3 py-2 border border-primary rounded-lg focus:outline-none focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface bg-white"
+                                />
+                                <div className="absolute z-50 w-[300px] mt-1 bg-white border border-outline-variant rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                   {dbProducts
-                                    .filter(p => (p.category || 'Uncategorized') === cat)
-                                    .sort((a, b) => {
-                                      const stockA = a.current_stock || 0;
-                                      const stockB = b.current_stock || 0;
-                                      if (stockA > 0 && stockB <= 0) return -1;
-                                      if (stockA <= 0 && stockB > 0) return 1;
-                                      return a.name.localeCompare(b.name);
+                                    .filter(p => {
+                                      const term = productSearchTerm.toLowerCase();
+                                      return (p.name?.toLowerCase().includes(term) || p.category?.toLowerCase().includes(term))
                                     })
                                     .map(p => {
                                       const stock = p.current_stock || 0
                                       return (
-                                        <option 
-                                          key={p.id} 
-                                          value={p.id} 
-                                          className={stock <= 0 ? "text-gray-400 bg-gray-50" : ""}
+                                        <div
+                                          key={p.id}
+                                          onMouseDown={(e) => {
+                                            e.preventDefault() // prevent blur
+                                            handleProductSelect(index, p.id)
+                                            setOpenDropdownId(null)
+                                            setProductSearchTerm("")
+                                          }}
+                                          className={`px-4 py-3 border-b border-outline-variant last:border-b-0 cursor-pointer hover:bg-surface-container-low transition-colors ${stock <= 0 ? "opacity-60 bg-gray-50" : ""}`}
                                         >
-                                          {p.type === 'base' ? '(BASE) ' : ''}{p.name} - Stock: {stock} {p.unit || p.size || 'L'}
-                                        </option>
+                                          <div className="flex justify-between items-start gap-2">
+                                            <div className="font-medium text-sm text-on-surface">
+                                              {p.type === 'base' && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold mr-1.5 align-middle">[BASE]</span>}
+                                              {p.name}
+                                            </div>
+                                            <div className="text-xs font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
+                                              Stock: {stock} {p.unit || p.size || 'L'}
+                                            </div>
+                                          </div>
+                                          <div className="text-xs text-on-surface-variant mt-1">{p.category || 'Uncategorized'}</div>
+                                        </div>
                                       )
                                     })}
-                                </optgroup>
-                              ))}
-                          </select>
+                                  {dbProducts.filter(p => (p.name?.toLowerCase().includes(productSearchTerm.toLowerCase()) || p.category?.toLowerCase().includes(productSearchTerm.toLowerCase()))).length === 0 && (
+                                    <div className="px-4 py-3 text-sm text-on-surface-variant text-center">No products found</div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                onClick={() => {
+                                  if (!savedBillData) {
+                                    setOpenDropdownId(item.id)
+                                    setProductSearchTerm("")
+                                  }
+                                }}
+                                className={`w-full px-3 py-2 border border-outline-variant rounded-lg font-body-md text-body-md flex justify-between items-center ${savedBillData ? "bg-gray-50 text-gray-500 cursor-not-allowed" : "bg-white text-on-surface cursor-text"}`}
+                              >
+                                <span className="truncate">{product ? product.name : "-- Select --"}</span>
+                                <Search className="size-4 text-on-surface-variant shrink-0" />
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="w-24 flex flex-col gap-1">
@@ -1055,83 +1087,74 @@ export default function BillingPage() {
               </div>
 
               {/* Payment Info & Calculation */}
-              <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6 flex flex-col md:flex-row gap-8">
-                {/* Left: Payment details */}
-                <div className="flex-1 flex flex-col gap-4 md:border-r border-outline-variant md:pr-8">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-md text-label-md text-on-surface-variant">Apply Discount</label>
-                    <div className="flex gap-2 items-center flex-wrap">
-                      {/* Discount Pills */}
-                      <div className="flex gap-2 mb-2 flex-wrap">
-                        <button onClick={() => setGlobalDiscount("")} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === "" || globalDiscount === 0 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
-                        {[5, 10, 15, 20].map(pct => (
-                          <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === pct ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
-                            {pct}%
-                          </button>
-                        ))}
+              <div className="flex flex-col lg:flex-row gap-6 lg:items-start pt-6 border-t border-outline-variant">
+                <div className="flex-1 max-w-sm flex flex-col gap-4">
+                  <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant flex flex-col gap-4">
+                    <h4 className="font-label-lg text-label-lg text-on-surface font-semibold mb-1">Totals Configuration</h4>
+                    
+                    {/* Discount Config */}
+                    <div className="flex flex-row items-center gap-4">
+                      <div className="flex gap-2 items-center">
+                        <span className="font-label-md text-label-md text-on-surface-variant w-16">Discount</span>
+                        <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-16 px-2 py-1 border border-outline-variant rounded-md outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center" placeholder="%" />
+                        <span className="font-label-md text-label-md text-on-surface-variant">%</span>
                       </div>
-                      <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Custom %" />
+                      <div className="flex-1 text-right text-error font-body-md">
+                        - {inr(calculations.discount)}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
-                    <label className="font-label-md text-label-md text-on-surface-variant">GST Configuration</label>
-                    <div className="flex flex-col items-end">
-                      <div className="flex gap-2 mb-2 flex-wrap justify-end">
-                        <button onClick={() => handleGlobalGstChange("")} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === "" || globalGst === 0 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
-                        <button onClick={() => handleGlobalGstChange(18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>+18%</button>
-                        <button onClick={() => handleGlobalGstChange(-18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === -18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>-18%</button>
+                    {/* GST Config */}
+                    <div className="flex flex-row items-center gap-4">
+                      <div className="flex gap-2 items-center">
+                        <span className="font-label-md text-label-md text-on-surface-variant w-16">GST Rate</span>
+                        <input type="number" disabled={!!savedBillData} value={globalGst} onChange={(e) => handleGlobalGstChange(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-16 px-2 py-1 border border-outline-variant rounded-md outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center" placeholder="%" />
+                        <span className="font-label-md text-label-md text-on-surface-variant">%</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleGlobalGstChange("Item-wise")} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === "Item-wise" ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>Item-wise</button>
-                        <input type="number" disabled={!!savedBillData} value={typeof globalGst === "number" ? globalGst : ""} onChange={(e) => handleGlobalGstChange(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Manual %" />
+                      <div className="flex-1 text-right text-on-surface font-body-md">
+                        + {inr(calculations.gst)}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30 mt-2">
-                    <div className="flex flex-col gap-1 w-full sm:w-[200px]">
-                      <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
-                      <select disabled={!!savedBillData} value={paymentStatus === 'Unpaid' ? 'Unpaid' : paymentMethod === 'UPI' ? 'UPI' : 'Cash'} onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'Unpaid') {
-                          setPaymentStatus('Unpaid');
-                          setPaymentMethod('Unpaid');
-                        } else if (val === 'UPI') {
-                          setPaymentStatus('Paid');
-                          setPaymentMethod('UPI');
-                        } else {
-                          setPaymentStatus('Paid');
-                          setPaymentMethod('Cash');
-                        }
-                      }} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
-                        <option value="Cash">Cash</option>
-                        <option value="UPI">UPI</option>
-                        <option value="Unpaid">Unpaid</option>
-                      </select>
-                    </div>
+                  <div className="flex flex-col gap-1 w-full sm:w-[200px]">
+                    <label className="font-label-md text-label-md text-on-surface-variant">Payment Status</label>
+                    <select disabled={!!savedBillData} value={paymentStatus === 'Unpaid' ? 'Unpaid' : paymentMethod === 'UPI' ? 'UPI' : 'Cash'} onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'Unpaid') {
+                        setPaymentStatus('Unpaid');
+                        setPaymentMethod('Unpaid');
+                      } else if (val === 'UPI') {
+                        setPaymentStatus('Paid');
+                        setPaymentMethod('UPI');
+                      } else {
+                        setPaymentStatus('Paid');
+                        setPaymentMethod('Cash');
+                      }
+                    }} className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary outline-none font-body-md text-body-md text-on-surface bg-white">
+                      <option value="Cash">Cash</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Unpaid">Unpaid</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Right: Totals */}
-                <div className="w-full md:w-64 flex flex-col gap-3 justify-end">
-                  <div className="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
-                    <span>Subtotal</span><span>{inr(calculations.subtotal)}</span>
+                <div className="flex-1 flex flex-col gap-2 bg-surface-container-low rounded-xl p-6 border border-outline-variant min-w-[280px]">
+                  <div className="flex justify-between font-body-md text-on-surface-variant">
+                    <span>Subtotal</span><span>{inr(calculations.baseSubtotal)}</span>
                   </div>
-                  <div className="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
-                    <span>Discount ({globalDiscount}%)</span><span className="text-error">- {inr(calculations.discount)}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-body-md text-body-md text-on-surface">
-                    <span>Final Amount</span><span>{inr(calculations.taxable)}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
-                    <span>CGST (9%)</span><span>{inr(cgst)}</span>
-                  </div>
-                  <div className="flex justify-between items-center font-body-md text-body-md text-on-surface-variant">
-                    <span>SGST (9%)</span><span>{inr(cgst)}</span>
-                  </div>
-                  <div className="border-t border-outline-variant pt-3 mt-1 flex justify-between items-center font-headline-md text-headline-md text-primary">
-                    <span>Total</span><span>{inr(finalTotal)}</span>
+                  {calculations.discount > 0 && (
+                    <div className="flex justify-between font-body-md text-error">
+                      <span>Discount ({globalDiscount}%)</span><span>- {inr(calculations.discount)}</span>
+                    </div>
+                  )}
+                  {calculations.gst !== 0 && (
+                    <div className="flex justify-between font-body-md text-on-surface-variant">
+                      <span>Total GST</span><span>{inr(calculations.gst)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-headline-sm text-headline-sm text-primary pt-3 border-t border-outline-variant mt-1">
+                    <span>Final Total</span><span>{inr(finalTotal)}</span>
                   </div>
                 </div>
               </div>

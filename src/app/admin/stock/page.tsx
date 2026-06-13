@@ -12,7 +12,7 @@ export default function AdminStockPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
-  const [editedStock, setEditedStock] = useState<Record<string, number | "">>({})
+  const [editedStock, setEditedStock] = useState<Record<string, string>>({})
   const [isSaving, setIsSaving] = useState(false)
 
   const fetchProducts = async () => {
@@ -41,13 +41,9 @@ export default function AdminStockPage() {
   }, [])
 
   const handleStockChange = (id: string, valStr: string) => {
-    if (valStr === "") {
-      setEditedStock(prev => ({ ...prev, [id]: "" }))
-      return
-    }
-    const val = parseInt(valStr)
-    if (isNaN(val) || val < 0) return
-    setEditedStock(prev => ({ ...prev, [id]: val }))
+    // Only allow numeric input or empty string
+    if (valStr !== "" && !/^\d+$/.test(valStr)) return
+    setEditedStock(prev => ({ ...prev, [id]: valStr }))
   }
 
   const handleSaveAll = async () => {
@@ -63,9 +59,10 @@ export default function AdminStockPage() {
     // We can update one by one or send a batch. Since it's quick, Promise.all is fine
     await Promise.all(
       updates.map(async ([id, newStock]) => {
+        const parsedStock = newStock === "" ? 0 : parseInt(newStock)
         const { error } = await supabase
           .from('products')
-          .update({ current_stock: newStock === "" ? 0 : newStock })
+          .update({ current_stock: parsedStock })
           .eq('id', id)
         
         if (error) {
@@ -169,10 +166,13 @@ export default function AdminStockPage() {
               <tbody className="divide-y divide-border/60">
                 {filteredProducts.map(product => {
                   const dbStock = product.current_stock || 0;
-                  const displayStock = editedStock[product.id] !== undefined ? editedStock[product.id] : dbStock;
-                  const isOutOfStock = displayStock === "" || displayStock <= 0;
-                  const isLowStock = displayStock !== "" && displayStock > 0 && displayStock <= 5;
-                  const isEdited = editedStock[product.id] !== undefined && editedStock[product.id] !== dbStock;
+                  const rawEdited = editedStock[product.id];
+                  const displayStock = rawEdited !== undefined ? rawEdited : dbStock;
+                  
+                  const activeStockNum = rawEdited !== undefined ? (rawEdited === "" ? 0 : parseInt(rawEdited)) : dbStock;
+                  const isOutOfStock = activeStockNum <= 0;
+                  const isLowStock = activeStockNum > 0 && activeStockNum <= 5;
+                  const isEdited = rawEdited !== undefined && rawEdited !== String(dbStock);
                   
                   return (
                     <tr key={product.id} className={`transition-colors ${isEdited ? 'bg-amber-50/50' : 'hover:bg-muted/30'}`}>
@@ -200,7 +200,8 @@ export default function AdminStockPage() {
                           <input 
                             type="number" 
                             min="0"
-                            value={displayStock}
+                            value={editedStock[product.id] ?? ""}
+                            placeholder={String(dbStock)}
                             onChange={(e) => handleStockChange(product.id, e.target.value)}
                             className={`w-20 h-9 text-center border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                               isEdited ? 'border-amber-400 bg-amber-50 text-amber-900 font-bold' : 'border-border'
