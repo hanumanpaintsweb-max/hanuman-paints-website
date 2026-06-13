@@ -1245,31 +1245,42 @@ export default function BillingPage() {
               <div className="sticky top-0 z-10 w-full text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
 
               <div id="print-a4-container" ref={printRef} className="print-area w-full flex flex-col items-center print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden origin-top">
+                <style dangerouslySetInnerHTML={{
+                  __html: `
+                    @media print {
+                      @page {
+                        size: ${items.length <= 7 ? '210mm 148.5mm' : '210mm 297mm'};
+                        margin: 0;
+                      }
+                    }
+                  `
+                }} />
                 {(() => {
+                  const isHalfPage = items.length <= 7;
                   const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
                   if (items.length > 0) {
                     for (let i = 0; i < items.length; i += 5) itemChunks.push(items.slice(i, i + 5));
                   }
                   return itemChunks.map((chunk, chunkIndex) => (
-                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] xl:scale-[0.55] 2xl:scale-[0.7] print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 print:h-auto ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : 'mb-[-400px]'}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] xl:scale-[0.55] 2xl:scale-[0.7] print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 ${isHalfPage ? 'print:h-[148.5mm]' : 'print:h-auto'} ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : 'mb-[-400px]'}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
                       {/* PDF Header */}
-                      <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+                      <div className={`flex justify-between items-start border-b-2 border-gray-800 ${isHalfPage ? 'pb-2 mb-2' : 'pb-4 mb-4'}`}>
                         <div>
-                          <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
-                          <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
+                          <h1 className={`${isHalfPage ? 'text-2xl' : 'text-3xl'} font-extrabold text-orange-600 uppercase`}>{settings.shop_name || "Hanuman Paints"}</h1>
+                          <p className={`${isHalfPage ? 'text-[10px]' : 'text-sm'} font-bold text-gray-600 mt-1`}>Authorized Dulux Blue Store</p>
                           <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
                           <p className="text-xs text-gray-500">Ph: 8292889540</p>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
+                          <div className={`${isHalfPage ? 'text-xl' : 'text-2xl'} font-black text-gray-200 uppercase tracking-widest`}>TAX INVOICE</div>
                           <div className="mt-2 text-sm"><strong>Bill No:</strong> {savedBillData?.bill_number || billNoStr}</div>
                           <div className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</div>
                         </div>
                       </div>
 
                       {/* Customer Info */}
-                      <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
+                      <div className={`border border-gray-300 rounded ${isHalfPage ? 'p-2 mb-2' : 'p-4 mb-6'} bg-gray-50`}>
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Billed To</h3>
                         <div className="flex justify-between">
                           <div>
                             <div className="font-bold text-lg">{customerName || "Cash Customer"}</div>
@@ -1280,8 +1291,7 @@ export default function BillingPage() {
                       </div>
 
                       {/* Items Table */}
-                      {/* Items Table */}
-                      <table className="w-full mb-6 border-collapse">
+                      <table className={`w-full ${isHalfPage ? 'mb-2' : 'mb-6'} border-collapse`}>
                         <thead>
                           <tr className="bg-gray-800 text-white text-xs uppercase">
                             <th className="py-2 px-2 text-left">S.No</th>
@@ -1507,42 +1517,56 @@ export default function BillingPage() {
                 <div id="history-bill-print-area" className="print-area flex flex-col items-center print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden">
                   {(() => {
                     const itemsArr = selectedHistoryBill.items || [];
-                    const itemChunks: BillItem[][] = itemsArr.length > 0 ? [] : [[]];
-                    if (itemsArr.length > 0) {
-                      for (let i = 0; i < itemsArr.length; i += 5) itemChunks.push(itemsArr.slice(i, i + 5));
-                    }
-                    return itemChunks.map((chunk, chunkIndex) => (
-                      <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 print:h-auto ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
-                        {/* PDF Header */}
-                        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
-                          <div>
-                            <h1 className="text-3xl font-extrabold text-orange-600 uppercase">{settings.shop_name || "Hanuman Paints"}</h1>
-                            <p className="text-sm font-bold text-gray-600 mt-1">Authorized Dulux Blue Store</p>
-                            <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
-                            <p className="text-xs text-gray-500">Ph: 8292889540</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-black text-gray-200 uppercase tracking-widest">TAX INVOICE</div>
-                            <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
-                            <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
-                          </div>
-                        </div>
+                    const isHalfPage = itemsArr.length <= 7;
+                    return (
+                      <>
+                        <style dangerouslySetInnerHTML={{
+                          __html: `
+                            @media print {
+                              @page {
+                                size: ${isHalfPage ? '210mm 148.5mm' : '210mm 297mm'};
+                                margin: 0;
+                              }
+                            }
+                          `
+                        }} />
+                        {(() => {
+                          const itemChunks: BillItem[][] = itemsArr.length > 0 ? [] : [[]];
+                          if (itemsArr.length > 0) {
+                            for (let i = 0; i < itemsArr.length; i += 5) itemChunks.push(itemsArr.slice(i, i + 5));
+                          }
+                          return itemChunks.map((chunk, chunkIndex) => (
+                            <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 ${isHalfPage ? 'print:h-[148.5mm]' : 'print:h-auto'} ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                              {/* PDF Header */}
+                              <div className={`flex justify-between items-start border-b-2 border-gray-800 ${isHalfPage ? 'pb-2 mb-2' : 'pb-4 mb-4'}`}>
+                                <div>
+                                  <h1 className={`${isHalfPage ? 'text-2xl' : 'text-3xl'} font-extrabold text-orange-600 uppercase`}>{settings.shop_name || "Hanuman Paints"}</h1>
+                                  <p className={`${isHalfPage ? 'text-[10px]' : 'text-sm'} font-bold text-gray-600 mt-1`}>Authorized Dulux Blue Store</p>
+                                  <p className="text-xs text-gray-500 mt-1 max-w-xs">{settings.shop_address || "Madhubani"}</p>
+                                  <p className="text-xs text-gray-500">Ph: 8292889540</p>
+                                </div>
+                                <div className="text-right">
+                                  <div className={`${isHalfPage ? 'text-xl' : 'text-2xl'} font-black text-gray-200 uppercase tracking-widest`}>TAX INVOICE</div>
+                                  <div className="mt-2 text-sm"><strong>Bill No:</strong> {selectedHistoryBill.bill_number}</div>
+                                  <div className="text-sm"><strong>Date:</strong> {new Date(selectedHistoryBill.created_at).toLocaleDateString('en-IN')}</div>
+                                </div>
+                              </div>
 
-                        {/* Customer Info */}
-                        <div className="border border-gray-300 rounded p-4 mb-6 bg-gray-50">
-                          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Billed To</h3>
-                          <div className="flex justify-between">
-                            <div>
-                              <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
-                              <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
-                              {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
-                            </div>
-                          </div>
-                        </div>
+                              {/* Customer Info */}
+                              <div className={`border border-gray-300 rounded ${isHalfPage ? 'p-2 mb-2' : 'p-4 mb-6'} bg-gray-50`}>
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Billed To</h3>
+                                <div className="flex justify-between">
+                                  <div>
+                                    <div className="font-bold text-lg">{selectedHistoryBill.customer_name || "Cash Customer"}</div>
+                                    <div className="text-sm text-gray-600">{selectedHistoryBill.customer_phone}</div>
+                                    {selectedHistoryBill.customer_address && <div className="text-sm text-gray-600">{selectedHistoryBill.customer_address}</div>}
+                                  </div>
+                                </div>
+                              </div>
 
-                        {/* Items Table */}
-                        <table className="w-full mb-6 border-collapse">
-                          <thead>
+                              {/* Items Table */}
+                              <table className={`w-full ${isHalfPage ? 'mb-2' : 'mb-6'} border-collapse`}>
+                                <thead>
                             <tr className="bg-gray-800 text-white text-xs uppercase">
                               <th className="py-2 px-2 text-left">S.No</th>
                               <th className="py-2 px-2 text-left">Item Description</th>
@@ -1630,8 +1654,11 @@ export default function BillingPage() {
                         )}
                       </div>
                     ))
-                  })()}
-                </div>
+                    })()}
+                  </>
+                );
+              })()}
+            </div>
               </div>
             </motion.div>
           </div>
