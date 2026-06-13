@@ -484,8 +484,7 @@ export default function BillingPage() {
       if (!item.productId) continue
       const { error: stockError } = await supabase.rpc('deduct_stock', {
         p_product_id: item.productId,
-        p_quantity: item.qty,
-        p_changed_by: 'billing-auto'
+        p_quantity: item.qty
       })
       if (stockError) stockUpdateFailed = true
     }
@@ -925,19 +924,6 @@ export default function BillingPage() {
                                 </optgroup>
                               ))}
                           </select>
-                          {product?.type === 'base' && (
-                            <div className="mt-1 flex gap-2 items-center bg-blue-50/50 p-1.5 rounded border border-blue-100">
-                              <label className="text-xs font-semibold text-blue-700 whitespace-nowrap">Color Code:</label>
-                              <input 
-                                type="text"
-                                disabled={!!savedBillData}
-                                value={item.colorCode || ""}
-                                onChange={(e) => updateItem(item.id, { colorCode: e.target.value })}
-                                className="flex-1 px-2 py-1 border border-blue-200 rounded focus:border-blue-400 outline-none text-xs bg-white text-blue-900"
-                                placeholder="e.g. 70YY 10/100"
-                              />
-                            </div>
-                          )}
                         </div>
 
                         <div className="w-24 flex flex-col gap-1">
