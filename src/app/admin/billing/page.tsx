@@ -119,16 +119,17 @@ export default function BillingPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filteredProducts = dbProducts.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
 
   // -- TAB 3: HISTORY STATE --
   const [historySearch, setHistorySearch] = useState("")
   const [historyFilter, setHistoryFilter] = useState("All")
   const [historyDate, setHistoryDate] = useState("")
   const [dbProducts, setDbProducts] = useState<any[]>([])
+
+  const filteredProducts = dbProducts.filter(p =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
   const [dbStaff, setDbStaff] = useState<any[]>([])
   const [selectedHistoryBill, setSelectedHistoryBill] = useState<Bill | null>(null)
 
