@@ -11,6 +11,7 @@ export default function AdminStockPage() {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("All")
   const [editedStock, setEditedStock] = useState<Record<string, number>>({})
   const [isSaving, setIsSaving] = useState(false)
 
@@ -81,9 +82,12 @@ export default function AdminStockPage() {
     setIsSaving(false)
   }
 
+  const categories = ["All", ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))]
+
   const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    (categoryFilter === "All" || p.category === categoryFilter) &&
+    (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())))
   )
 
   if (loading) {
@@ -106,15 +110,26 @@ export default function AdminStockPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-border/60 rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
-          />
+        <div className="relative flex-1 max-w-md flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-border/60 rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+            />
+          </div>
+          <select 
+            value={categoryFilter} 
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 border border-border/60 rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            {categories.map((cat: any) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
         
         <Button 

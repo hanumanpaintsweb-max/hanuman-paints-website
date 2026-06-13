@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, Package, Trash2, Plus, Edit, X, Save } from "lucide-react"
+import { Loader2, Package, Trash2, Plus, Edit, X, Save, Search } from "lucide-react"
 import { supabase } from "@/services/supabase"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,8 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("All")
-  
+  const [searchQuery, setSearchQuery] = useState("")
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -114,7 +115,7 @@ export default function AdminProductsPage() {
     } else {
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...payload, current_stock: 0 }]) // Ensure new products start at 0 stock
+        .insert([{ ...payload, id: crypto.randomUUID(), current_stock: 0 }]) // Ensure new products start at 0 stock
         .select()
         
       if (error) {
@@ -128,7 +129,10 @@ export default function AdminProductsPage() {
   }
 
   const categories = ["All", ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))]
-  const filteredProducts = products.filter(p => filter === "All" || p.category === filter)
+  const filteredProducts = products.filter(p => 
+    (filter === "All" || p.category === filter) &&
+    (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())))
+  )
 
   if (loading) {
     return (
@@ -147,9 +151,21 @@ export default function AdminProductsPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Full CRUD Management for Product Catalog</p>
         </div>
-        <Button onClick={openAddModal} className="rounded-xl gap-2 h-10">
-          <Plus className="size-4" /> Add Product
-        </Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-border/60 rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+            />
+          </div>
+          <Button onClick={openAddModal} className="rounded-xl gap-2 h-10 shrink-0">
+            <Plus className="size-4" /> Add Product
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2">
@@ -246,12 +262,15 @@ export default function AdminProductsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">Category</label>
-                    <input 
-                      type="text" 
+                    <select 
                       value={form.category} 
                       onChange={e => setForm({...form, category: e.target.value})}
                       className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none bg-background" 
-                    />
+                    >
+                      {["Interior", "Exterior", "Woodcare", "Enamel", "Primer", "Undercoat", "Waterproofing", "General", "Base"].map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-muted-foreground mb-1.5 block">Unit (L/ML/Kg)</label>
