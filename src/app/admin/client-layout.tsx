@@ -16,6 +16,8 @@ const NAV_ITEMS: { label: string; href: string; icon: any; badgeKey?: string }[]
   { label: "Day Book", href: "/admin/daybook", icon: CalendarRange },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Unpaid Bills", href: "/admin/ledger", icon: BookOpen },
+  { label: "Products", href: "/admin/products", icon: ShoppingBag },
+  { label: "Stock", href: "/admin/stock", icon: Package },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
