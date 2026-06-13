@@ -1217,14 +1217,14 @@ export default function BillingPage() {
             <div className="hidden lg:flex w-[40%] bg-surface-container-highest border-l border-outline-variant flex-col items-center justify-start overflow-y-auto pt-8 pb-20 print:hidden relative">
               <div className="sticky top-0 z-10 w-[210mm] text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
 
-              <div id="print-a4-container" ref={printRef} className="print-area flex flex-col items-center drop-shadow-md">
+              <div id="print-a4-container" ref={printRef} className="print-area flex flex-col items-center drop-shadow-md print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden">
                 {(() => {
                   const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
                   if (items.length > 0) {
                     for (let i = 0; i < items.length; i += 5) itemChunks.push(items.slice(i, i + 5));
                   }
                   return itemChunks.map((chunk, chunkIndex) => (
-                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.5] xl:scale-[0.6] print:scale-100 print:shadow-none print:w-full print:p-0 ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.5] xl:scale-[0.6] print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 print:h-auto ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
                       {/* PDF Header */}
                       <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
                         <div>
@@ -1477,7 +1477,7 @@ export default function BillingPage() {
 
               {/* Body */}
               <div className="flex-1 overflow-y-auto p-6 bg-surface-variant/20 flex justify-center">
-                <div id="history-bill-print-area" className="print-area flex flex-col items-center">
+                <div id="history-bill-print-area" className="print-area flex flex-col items-center print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden">
                   {(() => {
                     const itemsArr = selectedHistoryBill.items || [];
                     const itemChunks: BillItem[][] = itemsArr.length > 0 ? [] : [[]];
@@ -1485,7 +1485,7 @@ export default function BillingPage() {
                       for (let i = 0; i < itemsArr.length; i += 5) itemChunks.push(itemsArr.slice(i, i + 5));
                     }
                     return itemChunks.map((chunk, chunkIndex) => (
-                      <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-full print:p-0 ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                      <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.6] sm:scale-[0.8] md:scale-[0.9] lg:scale-100 mb-20 lg:mb-0 print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 print:h-auto ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
                         {/* PDF Header */}
                         <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
                           <div>

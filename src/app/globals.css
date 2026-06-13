@@ -221,7 +221,47 @@
   }
 }
 
+/* --- WINDOWS BOXY SCROLLBAR FIX --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 */
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
+}
+
+/* Ensure firefox uses thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
 @media print {
+  @page {
+    margin: 0; /* Remove default browser margins */
+    size: auto; /* Let content dictate size without forcing a break */
+  }
+  
+  body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important; /* Prevent 100vh from pushing to next page */
+    overflow: hidden !important; /* Prevent scrollbars from printing */
+    background-color: white !important;
+  }
+
+  /* Force page breaks to avoid splitting rows, but prevent empty trailing pages */
+  .print-page-break {
+    page-break-inside: avoid;
+  }
+
   /* Sab kuch hide karo */
   body * {
     visibility: hidden;
