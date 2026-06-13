@@ -91,10 +91,10 @@ export default function BillingPage() {
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
-  const [globalDiscount, setGlobalDiscount] = useState<number>(0)
-  const [globalGst, setGlobalGst] = useState<number | "Item-wise">(0)
+  const [globalDiscount, setGlobalDiscount] = useState<number | "">("")
+  const [globalGst, setGlobalGst] = useState<number | "Item-wise" | "">("")
 
-  const handleGlobalGstChange = (val: number | "Item-wise") => {
+  const handleGlobalGstChange = (val: number | "Item-wise" | "") => {
     setGlobalGst(val)
     if (typeof val === "number") {
       setItems(prevItems => prevItems.map(item => ({ ...item, taxRate: val })))
@@ -245,7 +245,7 @@ export default function BillingPage() {
           setGlobalDiscount(10)
           toast.success("Wholesale customer detected. Wholesale discount applied.")
         } else {
-          setGlobalDiscount(0)
+          setGlobalDiscount("")
         }
       })
     } else {
@@ -271,11 +271,12 @@ export default function BillingPage() {
       colorantTotal += cPrice * item.qty
     })
 
-    const discount = baseSubtotal * (globalDiscount / 100)
+    const activeDiscount = typeof globalDiscount === 'number' ? globalDiscount : 0;
+    const discount = baseSubtotal * (activeDiscount / 100)
     let taxableBase = baseSubtotal - discount
     let gst = 0
 
-    const effectiveGst = typeof globalGst === 'number' ? globalGst : 18;
+    const effectiveGst = typeof globalGst === 'number' ? globalGst : (globalGst === "" ? 0 : 18);
 
     if (effectiveGst > 0) {
       gst = taxableBase * (effectiveGst / 100)
@@ -1060,22 +1061,31 @@ export default function BillingPage() {
                   <div className="flex flex-col gap-2">
                     <label className="font-label-md text-label-md text-on-surface-variant">Apply Discount</label>
                     <div className="flex gap-2 items-center flex-wrap">
-                      {[0, 5, 10, 15].map(pct => (
-                        <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === pct ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
-                          {pct}%
-                        </button>
-                      ))}
-                      <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Custom %" />
+                      {/* Discount Pills */}
+                      <div className="flex gap-2 mb-2 flex-wrap">
+                        <button onClick={() => setGlobalDiscount("")} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === "" || globalDiscount === 0 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
+                        {[5, 10, 15, 20].map(pct => (
+                          <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === pct ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
+                      <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Custom %" />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
                     <label className="font-label-md text-label-md text-on-surface-variant">GST Configuration</label>
-                    <div className="flex gap-2 items-center flex-wrap">
-                      <button onClick={() => handleGlobalGstChange(0)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 0 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
-                      <button onClick={() => handleGlobalGstChange(18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>+18%</button>
-                      <button onClick={() => handleGlobalGstChange(-18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === -18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>-18%</button>
-                      <input type="number" disabled={!!savedBillData} value={typeof globalGst === "number" ? globalGst : ""} onChange={(e) => handleGlobalGstChange(parseFloat(e.target.value) || 0)} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Manual %" />
+                    <div className="flex flex-col items-end">
+                      <div className="flex gap-2 mb-2 flex-wrap justify-end">
+                        <button onClick={() => handleGlobalGstChange("")} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === "" || globalGst === 0 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
+                        <button onClick={() => handleGlobalGstChange(18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>+18%</button>
+                        <button onClick={() => handleGlobalGstChange(-18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === -18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>-18%</button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleGlobalGstChange("Item-wise")} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === "Item-wise" ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>Item-wise</button>
+                        <input type="number" disabled={!!savedBillData} value={typeof globalGst === "number" ? globalGst : ""} onChange={(e) => handleGlobalGstChange(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-24 px-3 py-1 border border-outline-variant rounded-full outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Manual %" />
+                      </div>
                     </div>
                   </div>
 

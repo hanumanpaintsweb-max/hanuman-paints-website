@@ -6,6 +6,7 @@ import { supabase } from "@/services/supabase"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "motion/react"
+import { inr } from "@/lib/format"
 
 export default function AdminStaffPage() {
   const [staffList, setStaffList] = useState<any[]>([])
@@ -14,6 +15,12 @@ export default function AdminStaffPage() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  
+  // Sales Tracking Modal states
+  const [isSalesModalOpen, setIsSalesModalOpen] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState<any>(null)
+  const [staffSales, setStaffSales] = useState<any[]>([])
+  const [salesLoading, setSalesLoading] = useState(false)
   
   // Form state
   const [form, setForm] = useState({
@@ -119,6 +126,26 @@ export default function AdminStaffPage() {
     }
   }
 
+  const openSalesModal = async (staff: any) => {
+    setSelectedStaff(staff)
+    setIsSalesModalOpen(true)
+    setSalesLoading(true)
+    setStaffSales([])
+    
+    const { data, error } = await supabase
+      .from('bills')
+      .select('*')
+      .eq('staff_name', staff.name)
+      .order('created_at', { ascending: false })
+      
+    if (error) {
+      toast.error("Failed to fetch staff sales")
+    } else {
+      setStaffSales(data || [])
+    }
+    setSalesLoading(false)
+  }
+
   if (loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -173,6 +200,14 @@ export default function AdminStaffPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 text-primary hover:text-primary-focus hover:bg-primary/10 rounded-lg font-medium text-xs border border-primary/20"
+                          onClick={() => openSalesModal(staff)}
+                        >
+                          View Sales
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -273,6 +308,85 @@ export default function AdminStaffPage() {
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isSalesModalOpen && selectedStaff && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSalesModalOpen(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-card rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between bg-muted/30">
+                <div>
+                  <h3 className="font-semibold text-foreground text-lg">
+                    Sales History: {selectedStaff.name}
+                  </h3>
+                  {!salesLoading && (
+                    <p className="text-sm font-medium text-primary mt-1">
+                      Total Bills Cut: {staffSales.length}
+                    </p>
+                  )}
+                </div>
+                <button 
+                  onClick={() => setIsSalesModalOpen(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto bg-surface flex-1">
+                {salesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="size-6 animate-spin text-primary" />
+                  </div>
+                ) : staffSales.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-xl border border-dashed border-border/60">
+                    No sales recorded for this staff member yet.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-border/60">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-semibold border-b border-border/60">
+                        <tr>
+                          <th className="px-4 py-3">Bill No</th>
+                          <th className="px-4 py-3">Date</th>
+                          <th className="px-4 py-3">Customer</th>
+                          <th className="px-4 py-3 text-right">Total Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/60">
+                        {staffSales.map(bill => (
+                          <tr key={bill.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3 font-medium text-foreground">{bill.bill_number}</td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {new Date(bill.created_at).toLocaleDateString("en-IN", {
+                                day: "numeric", month: "short", year: "numeric",
+                                hour: "2-digit", minute: "2-digit"
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{bill.customer_name || "Cash Customer"}</td>
+                            <td className="px-4 py-3 text-right font-bold text-foreground">{inr(bill.total_amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </div>
         )}

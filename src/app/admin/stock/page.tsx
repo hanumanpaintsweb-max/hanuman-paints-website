@@ -12,7 +12,7 @@ export default function AdminStockPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("All")
-  const [editedStock, setEditedStock] = useState<Record<string, number>>({})
+  const [editedStock, setEditedStock] = useState<Record<string, number | "">>({})
   const [isSaving, setIsSaving] = useState(false)
 
   const fetchProducts = async () => {
@@ -41,6 +41,10 @@ export default function AdminStockPage() {
   }, [])
 
   const handleStockChange = (id: string, valStr: string) => {
+    if (valStr === "") {
+      setEditedStock(prev => ({ ...prev, [id]: "" }))
+      return
+    }
     const val = parseInt(valStr)
     if (isNaN(val) || val < 0) return
     setEditedStock(prev => ({ ...prev, [id]: val }))
@@ -61,7 +65,7 @@ export default function AdminStockPage() {
       updates.map(async ([id, newStock]) => {
         const { error } = await supabase
           .from('products')
-          .update({ current_stock: newStock })
+          .update({ current_stock: newStock === "" ? 0 : newStock })
           .eq('id', id)
         
         if (error) {
@@ -166,8 +170,8 @@ export default function AdminStockPage() {
                 {filteredProducts.map(product => {
                   const dbStock = product.current_stock || 0;
                   const displayStock = editedStock[product.id] !== undefined ? editedStock[product.id] : dbStock;
-                  const isOutOfStock = displayStock <= 0;
-                  const isLowStock = displayStock > 0 && displayStock <= 5;
+                  const isOutOfStock = displayStock === "" || displayStock <= 0;
+                  const isLowStock = displayStock !== "" && displayStock > 0 && displayStock <= 5;
                   const isEdited = editedStock[product.id] !== undefined && editedStock[product.id] !== dbStock;
                   
                   return (
@@ -198,7 +202,7 @@ export default function AdminStockPage() {
                             min="0"
                             value={displayStock}
                             onChange={(e) => handleStockChange(product.id, e.target.value)}
-                            className={`w-20 h-9 text-center border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none transition-colors ${
+                            className={`w-20 h-9 text-center border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                               isEdited ? 'border-amber-400 bg-amber-50 text-amber-900 font-bold' : 'border-border'
                             }`}
                           />
