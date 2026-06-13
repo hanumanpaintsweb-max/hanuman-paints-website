@@ -1090,29 +1090,30 @@ export default function BillingPage() {
               <div className="flex flex-col lg:flex-row gap-6 lg:items-start pt-6 border-t border-outline-variant">
                 <div className="flex-1 max-w-sm flex flex-col gap-4">
                   <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant flex flex-col gap-4">
-                    <h4 className="font-label-lg text-label-lg text-on-surface font-semibold mb-1">Totals Configuration</h4>
-                    
                     {/* Discount Config */}
-                    <div className="flex flex-row items-center gap-4">
-                      <div className="flex gap-2 items-center">
-                        <span className="font-label-md text-label-md text-on-surface-variant w-16">Discount</span>
-                        <input type="number" disabled={!!savedBillData} value={globalDiscount} onChange={(e) => setGlobalDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-16 px-2 py-1 border border-outline-variant rounded-md outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center" placeholder="%" />
-                        <span className="font-label-md text-label-md text-on-surface-variant">%</span>
-                      </div>
-                      <div className="flex-1 text-right text-error font-body-md">
-                        - {inr(calculations.discount)}
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-md text-label-md text-on-surface-variant">Apply Discount</label>
+                      <div className="flex gap-2 flex-wrap">
+                        <button onClick={() => setGlobalDiscount(0)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === 0 || globalDiscount === "" ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
+                        {[5, 10, 15].map(pct => (
+                          <button key={pct} onClick={() => setGlobalDiscount(pct)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalDiscount === pct ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>
+                            {pct}%
+                          </button>
+                        ))}
+                        <input type="number" disabled={!!savedBillData} value={(globalDiscount !== "" && ![0, 5, 10, 15].includes(globalDiscount)) ? globalDiscount : ""} onChange={(e) => setGlobalDiscount(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className={`w-24 px-3 py-1 border rounded-full outline-none font-label-md text-label-md transition-colors ${(globalDiscount !== "" && ![0, 5, 10, 15].includes(globalDiscount)) ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-outline-variant hover:bg-surface-container text-on-surface'} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="Custom %" />
                       </div>
                     </div>
 
+                    <div className="border-t border-outline-variant/30 my-1"></div>
+
                     {/* GST Config */}
-                    <div className="flex flex-row items-center gap-4">
-                      <div className="flex gap-2 items-center">
-                        <span className="font-label-md text-label-md text-on-surface-variant w-16">GST Rate</span>
-                        <input type="number" disabled={!!savedBillData} value={globalGst} onChange={(e) => handleGlobalGstChange(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className="w-16 px-2 py-1 border border-outline-variant rounded-md outline-none font-body-md text-body-md text-on-surface [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-center" placeholder="%" />
-                        <span className="font-label-md text-label-md text-on-surface-variant">%</span>
-                      </div>
-                      <div className="flex-1 text-right text-on-surface font-body-md">
-                        + {inr(calculations.gst)}
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-md text-label-md text-on-surface-variant">GST Configuration</label>
+                      <div className="flex gap-2 flex-wrap">
+                        <button onClick={() => handleGlobalGstChange(0)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 0 || globalGst === "" ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>0%</button>
+                        <button onClick={() => handleGlobalGstChange(18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === 18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>+18%</button>
+                        <button onClick={() => handleGlobalGstChange(-18)} disabled={!!savedBillData} className={`px-3 py-1 rounded-full font-label-md text-label-md transition-colors ${globalGst === -18 ? 'border border-blue-200 bg-blue-100 text-blue-700' : 'border border-outline-variant hover:bg-surface-container text-on-surface'}`}>-18%</button>
+                        <input type="number" disabled={!!savedBillData} value={(globalGst !== "" && ![0, 18, -18].includes(globalGst)) ? globalGst : ""} onChange={(e) => handleGlobalGstChange(e.target.value === "" ? "" : (parseFloat(e.target.value) || 0))} className={`w-24 px-3 py-1 border rounded-full outline-none font-label-md text-label-md transition-colors ${(globalGst !== "" && ![0, 18, -18].includes(globalGst)) ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-outline-variant hover:bg-surface-container text-on-surface'} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="Manual %" />
                       </div>
                     </div>
                   </div>
