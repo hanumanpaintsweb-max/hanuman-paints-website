@@ -913,7 +913,7 @@ export default function BillingPage() {
         {activeTab === "New Bill" ? (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* Left Column (Form) */}
-            <div className="xl:col-span-8 flex flex-col gap-6">
+            <div className="xl:col-span-12 max-w-5xl mx-auto w-full flex flex-col gap-6">
 
               {/* Customer Info */}
               <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6">
@@ -1240,8 +1240,8 @@ export default function BillingPage() {
               <div className="h-8"></div>
             </div>
 
-            {/* Right Column (Live Preview / A4 Sheet) */}
-            <div className="hidden xl:flex xl:col-span-4 sticky top-6 bg-surface-container-highest rounded-2xl border border-outline-variant flex-col items-center justify-start overflow-x-hidden overflow-y-auto pt-8 pb-20 print:hidden z-10 max-h-[calc(100vh-100px)] w-full">
+            {/* Right Column (Live Preview / A4 Sheet) - HIDDEN TEMPORARILY */}
+            <div className="hidden">
               <div className="sticky top-0 z-10 w-full text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
 
               <div id="print-a4-container" ref={printRef} className="print-area w-full flex flex-col items-center print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden origin-top">
