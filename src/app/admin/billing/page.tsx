@@ -315,10 +315,17 @@ export default function BillingPage() {
 
     setIsSaving(true)
 
+    // Always re-fetch the latest bill sequence directly from the database before saving
     let finalBillNoStr = billNoStr;
     if (!editBillId) {
-      // Fetch latest number right before saving to prevent duplicates
-      const { data: latestData } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+      const { data: latestData, error: seqError } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+      if (seqError) {
+        console.error('SUPABASE DB ERROR (Sequence Fetch):', seqError)
+        alert('Failed to fetch latest bill sequence: ' + seqError.message)
+        setIsSaving(false)
+        return
+      }
+      
       let maxNum = 0
       if (latestData && latestData.length > 0) {
         const match = latestData[0].bill_number.match(/-(\d+)$/)
@@ -366,127 +373,99 @@ export default function BillingPage() {
       }
     }
 
-    console.log('Saving bill:', billData)
-    if (ledgerData) console.log('Saving ledger:', ledgerData)
+    console.log('Attempting to save bill:', billData)
 
     if (editBillId) {
       const { data, error } = await supabase.from('bills').update(billData).eq('id', editBillId).select()
-      setIsSaving(false)
+      
       if (error) {
-        toast.error(`Failed to update bill: ${error.message}`)
+        console.error('SUPABASE DB ERROR (Update):', error);
+        alert('Failed to update in Database: ' + error.message);
+        setIsSaving(false)
         return
       }
+
+      if (!data || data.length === 0) {
+        console.error('SUPABASE DB ERROR: No data returned from update.');
+        alert('Failed to update in Database: No data returned.');
+        setIsSaving(false)
+        return
+      }
+
       toast.success("Bill updated successfully!")
       const updatedBill = data[0]
       setSavedBillData(updatedBill)
       setBills(bills.map(b => b.id === editBillId ? updatedBill : b))
       setEditBillId(null)
+      setIsSaving(false)
       return
     }
 
-    // Try atomic RPC first
-    const { data: rpcData, error: rpcError } = await supabase.rpc('save_bill_with_ledger', {
-      p_bill: billData,
-      p_ledger: ledgerData
-    })
+    // STRICT INSERT CALL
+    const { data, error } = await supabase.from('bills').insert([billData]).select()
 
-    console.log('Supabase RPC response:', rpcData, rpcError)
-
-    if (!rpcError && rpcData?.success) {
+    if (error) {
+      console.error('SUPABASE DB ERROR:', error);
+      alert('Failed to save in Database: ' + error.message);
       setIsSaving(false)
-      toast.success("Bill saved successfully! (Atomic)")
+      return;
+    }
 
-      const newBill = { ...billData, id: rpcData.bill_id, created_at: new Date().toISOString() } as unknown as Bill
-      setSavedBillData(newBill)
-      setBills([newBill, ...bills])
+    if (!data || data.length === 0) {
+      console.error('SUPABASE DB ERROR: No data returned from insert. (RLS issue?)');
+      alert('Failed to save in Database: No data returned.');
+      setIsSaving(false)
+      return;
+    }
 
-      // Stock deduction
-      let stockUpdateFailed = false
-      for (const item of items) {
-        if (!item.productId) continue
-        const { error: stockError } = await supabase.rpc('deduct_stock', {
-          p_product_id: item.productId,
-          p_quantity: item.qty,
-          p_changed_by: 'billing-auto'
-        })
-        if (stockError) stockUpdateFailed = true
+    // ONLY update local state AFTER exact confirmation from DB
+    console.log("DB confirmed save, updating local state.", data[0])
+    toast.success("Bill saved successfully!")
+    const newBill = data[0]
+    setSavedBillData(newBill)
+    setBills([newBill, ...bills])
+
+    // Fetch sequence immediately so next "Create New" is accurate
+    const { data: fetchNext } = await supabase.from('bills').select('bill_number').order('created_at', { ascending: false }).limit(1)
+    if (fetchNext && fetchNext.length > 0) {
+      const match = fetchNext[0].bill_number.match(/-(\d+)$/)
+      if (match) {
+        // Just keeping it ready, though resetForm will fetch it again
+        const nextNum = parseInt(match[1]) + 1
       }
-      if (stockUpdateFailed) toast.error("Bill saved, but stock update failed")
+    }
 
-      // Update customer outstanding
-      if (ledgerData && customerRecord) {
+    // Stock deduction
+    let stockUpdateFailed = false
+    for (const item of items) {
+      if (!item.productId) continue
+      const { error: stockError } = await supabase.rpc('deduct_stock', {
+        p_product_id: item.productId,
+        p_quantity: item.qty,
+        p_changed_by: 'billing-auto'
+      })
+      if (stockError) stockUpdateFailed = true
+    }
+    if (stockUpdateFailed) toast.error("Bill saved, but stock update failed")
+
+    // Ledger insertion
+    if (ledgerData) {
+      const { error: ledgerError } = await supabase.from('ledger').insert([ledgerData])
+      if (ledgerError) {
+        console.error('SUPABASE DB ERROR (Ledger):', ledgerError);
+        toast.error("⚠️ BILL SAVE HUA BUT UDHAAR ENTRY FAIL HUI. Ledger page mein manually add karo.")
+      }
+
+      if (customerRecord) {
         await supabase.from('customers').update({
           current_outstanding: (customerRecord.current_outstanding || 0) + finalTotal,
           total_orders: (customerRecord.total_orders || 0) + 1,
           total_value: (customerRecord.total_value || 0) + finalTotal
         }).eq('id', customerRecord.id)
       }
-      return
     }
-
-    // If RPC failed internally, log the exact error from the DB
-    if (rpcData && rpcData.success === false) {
-      console.error("RPC Internal Error:", rpcData.error);
-    }
-
-    // Fallback if RPC fails or doesn't exist
-    const { data, error } = await supabase.from("bills").insert([billData]).select()
-
-    setIsSaving(false)
-
-    console.log('Supabase Fallback response:', data, error)
-
-    if (error) {
-      console.error("FULL SAVE ERROR OBJECT:", error);
-      if (error.code === '23505') toast.error("Bill number already exists!") // Unique constraint
-      else toast.error(`Failed to save bill: ${error.message || error.details || JSON.stringify(error)}`)
-      return; // STOP execution if error
-    } 
     
-    if (!data || data.length === 0) {
-      console.error("SAVE FAILED SILENTLY: No data returned from insert. Check RLS policies.");
-      toast.error("Failed to save bill: No data returned from database.");
-      return; // STOP execution
-    }
-
-    toast.success("Bill saved successfully!")
-    const newBill = data[0]
-    setSavedBillData(newBill)
-    setBills([newBill, ...bills])
-
-      let stockUpdateFailed = false
-
-      for (const item of items) {
-        if (!item.productId) continue
-
-        const { error: stockError } = await supabase.rpc('deduct_stock', {
-          p_product_id: item.productId,
-          p_quantity: item.qty,
-          p_changed_by: 'billing-auto'
-        })
-
-        if (stockError) stockUpdateFailed = true
-      }
-
-      if (stockUpdateFailed) {
-        toast.error("Bill saved, but stock update failed")
-      }
-
-      if (ledgerData) {
-        const { error: ledgerError } = await supabase.from('ledger').insert([ledgerData])
-
-        if (ledgerError) {
-          toast.error("⚠️ BILL SAVE HUA BUT UDHAAR ENTRY FAIL HUI. Ledger page mein manually add karo.")
-        }
-
-        if (customerRecord) {
-          await supabase.from('customers').update({
-            current_outstanding: (customerRecord.current_outstanding || 0) + finalTotal,
-            total_orders: (customerRecord.total_orders || 0) + 1,
-            total_value: (customerRecord.total_value || 0) + finalTotal
-          }).eq('id', customerRecord.id)
-        }
-      }
+    setIsSaving(false)
   }
 
   const handlePrint = (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
