@@ -424,6 +424,11 @@ export default function BillingPage() {
       return
     }
 
+    // If RPC failed internally, log the exact error from the DB
+    if (rpcData && rpcData.success === false) {
+      console.error("RPC Internal Error:", rpcData.error);
+    }
+
     // Fallback if RPC fails or doesn't exist
     const { data, error } = await supabase.from("bills").insert([billData]).select()
 
@@ -432,13 +437,22 @@ export default function BillingPage() {
     console.log('Supabase Fallback response:', data, error)
 
     if (error) {
+      console.error("FULL SAVE ERROR OBJECT:", error);
       if (error.code === '23505') toast.error("Bill number already exists!") // Unique constraint
-      else toast.error(`Failed to save bill: ${error.message || error.details || JSON.stringify(error)} (RPC: ${rpcError?.message})`)
-    } else {
-      toast.success("Bill saved successfully!")
-      const newBill = data[0]
-      setSavedBillData(newBill)
-      setBills([newBill, ...bills])
+      else toast.error(`Failed to save bill: ${error.message || error.details || JSON.stringify(error)}`)
+      return; // STOP execution if error
+    } 
+    
+    if (!data || data.length === 0) {
+      console.error("SAVE FAILED SILENTLY: No data returned from insert. Check RLS policies.");
+      toast.error("Failed to save bill: No data returned from database.");
+      return; // STOP execution
+    }
+
+    toast.success("Bill saved successfully!")
+    const newBill = data[0]
+    setSavedBillData(newBill)
+    setBills([newBill, ...bills])
 
       let stockUpdateFailed = false
 
@@ -473,7 +487,6 @@ export default function BillingPage() {
           }).eq('id', customerRecord.id)
         }
       }
-    }
   }
 
   const handlePrint = (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
@@ -756,10 +769,12 @@ export default function BillingPage() {
                   <Printer className="size-[18px]" />
                   <span className="font-label-md text-label-md">Print</span>
                 </button>
+                {/* PHASE2_HIDDEN: PDF Download button temporarily disabled
                 <button onClick={() => handlePDF('print-a4-container', savedBillData)} className="border border-outline-variant text-primary px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-surface-container transition-colors">
                   <FileDown className="size-[18px]" />
                   <span className="font-label-md text-label-md">PDF</span>
                 </button>
+                */}
                 <button onClick={resetForm} className="bg-primary text-white px-4 py-1.5 rounded-lg flex items-center gap-2 hover:bg-opacity-90 transition-colors">
                   <Plus className="size-[18px]" />
                   <span className="font-label-md text-label-md">Create New</span>
@@ -1254,8 +1269,10 @@ export default function BillingPage() {
                     <option value="partial">Mark Partial</option>
                   </select>
                   <button onClick={() => shareWhatsApp()} className="px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Share2 className="size-4" /> Share</button>
-                  <button onClick={() => handlePrint('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 border border-outline-variant hover:bg-surface-container-high rounded-xl font-bold text-sm transition-colors flex items-center gap-2 bg-white text-on-surface"><Printer className="size-4" /> Print</button>
+                  <button onClick={() => handlePrint('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Printer className="size-4" /> Print</button>
+                  {/* PHASE2_HIDDEN: PDF button temporarily disabled 
                   <button onClick={() => handlePDF('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Download className="size-4" /> PDF</button>
+                  */}
                   <button onClick={() => setSelectedHistoryBill(null)} className="p-2 bg-surface-variant hover:bg-outline-variant rounded-full transition-colors ml-2"><X className="size-5" /></button>
                 </div>
               </div>
