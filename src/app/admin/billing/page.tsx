@@ -974,8 +974,8 @@ export default function BillingPage() {
                 {items.map((item, index) => {
                   const product = dbProducts.find(p => p.id === item.productId);
                   return (
-                    <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
-                      <div className="flex flex-row items-end gap-3 w-full mb-4 flex-wrap xl:flex-nowrap">
+                    <div key={item.id} className="border border-outline-variant rounded-xl p-4 mb-4 bg-surface relative">
+                      <div className="flex flex-row items-end gap-3 w-full pr-12 flex-wrap xl:flex-nowrap">
                         <div className="flex-1 min-w-[250px] flex flex-col gap-1">
                           <div className="relative w-full" ref={searchRef}>
                             <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
@@ -1084,19 +1084,17 @@ export default function BillingPage() {
                           </div>
                         </div>
 
-                        <div className="w-24 min-w-[96px] flex flex-col gap-1">
+                        <div className="w-24 shrink-0 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Rate</label>
                           <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
-
-                        {!savedBillData && (
-                          <div className="flex pb-1">
-                            <button onClick={() => removeItem(item.id)} className="text-error hover:bg-error-container p-2 rounded-full transition-colors shrink-0">
-                              <Trash2 className="size-5" />
-                            </button>
-                          </div>
-                        )}
                       </div>
+
+                      {!savedBillData && (
+                        <button onClick={() => removeItem(item.id)} className="absolute right-3 top-6 p-2 text-rose-500 hover:bg-rose-50 rounded-md transition-colors">
+                          <Trash2 className="size-5" />
+                        </button>
+                      )}
 
                       {/* Colorant Expandable logic */}
                       {true && (
