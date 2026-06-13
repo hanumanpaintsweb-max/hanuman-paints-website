@@ -1241,17 +1241,17 @@ export default function BillingPage() {
             </div>
 
             {/* Right Column (Live Preview / A4 Sheet) */}
-            <div className="hidden xl:flex xl:col-span-4 sticky top-6 bg-surface-container-highest rounded-2xl border border-outline-variant flex-col items-center justify-start overflow-x-auto pt-8 pb-20 print:hidden z-10 max-h-[calc(100vh-100px)]">
-              <div className="sticky top-0 z-10 w-[210mm] text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
+            <div className="hidden xl:flex xl:col-span-4 sticky top-6 bg-surface-container-highest rounded-2xl border border-outline-variant flex-col items-center justify-start overflow-x-hidden overflow-y-auto pt-8 pb-20 print:hidden z-10 max-h-[calc(100vh-100px)] w-full">
+              <div className="sticky top-0 z-10 w-full text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
 
-              <div id="print-a4-container" ref={printRef} className="print-area flex flex-col items-center drop-shadow-md print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden">
+              <div id="print-a4-container" ref={printRef} className="print-area w-full flex flex-col items-center print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden origin-top">
                 {(() => {
                   const itemChunks: BillItem[][] = items.length > 0 ? [] : [[]];
                   if (items.length > 0) {
                     for (let i = 0; i < items.length; i += 5) itemChunks.push(items.slice(i, i + 5));
                   }
                   return itemChunks.map((chunk, chunkIndex) => (
-                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.5] xl:scale-[0.6] print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 print:h-auto ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : ''}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
+                    <div key={chunkIndex} className={`bg-white p-8 w-[210mm] min-h-[297mm] text-black shadow-lg origin-top scale-[0.45] xl:scale-[0.55] 2xl:scale-[0.7] print:scale-100 print:shadow-none print:w-[210mm] print:p-0 print:min-h-0 print:h-auto ${chunkIndex < itemChunks.length - 1 ? 'mb-8 print:mb-0' : 'mb-[-400px]'}`} style={chunkIndex < itemChunks.length - 1 ? { pageBreakAfter: 'always' } : {}}>
                       {/* PDF Header */}
                       <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
                         <div>
