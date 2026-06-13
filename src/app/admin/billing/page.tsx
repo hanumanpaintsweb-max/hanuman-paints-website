@@ -216,7 +216,7 @@ export default function BillingPage() {
         const targetBill = bills.find(b => b.bill_number === targetBillNo)
         if (targetBill) {
           if (action === "edit") {
-            loadBillForEditing(targetBill)
+            loadBillForEdit(targetBill)
             setActiveTab("New Bill")
           } else if (action === "view") {
             setSelectedHistoryBill(targetBill)
