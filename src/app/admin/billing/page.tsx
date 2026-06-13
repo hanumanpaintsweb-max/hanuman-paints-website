@@ -382,8 +382,8 @@ export default function BillingPage() {
       cgst_amount: parseFloat(cgst.toFixed(2)),
       sgst_amount: parseFloat(sgst.toFixed(2)),
       total_amount: finalTotal,
-      payment_status: paymentStatus.toLowerCase(),
-      payment_method: paymentMethod.toLowerCase(),
+      payment_status: paymentStatus,
+      payment_method: paymentMethod,
       order_id: linkedOrderId || null,
       staff_name: staffName || null,
       bill_type: billMode
