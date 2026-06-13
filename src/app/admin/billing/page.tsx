@@ -81,15 +81,15 @@ export default function BillingPage() {
   const [customerPhone, setCustomerPhone] = useState("")
   const [customerAddress, setCustomerAddress] = useState("")
 
-  const [items, setItems] = useState<BillItem[]>([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 18 }])
+  const [items, setItems] = useState<BillItem[]>([{ id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0 }])
   const [paymentStatus, setPaymentStatus] = useState("Paid")
   const [dueDate, setDueDate] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("Cash")
   const [linkedOrderId, setLinkedOrderId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [savedBillData, setSavedBillData] = useState<Bill | null>(null)
-  const [globalDiscount, setGlobalDiscount] = useState<number>(5)
-  const [globalGst, setGlobalGst] = useState<number | "Item-wise">("Item-wise")
+  const [globalDiscount, setGlobalDiscount] = useState<number>(0)
+  const [globalGst, setGlobalGst] = useState<number | "Item-wise">(0)
 
   const handleGlobalGstChange = (val: number | "Item-wise") => {
     setGlobalGst(val)
@@ -264,7 +264,7 @@ export default function BillingPage() {
 
   const handleAddRow = () => {
     setItems([...items, {
-      id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 18
+      id: Date.now().toString(), productId: "", name: "", size: "1 Ltr", qty: 1, mrp: "" as unknown as number, taxRate: 0
     }])
   }
 
@@ -533,14 +533,13 @@ export default function BillingPage() {
     printWindow.document.close()
   }
 
-  const handlePDF = async (targetId: string = 'bill-print-area', providedBillData?: Bill) => {
+  const handlePDF = async (targetId: string = 'bill-print-area', providedBillData?: Bill, returnFile: boolean = false): Promise<File | void> => {
     const printArea = document.getElementById(targetId)
     if (!printArea) return
 
     const bd = providedBillData || savedBillData
     const billNumber = bd?.bill_number || billNoStr
-    const cName = bd?.customer_name ? `-${bd.customer_name.replace(/[^a-zA-Z0-9]/g, '')}` : (customerName ? `-${customerName.replace(/[^a-zA-Z0-9]/g, '')}` : '')
-    const fileName = `${billNumber}${cName}.pdf`
+    const fileName = `bill_${billNumber}.pdf`
 
     try {
       const html2canvas = (await import('html2canvas')).default;
@@ -573,6 +572,12 @@ export default function BillingPage() {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      
+      if (returnFile) {
+        const pdfBlob = pdf.output('blob');
+        return new File([pdfBlob], fileName, { type: 'application/pdf' });
+      }
+
       pdf.save(fileName);
       
       toast.success('PDF downloaded successfully');
@@ -582,16 +587,50 @@ export default function BillingPage() {
     }
   }
 
-  const shareWhatsApp = () => {
-    const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill ${savedBillData?.bill_number} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nPayment Status: ${paymentStatus.toUpperCase()}\n\nDhanyawad! 🎨`
-    const url = `https://wa.me/91${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`
-    window.open(url, "_blank")
+  const shareWhatsApp = async () => {
+    const bd = savedBillData
+    const billNumber = bd?.bill_number || billNoStr
+    const fileName = `bill_${billNumber}.pdf`
+    
+    // 1. Generate PDF file
+    const file = await handlePDF('print-a4-container', bd || undefined, true) as File | undefined;
+    
+    // 2. Try Web Share API directly
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill ${billNumber} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nPayment Status: ${paymentStatus.toUpperCase()}\n\nDhanyawad! 🎨`;
+        await navigator.share({
+          files: [file],
+          title: fileName,
+          text: text,
+        });
+        toast.success("Shared via WhatsApp!");
+        return;
+      } catch (err) {
+        console.error("Web share failed", err);
+      }
+    }
+    
+    // 3. Fallback: Trigger download manually, then open WhatsApp
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    const fallbackText = `Namaste ${customerName}!\n\nBill #${billNumber} - ${inr(finalTotal)}\n- PDF downloaded, please attach from downloads\n\nDhanyawad! 🎨`;
+    const waUrl = `https://wa.me/91${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(fallbackText)}`
+    window.open(waUrl, "_blank")
   }
 
   const resetForm = async () => {
     setCustomerName("")
     setCustomerPhone("")
-    setGlobalDiscount(5)
+    setGlobalDiscount(0)
+    setGlobalGst(0)
     setDueDate("")
     setPaymentStatus("Paid")
     setPaymentMethod("Cash")
