@@ -578,18 +578,23 @@ export default function BillingPage() {
     }
   }
 
-  const shareWhatsApp = async () => {
-    const bd = savedBillData
+  const shareWhatsApp = async (historyBill?: Bill) => {
+    const bd = historyBill || savedBillData
     const billNumber = bd?.bill_number || billNoStr
     const fileName = `bill_${billNumber}.pdf`
+    const cName = bd?.customer_name || customerName
+    const cPhone = bd?.customer_phone || customerPhone
+    const cTotal = bd?.total_amount || finalTotal
+    const cStatus = bd?.payment_status || paymentStatus
+    const targetId = historyBill ? 'history-bill-print-area' : 'print-a4-container-hidden'
     
     // 1. Generate PDF file
-    const file = await handlePDF('print-a4-container', bd || undefined, true) as File | undefined;
+    const file = await handlePDF(targetId, bd || undefined, true) as File | undefined;
     
     // 2. Try Web Share API directly
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        const text = `Namaste ${customerName}!\n\nAapka Hanuman Paints ka bill ${billNumber} generate ho gaya hai.\n\nTotal Amount: ${inr(finalTotal)}\nPayment Status: ${paymentStatus.toUpperCase()}\n\nDhanyawad! 🎨`;
+        const text = `Namaste ${cName}!\n\nAapka Hanuman Paints ka bill ${billNumber} generate ho gaya hai.\n\nTotal Amount: ${inr(cTotal)}\nPayment Status: ${cStatus.toUpperCase()}\n\nDhanyawad! 🎨`;
         await navigator.share({
           files: [file],
           title: fileName,
@@ -612,8 +617,8 @@ export default function BillingPage() {
       URL.revokeObjectURL(url);
     }
     
-    const fallbackText = `Namaste ${customerName}!\n\nBill #${billNumber} - ${inr(finalTotal)}\n- PDF downloaded, please attach from downloads\n\nDhanyawad! 🎨`;
-    const waUrl = `https://wa.me/91${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(fallbackText)}`
+    const fallbackText = `Hello, here is your bill from Hanuman Paints. (Please attach the downloaded PDF).\n\nBill #${billNumber} - ${inr(cTotal)}\nDhanyawad! 🎨`;
+    const waUrl = `https://wa.me/91${cPhone.replace(/\D/g, "")}?text=${encodeURIComponent(fallbackText)}`
     window.open(waUrl, "_blank")
   }
 
@@ -1196,7 +1201,7 @@ export default function BillingPage() {
                             <td className="px-6 py-4 text-right">
                               <div className="flex gap-2 justify-end">
                                 <button onClick={() => viewHistoricalBill(b)} className="p-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-md transition-colors" title="View"><Eye className="size-4" /></button>
-                                <button onClick={() => handlePrint('print-a4-container', b)} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
+                                <button onClick={() => { setSelectedHistoryBill(b); setTimeout(() => handlePrint('history-bill-print-area', b), 100); }} className="p-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="Print"><Printer className="size-4" /></button>
                                 <button onClick={() => loadBillForEdit(b)} className="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors" title="Edit"><Edit className="size-4" /></button>
                                 <button onClick={() => deleteBill(b)} className="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-md transition-colors" title="Delete"><Trash2 className="size-4" /></button>
                               </div>
@@ -1242,12 +1247,7 @@ export default function BillingPage() {
                   </p>
                 </div>
                 <div className="flex gap-2 items-center">
-                  <select value={selectedHistoryBill.payment_status} onChange={(e) => updateBillStatus(selectedHistoryBill.id, e.target.value)} className="bg-white border border-outline-variant rounded-lg px-3 py-2 text-sm outline-none font-medium mr-2">
-                    <option value="paid">Mark Paid</option>
-                    <option value="unpaid">Mark Unpaid</option>
-                    <option value="partial">Mark Partial</option>
-                  </select>
-                  <button onClick={() => shareWhatsApp()} className="px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Share2 className="size-4" /> Share</button>
+                  <button onClick={() => shareWhatsApp(selectedHistoryBill)} className="px-4 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Share2 className="size-4" /> Share</button>
                   <button onClick={() => handlePrint('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Printer className="size-4" /> Print</button>
                   {/* PHASE2_HIDDEN: PDF button temporarily disabled 
                   <button onClick={() => handlePDF('history-bill-print-area', selectedHistoryBill)} className="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"><Download className="size-4" /> PDF</button>
