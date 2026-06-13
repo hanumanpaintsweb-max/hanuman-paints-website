@@ -853,7 +853,7 @@ export default function BillingPage() {
                   return (
                     <div key={item.id} className="border border-outline-variant rounded-lg p-4 bg-surface-bright flex flex-col gap-4 relative">
                       <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
-                        <div className="flex-1 min-w-[200px] flex flex-col gap-1 relative">
+                        <div className="flex-1 min-w-[200px] flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Select Product</label>
                           <select
                             disabled={!!savedBillData}
@@ -862,19 +862,36 @@ export default function BillingPage() {
                             className="w-full px-3 py-2 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface bg-white"
                           >
                             <option value="">-- Select --</option>
-                            {dbProducts.map(p => {
-                              const stock = p.current_stock || 0
-                              return (
-                                <option 
-                                  key={p.id} 
-                                  value={p.id} 
-                                  className={stock <= 0 ? "text-gray-400 bg-gray-50" : ""}
-                                >
-                                  {p.name} - Stock: {stock} {p.unit || p.size || 'L'}
-                                </option>
-                              )
-                            })}
+                            {Array.from(new Set(dbProducts.map(p => p.category || 'Uncategorized'))).map(cat => (
+                              <optgroup key={cat} label={cat}>
+                                {dbProducts.filter(p => (p.category || 'Uncategorized') === cat).map(p => {
+                                  const stock = p.current_stock || 0
+                                  return (
+                                    <option 
+                                      key={p.id} 
+                                      value={p.id} 
+                                      className={stock <= 0 ? "text-gray-400 bg-gray-50" : ""}
+                                    >
+                                      {p.type === 'base' ? '(BASE) ' : ''}{p.name} - Stock: {stock} {p.unit || p.size || 'L'}
+                                    </option>
+                                  )
+                                })}
+                              </optgroup>
+                            ))}
                           </select>
+                          {product?.type === 'base' && (
+                            <div className="mt-1 flex gap-2 items-center bg-blue-50/50 p-1.5 rounded border border-blue-100">
+                              <label className="text-xs font-semibold text-blue-700 whitespace-nowrap">Color Code:</label>
+                              <input 
+                                type="text"
+                                disabled={!!savedBillData}
+                                value={item.colorCode || ""}
+                                onChange={(e) => updateItem(item.id, { colorCode: e.target.value })}
+                                className="flex-1 px-2 py-1 border border-blue-200 rounded focus:border-blue-400 outline-none text-xs bg-white text-blue-900"
+                                placeholder="e.g. 70YY 10/100"
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <div className="w-24 flex flex-col gap-1">
@@ -1109,7 +1126,10 @@ export default function BillingPage() {
                                 <tr className="border-b border-gray-100">
                                   <td className="py-3 px-2 text-gray-500">{globalIndex + 1}</td>
                                   <td className="py-3 px-2">
-                                    <strong>{item.name}</strong><br />
+                                    <strong>
+                                      {item.name}
+                                      {item.colorCode && (dbProducts.find(p => p.id === item.productId)?.type === 'base' || !dbProducts.find(p => p.id === item.productId)) ? ` - ${item.colorCode}` : ''}
+                                    </strong><br />
                                     <span className="text-xs text-gray-500">Base: {item.size}</span>
                                   </td>
                                   <td className="py-3 px-2 text-center">{item.qty}</td>
@@ -1349,7 +1369,10 @@ export default function BillingPage() {
                                   <tr className="border-b border-gray-100">
                                     <td className="py-3 px-2 text-gray-500">{globalIndex + 1}</td>
                                     <td className="py-3 px-2">
-                                      <strong>{item.name}</strong><br />
+                                      <strong>
+                                        {item.name}
+                                        {item.colorCode && (dbProducts.find(p => p.id === item.productId)?.type === 'base' || !dbProducts.find(p => p.id === item.productId)) ? ` - ${item.colorCode}` : ''}
+                                      </strong><br />
                                       <span className="text-xs text-gray-500">Base: {item.size}</span>
                                     </td>
                                     <td className="py-3 px-2 text-center">{item.qty}</td>
