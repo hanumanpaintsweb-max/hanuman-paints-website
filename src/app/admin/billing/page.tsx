@@ -527,8 +527,8 @@ export default function BillingPage() {
     let stockUpdateFailed = false;
     for (const item of items) {
       console.log('Processing stock deduction for item:', item);
-      if (!item.productId) {
-        console.warn('SKIPPED DEDUCTION: No productId found for', item.name);
+      if (!item.productId || item.productId === 'CUSTOM') {
+        console.warn('SKIPPED DEDUCTION: Custom product or no productId found for', item.name);
         continue;
       }
 
@@ -909,11 +909,11 @@ export default function BillingPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-surface-container-low">
         {activeTab === "New Bill" ? (
-          <>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* Left Column (Form) */}
-            <div className="w-full lg:w-[60%] h-full overflow-y-auto p-container-padding flex flex-col gap-element-gap">
+            <div className="xl:col-span-8 flex flex-col gap-6">
 
               {/* Customer Info */}
               <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-6">
@@ -976,80 +976,107 @@ export default function BillingPage() {
                   return (
                     <div key={item.id} className="border border-outline-variant rounded-xl p-4 mb-4 bg-surface relative">
                       <div className="flex flex-row items-end gap-3 w-full flex-wrap xl:flex-nowrap">
-                        <div className="flex-1 min-w-[250px] flex flex-col gap-1">
+                        <div className="flex-1 min-w-[200px] flex flex-col gap-1">
                           <div className="relative w-full" ref={searchRef}>
                             <label className="block text-sm font-bold text-on-surface mb-2">Select Product</label>
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
+                            {item.productId === 'CUSTOM' ? (
                               <input
                                 type="text"
                                 disabled={!!savedBillData}
-                                placeholder={savedBillData ? (product?.name || "") : "Type to search..."}
-                                value={openDropdownId === item.id ? searchQuery : (product?.name || "")}
-                                onChange={(e) => {
-                                  setSearchQuery(e.target.value);
-                                  setIsDropdownOpen(true);
-                                  setOpenDropdownId(item.id);
-                                }}
-                                onFocus={() => {
-                                  if (!savedBillData) {
-                                    setIsDropdownOpen(true);
-                                    setOpenDropdownId(item.id);
-                                    setSearchQuery("");
-                                  }
-                                }}
-                                className="w-full pl-9 pr-4 py-2 border border-outline-variant rounded-lg bg-surface text-sm text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                                value={item.name}
+                                onChange={(e) => updateItem(item.id, { name: e.target.value })}
+                                className="w-full px-4 py-2 border border-outline-variant rounded-lg bg-surface text-sm text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all h-10"
+                                placeholder="Enter custom item name"
                               />
-                            </div>
-
-                            {/* DROPDOWN MENU - FIXED WIDTH */}
-                            {isDropdownOpen && openDropdownId === item.id && (
-                              <div className="absolute left-0 z-50 w-[450px] mt-1 bg-surface border border-outline-variant rounded-xl shadow-2xl max-h-72 overflow-y-auto overflow-x-hidden">
-                                {filteredProducts.length > 0 ? (
-                                  filteredProducts.map(p => (
-                                    <div
-                                      key={p.id}
-                                      onClick={() => {
-                                        handleProductSelect(index, p.id);
+                            ) : (
+                              <>
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant" />
+                                  <input
+                                    type="text"
+                                    disabled={!!savedBillData}
+                                    placeholder={savedBillData ? (product?.name || "") : "Type to search..."}
+                                    value={openDropdownId === item.id ? searchQuery : (product?.name || "")}
+                                    onChange={(e) => {
+                                      setSearchQuery(e.target.value);
+                                      setIsDropdownOpen(true);
+                                      setOpenDropdownId(item.id);
+                                    }}
+                                    onFocus={() => {
+                                      if (!savedBillData) {
+                                        setIsDropdownOpen(true);
+                                        setOpenDropdownId(item.id);
                                         setSearchQuery("");
-                                        setIsDropdownOpen(false);
-                                        setOpenDropdownId(null);
-                                      }}
-                                      className="p-3 border-b border-outline-variant hover:bg-primary/5 cursor-pointer flex justify-between items-center transition-colors group"
-                                    >
-                                      <div className="flex flex-col overflow-hidden mr-4">
-                                        <span className="font-bold text-on-surface flex items-center gap-2 truncate text-sm">
-                                          {p.name} 
-                                          {p.type === 'base' && (
-                                            <span className="text-[9px] font-black bg-primary text-white px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">BASE</span>
-                                          )}
-                                        </span>
-                                        <span className="text-xs text-on-surface-variant mt-0.5 truncate">
-                                          {p.category || 'General'} • Size: {p.size || p.unit || '1 Ltr'} • MRP: ₹{p.base_mrp || 0}
-                                        </span>
+                                      }
+                                    }}
+                                    className="w-full pl-9 pr-4 py-2 border border-outline-variant rounded-lg bg-surface text-sm text-on-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all h-10"
+                                  />
+                                </div>
+
+                                {/* DROPDOWN MENU - FIXED WIDTH */}
+                                {isDropdownOpen && openDropdownId === item.id && (
+                                  <div className="absolute left-0 z-50 w-[450px] mt-1 bg-surface border border-outline-variant rounded-xl shadow-2xl max-h-72 overflow-y-auto overflow-x-hidden">
+                                    {filteredProducts.length > 0 ? (
+                                      filteredProducts.map(p => (
+                                        <div
+                                          key={p.id}
+                                          onClick={() => {
+                                            handleProductSelect(index, p.id);
+                                            setSearchQuery("");
+                                            setIsDropdownOpen(false);
+                                            setOpenDropdownId(null);
+                                          }}
+                                          className="p-3 border-b border-outline-variant hover:bg-primary/5 cursor-pointer flex justify-between items-center transition-colors group"
+                                        >
+                                          <div className="flex flex-col overflow-hidden mr-4">
+                                            <span className="font-bold text-on-surface flex items-center gap-2 truncate text-sm">
+                                              {p.name} 
+                                              {p.type === 'base' && (
+                                                <span className="text-[9px] font-black bg-primary text-white px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0">BASE</span>
+                                              )}
+                                            </span>
+                                            <span className="text-xs text-on-surface-variant mt-0.5 truncate">
+                                              {p.category || 'General'} • Size: {p.size || p.unit || '1 Ltr'} • MRP: ₹{p.base_mrp || 0}
+                                            </span>
+                                          </div>
+                                          <div className={`text-sm font-black whitespace-nowrap shrink-0 ${(p.current_stock || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            {(p.current_stock || 0) > 0 ? `Stock: ${p.current_stock}` : 'OUT OF STOCK'}
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="p-6 text-center text-on-surface-variant flex flex-col items-center">
+                                        <Search className="size-6 opacity-20 mb-2" />
+                                        <p className="text-sm">No products found matching "{searchQuery}"</p>
                                       </div>
-                                      <div className={`text-sm font-black whitespace-nowrap shrink-0 ${(p.current_stock || 0) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {(p.current_stock || 0) > 0 ? `Stock: ${p.current_stock}` : 'OUT OF STOCK'}
+                                    )}
+                                    {/* CUSTOM ITEM BUTTON */}
+                                    {searchQuery.trim() !== "" && (
+                                      <div 
+                                        onClick={() => {
+                                          updateItem(item.id, { productId: 'CUSTOM', name: searchQuery, size: '1 Ltr', mrp: 0, qty: 1 });
+                                          setSearchQuery("");
+                                          setIsDropdownOpen(false);
+                                          setOpenDropdownId(null);
+                                        }}
+                                        className="p-3 border-t border-outline-variant bg-primary/5 hover:bg-primary/10 cursor-pointer flex justify-center items-center transition-colors text-primary font-bold text-sm"
+                                      >
+                                        <Plus className="size-4 mr-2" /> Add Custom Item: "{searchQuery}"
                                       </div>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="p-6 text-center text-on-surface-variant flex flex-col items-center">
-                                    <Search className="size-6 opacity-20 mb-2" />
-                                    <p className="text-sm">No products found matching "{searchQuery}"</p>
+                                    )}
                                   </div>
                                 )}
-                              </div>
+                              </>
                             )}
                           </div>
                         </div>
 
-                        <div className="w-20 min-w-[80px] flex flex-col gap-1">
+                        <div className="w-20 shrink-0 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Qty</label>
                           <input type="number" min="1" disabled={!!savedBillData} value={item.qty} onChange={(e) => updateItem(item.id, { qty: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md text-on-surface" />
                         </div>
 
-                        <div className="w-28 min-w-[100px] flex flex-col gap-1">
+                        <div className="w-24 shrink-0 flex flex-col gap-1">
                           <label className="font-label-md text-label-md text-on-surface-variant">Unit</label>
                           <div className="flex bg-white rounded-lg border border-outline-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary overflow-hidden h-10">
                             <input
@@ -1214,7 +1241,7 @@ export default function BillingPage() {
             </div>
 
             {/* Right Column (Live Preview / A4 Sheet) */}
-            <div className="hidden lg:flex w-[40%] bg-surface-container-highest border-l border-outline-variant flex-col items-center justify-start overflow-y-auto pt-8 pb-20 print:hidden relative">
+            <div className="hidden xl:flex xl:col-span-4 sticky top-6 bg-surface-container-highest rounded-2xl border border-outline-variant flex-col items-center justify-start overflow-x-auto pt-8 pb-20 print:hidden z-10 max-h-[calc(100vh-100px)]">
               <div className="sticky top-0 z-10 w-[210mm] text-center mb-2 font-label-md text-label-md text-outline">Live A4 Preview</div>
 
               <div id="print-a4-container" ref={printRef} className="print-area flex flex-col items-center drop-shadow-md print:m-0 print:p-0 print:w-[210mm] print:h-auto print:overflow-hidden">
@@ -1346,7 +1373,7 @@ export default function BillingPage() {
                 })()}
               </div>
             </div>
-          </>
+          </div>
         ) : (
           /* BILL HISTORY TAB */
           <div className="w-full h-full p-container-padding">
