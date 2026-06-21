@@ -25,7 +25,6 @@ type BillItem = {
   mrp: number
   colorCode?: string
   colorantCost?: number
-  litreDiscount?: number
 }
 
 type Settings = Record<string, string>
@@ -285,12 +284,11 @@ export default function BillingPage() {
 
       const price = Number(item.mrp || 0)
       const cPrice = Number(item.colorantCost || 0)
-      const rowLitreDiscount = billMode === "DPL" ? Number(item.litreDiscount || 0) : 0
       let ltrQty = 1
       if (item.size.toLowerCase().includes('l') && !item.size.toLowerCase().includes('ml')) ltrQty = parseFloat(item.size) || 1
       if (item.size.toLowerCase().includes('ml')) ltrQty = (parseFloat(item.size) || 1000) / 1000
 
-      baseSubtotal += (price * item.qty) - rowLitreDiscount
+      baseSubtotal += price * item.qty
       colorantTotal += cPrice * item.qty
     })
 
@@ -1118,13 +1116,6 @@ export default function BillingPage() {
                           <input type="number" disabled={!!savedBillData} value={item.mrp === "" as any ? "" : (item.mrp || "")} onChange={(e) => updateItem(item.id, { mrp: e.target.value === "" ? "" as any : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </div>
 
-                        {billMode === "DPL" && (
-                          <div className="w-28 shrink-0 flex flex-col gap-1">
-                            <label className="font-label-md text-label-md text-on-surface-variant">Litre Discount (₹)</label>
-                            <input type="number" disabled={!!savedBillData} value={item.litreDiscount || 0} onChange={(e) => updateItem(item.id, { litreDiscount: e.target.value === "" ? 0 : parseFloat(e.target.value) })} className="w-full px-3 py-2 h-10 border border-outline-variant rounded-lg bg-surface-container outline-none font-body-md text-body-md text-on-surface-variant [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                          </div>
-                        )}
-
                         {!savedBillData && (
                           <div className="flex pb-1">
                             <button onClick={() => removeItem(item.id)} className="text-rose-500 hover:bg-rose-50 p-2 rounded-md transition-colors shrink-0">
@@ -1337,17 +1328,6 @@ export default function BillingPage() {
                                   <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-right`}>{Number(item.mrp || 0).toFixed(2)}</td>
                                   <td className={`${isHalfPage ? 'py-1' : 'py-3'} px-2 text-right font-bold`}>{baseGross.toFixed(2)}</td>
                                 </tr>
-                                {billMode === "DPL" && item.litreDiscount && item.litreDiscount > 0 ? (
-                                  <tr className="border-b border-gray-100 bg-red-50/30">
-                                    <td className="py-1 px-2 text-gray-400 text-[7px]"></td>
-                                    <td className={`py-1 px-2 ${isHalfPage ? 'text-[7px]' : 'text-xs'} text-gray-600`}>
-                                      └ Litre Discount
-                                    </td>
-                                    <td className={`py-1 px-2 text-center ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}></td>
-                                    <td className={`py-1 px-2 text-right ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}></td>
-                                    <td className={`py-1 px-2 text-right font-bold text-red-600 ${isHalfPage ? 'text-[7px]' : 'text-xs'}`}>-₹{Number(item.litreDiscount).toFixed(2)}</td>
-                                  </tr>
-                                ) : null}
                                 {((item.colorantCost !== undefined && item.colorantCost > 0) || (item.colorCode && item.colorCode.trim() !== "")) && (
                                   <tr className="border-b border-gray-200 bg-blue-50/30">
                                     <td className="py-1 px-2 text-gray-400 text-[7px]"></td>
