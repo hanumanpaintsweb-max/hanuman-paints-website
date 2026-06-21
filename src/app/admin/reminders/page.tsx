@@ -33,9 +33,7 @@ export default function RemindersPage() {
     const { data } = await supabase
       .from('ledger')
       .select('*')
-      .eq('type', 'receivable')
-      .neq('status', 'paid')
-      .not('due_date', 'is', null)
+      .eq('status', 'pending')
       .order('due_date', { ascending: true })
 
     if (data) {
